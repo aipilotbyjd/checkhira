@@ -2,7 +2,7 @@ import { Text, View, TextInput, Pressable, Alert } from 'react-native';
 import { useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
-import { MaterialCommunityIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Ionicons, FontAwesome5, Octicons } from '@expo/vector-icons';
 
 export default function WorkEntry() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -10,7 +10,11 @@ export default function WorkEntry() {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const calculateTotal = () => {
-    return entries.reduce((sum, entry) => sum + (Number(entry.price) || 0), 0);
+    return entries.reduce((sum, entry) => {
+      const diamond = Number(entry.diamond) || 0;
+      const price = Number(entry.price) || 0;
+      return sum + diamond * price;
+    }, 0);
   };
 
   const getNextType = (currentType: string) => {
@@ -27,12 +31,12 @@ export default function WorkEntry() {
     setEntries([...entries, { id: Date.now(), type: 'A', diamond: '', price: '' }]);
   };
 
-  const removeEntry = (id: number) => {
+  const removeEntry = () => {
     if (entries.length === 1) {
       Alert.alert('Cannot Remove', 'At least one entry is required.');
       return;
     }
-    setEntries(entries.filter((entry) => entry.id !== id));
+    setEntries(entries.slice(0, -1));
   };
 
   return (
@@ -67,17 +71,18 @@ export default function WorkEntry() {
       <View className="flex-1 p-4">
         {/* Headers */}
         <View className="flex-row items-center justify-between rounded-t-lg bg-gray-100 p-3">
-          <View className="flex-1 flex-row items-center">
+          <View className="flex-1 flex-row items-center justify-center">
             <Text className="ml-2 font-medium text-gray-700">Type</Text>
           </View>
-          <View className="flex-1 flex-row items-center">
+          <View className="flex-1 flex-row items-center justify-center">
             <Text className="ml-2 font-medium text-gray-700">Diamond</Text>
           </View>
-          <View className="flex-1 flex-row items-center">
+          <View className="flex-1 flex-row items-center justify-center">
             <Text className="ml-2 font-medium text-gray-700">Price</Text>
           </View>
-          <Text className="w-16 text-right font-medium text-gray-700">Total</Text>
-          <View className="w-10" />
+          <View className="flex-1 flex-row items-center justify-center">
+            <Text className="ml-2 font-medium text-gray-700">Total</Text>
+          </View>
         </View>
 
         {/* Entries */}
@@ -88,55 +93,64 @@ export default function WorkEntry() {
               className={`flex-row items-center justify-between p-3 ${
                 index !== entries.length - 1 ? 'border-b border-gray-200' : ''
               }`}>
-              <View className="flex-1">
+              <View className="flex-1 items-center">
                 <Pressable
                   onPress={() => {
                     setEntries(
                       entries.map((e) =>
-                        e.id === entry.id
-                          ? { ...e, type: getNextType(e.type) }
-                          : e
+                        e.id === entry.id ? { ...e, type: getNextType(e.type) } : e
                       )
                     );
                   }}
                   className="flex-row items-center justify-center">
-                  <Text className="rounded-full bg-blue-100 text-blue-800 px-2 py-1 text-center">
+                  <Text className="rounded-full bg-blue-100 px-2 py-1 text-center text-blue-800">
                     {entry.type}
                   </Text>
                 </Pressable>
               </View>
               <TextInput
-                className="mx-1 flex-1 rounded-lg border border-gray-300 px-2 py-1.5"
+                className="mx-1 flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-center"
                 value={entry.diamond}
-                placeholder="Enter"
+                placeholder="0"
+                keyboardType="numeric"
                 onChangeText={(text) => {
-                  setEntries(entries.map((e) => (e.id === entry.id ? { ...e, diamond: text } : e)));
+                  const numericText = text.replace(/[^0-9]/g, '');
+                  setEntries(
+                    entries.map((e) => (e.id === entry.id ? { ...e, diamond: numericText } : e))
+                  );
                 }}
               />
               <TextInput
-                className="mx-1 flex-1 rounded-lg border border-gray-300 px-2 py-1.5"
+                className="mx-1 flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-center"
                 value={entry.price}
                 placeholder="0.00"
                 keyboardType="numeric"
                 onChangeText={(text) => {
-                  setEntries(entries.map((e) => (e.id === entry.id ? { ...e, price: text } : e)));
+                  const numericText = text.replace(/[^0-9.]/g, '');
+                  setEntries(
+                    entries.map((e) => (e.id === entry.id ? { ...e, price: numericText } : e))
+                  );
                 }}
               />
-              <Text className="w-16 text-right">${Number(entry.price) || 0}</Text>
-              <Pressable onPress={() => removeEntry(entry.id)} className="w-10 items-center">
-                <Ionicons name="close-circle" size={20} color="#EF4444" />
-              </Pressable>
+              <Text className="flex-1 text-center">
+                ${((Number(entry.diamond) || 0) * (Number(entry.price) || 0)).toFixed(2)}
+              </Text>
             </View>
           ))}
         </View>
 
-        {/* Add Button */}
-        <Pressable
-          onPress={addEntry}
-          className="mt-4 flex-row items-center justify-center rounded-lg bg-blue-500 p-3">
-          <Ionicons name="add-circle-outline" size={20} color="white" />
-          <Text className="ml-2 text-center font-medium text-white">Add New Entry</Text>
-        </Pressable>
+        {/* Action Buttons */}
+        <View className="mt-4 flex-row justify-between space-x-4">
+          <View className="flex-1" />
+          <View className="flex-row justify-between space-x-4">
+            <Pressable onPress={removeEntry} className="mx-2 rounded-lg bg-red-500 p-3">
+              <Octicons name="trash" size={24} color="white" />
+            </Pressable>
+            <Pressable onPress={addEntry} className="mx-2 rounded-lg bg-blue-500 p-3">
+              <Octicons name="plus" size={24} color="white" />
+            </Pressable>
+          </View>
+        </View>
 
         {/* Footer */}
         <View className="mt-6 rounded-lg bg-white p-4 shadow-sm">
@@ -145,7 +159,7 @@ export default function WorkEntry() {
               <MaterialCommunityIcons name="cash-multiple" size={24} color="#2563EB" />
               <Text className="ml-2 text-lg font-medium text-gray-700">Total Amount</Text>
             </View>
-            <Text className="text-xl font-bold text-blue-600">${calculateTotal().toFixed(2)}</Text>
+            <Text className="text-xl font-bold text-blue-600">{calculateTotal().toFixed(2)}</Text>
           </View>
         </View>
       </View>
