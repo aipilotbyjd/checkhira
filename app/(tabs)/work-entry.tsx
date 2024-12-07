@@ -51,9 +51,6 @@ export default function WorkEntry() {
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
       {/* Header */}
       <View className="px-6 pt-6">
-        <Text className="mb-4 text-2xl font-bold" style={{ color: COLORS.secondary }}>
-          Work Entry
-        </Text>
         <Pressable
           onPress={() => setShowDatePicker(true)}
           className="flex-row items-center rounded-2xl p-4"
