@@ -7,11 +7,5 @@ interface TabBarIconProps {
 }
 
 export const TabBarIcon = ({ name, color }: TabBarIconProps) => {
-  return <Octicons size={28} style={styles.tabBarIcon} name={name} color={color} />;
+  return <Octicons size={24} name={name} color={color} />;
 };
-
-const styles = StyleSheet.create({
-  tabBarIcon: {
-    marginBottom: -3,
-  },
-});

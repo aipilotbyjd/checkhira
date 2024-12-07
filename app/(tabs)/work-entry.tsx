@@ -6,11 +6,17 @@ import { MaterialCommunityIcons, Ionicons, FontAwesome5 } from '@expo/vector-ico
 
 export default function WorkEntry() {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [entries, setEntries] = useState([{ id: 1, type: 'Regular', diamond: '', price: '' }]);
+  const [entries, setEntries] = useState([{ id: 1, type: 'A', diamond: '', price: '' }]);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const calculateTotal = () => {
     return entries.reduce((sum, entry) => sum + (Number(entry.price) || 0), 0);
+  };
+
+  const getNextType = (currentType: string) => {
+    const types = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+    const currentIndex = types.indexOf(currentType);
+    return types[(currentIndex + 1) % types.length];
   };
 
   const addEntry = () => {
@@ -18,7 +24,7 @@ export default function WorkEntry() {
       Alert.alert('Maximum Limit', 'You can add up to 10 entries only.');
       return;
     }
-    setEntries([...entries, { id: Date.now(), type: 'Regular', diamond: '', price: '' }]);
+    setEntries([...entries, { id: Date.now(), type: 'A', diamond: '', price: '' }]);
   };
 
   const removeEntry = (id: number) => {
@@ -62,15 +68,12 @@ export default function WorkEntry() {
         {/* Headers */}
         <View className="flex-row items-center justify-between rounded-t-lg bg-gray-100 p-3">
           <View className="flex-1 flex-row items-center">
-            <FontAwesome5 name="tag" size={14} color="#4B5563" />
             <Text className="ml-2 font-medium text-gray-700">Type</Text>
           </View>
           <View className="flex-1 flex-row items-center">
-            <MaterialCommunityIcons name="diamond-stone" size={16} color="#4B5563" />
             <Text className="ml-2 font-medium text-gray-700">Diamond</Text>
           </View>
           <View className="flex-1 flex-row items-center">
-            <FontAwesome5 name="dollar-sign" size={14} color="#4B5563" />
             <Text className="ml-2 font-medium text-gray-700">Price</Text>
           </View>
           <Text className="w-16 text-right font-medium text-gray-700">Total</Text>
@@ -91,26 +94,13 @@ export default function WorkEntry() {
                     setEntries(
                       entries.map((e) =>
                         e.id === entry.id
-                          ? { ...e, type: e.type === 'Regular' ? 'Special' : 'Regular' }
+                          ? { ...e, type: getNextType(e.type) }
                           : e
                       )
                     );
                   }}
                   className="flex-row items-center justify-center">
-                  <MaterialCommunityIcons
-                    name={entry.type === 'Regular' ? 'circle-slice-8' : 'star-circle'}
-                    size={16}
-                    color={entry.type === 'Regular' ? '#1D4ED8' : '#7E22CE'}
-                  />
-                  <Text
-                    className={`
-                    ml-1 rounded-full px-2 py-1 text-center
-                    ${
-                      entry.type === 'Regular'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-purple-100 text-purple-800'
-                    }
-                  `}>
+                  <Text className="rounded-full bg-blue-100 text-blue-800 px-2 py-1 text-center">
                     {entry.type}
                   </Text>
                 </Pressable>
