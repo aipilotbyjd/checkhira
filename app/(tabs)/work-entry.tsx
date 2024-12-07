@@ -50,76 +50,51 @@ export default function WorkEntry() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
-      {/* Header Section */}
-      <View className="px-6 pt-6" style={SHADOWS.small}>
-        <Text style={{ 
-          fontSize: SIZES.h2, 
-          color: COLORS.secondary,
-          fontWeight: 'bold',
-          marginBottom: SPACING.md 
-        }}>
+      {/* Header */}
+      <View className="px-6 pt-6">
+        <Text className="text-2xl font-bold mb-4" style={{ color: COLORS.secondary }}>
           Work Entry
         </Text>
         <Pressable
           onPress={() => setShowDatePicker(true)}
-          className="flex-row items-center rounded-2xl"
-          style={{ 
-            backgroundColor: COLORS.gray[100],
-            padding: SPACING.md,
-            marginBottom: SPACING.lg
-          }}>
-          <MaterialCommunityIcons name="calendar-month" size={SIZES.iconSize.medium} color={COLORS.primary} />
-          <Text className="flex-1 ml-3" style={{ 
-            fontSize: SIZES.body,
-            color: COLORS.gray[600]
-          }}>
+          className="flex-row items-center p-4 rounded-2xl"
+          style={{ backgroundColor: COLORS.gray[100] }}>
+          <MaterialCommunityIcons name="calendar-month" size={24} color={COLORS.primary} />
+          <Text className="flex-1 ml-3 text-base" style={{ color: COLORS.gray[600] }}>
             {format(selectedDate, 'MMMM dd, yyyy')}
           </Text>
-          <Ionicons name="chevron-down" size={SIZES.iconSize.small} color={COLORS.gray[400]} />
+          <Ionicons name="chevron-down" size={20} color={COLORS.gray[400]} />
         </Pressable>
 
-        {showDatePicker && (
-          <DateTimePicker
-            mode="date"
-            display="spinner"
-            value={selectedDate}
-            onChange={(event, date) => {
-              setShowDatePicker(false);
-              if (date) setSelectedDate(date);
-            }}
-          />
-        )}
+        {showDatePicker && <DateTimePicker
+          mode="date"
+          display="spinner"
+          value={selectedDate}
+          onChange={(event, date) => {
+            setShowDatePicker(false);
+            if (date) setSelectedDate(date);
+          }}
+        />}
       </View>
 
       {/* Scrollable Content */}
-      <ScrollView 
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ 
-          padding: SPACING.screenPadding,
-          paddingBottom: SPACING.xxl 
-        }}>
-        {/* Entries Header */}
+      <ScrollView className="flex-1 px-6 mt-6">
         <View className="flex-row items-center justify-between mb-4">
-          <Text style={{ 
-            fontSize: SIZES.h3,
-            color: COLORS.secondary,
-            fontWeight: '600'
-          }}>
+          <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
             Entries
           </Text>
-          <View className="flex-row space-x-3">
+          <View className="flex-row space-x-2">
             <Pressable 
               onPress={removeEntry}
               className="p-2 rounded-full"
               style={{ backgroundColor: COLORS.error + '15' }}>
-              <Octicons name="trash" size={SIZES.iconSize.small} color={COLORS.error} />
+              <Octicons name="trash" size={20} color={COLORS.error} />
             </Pressable>
             <Pressable 
               onPress={addEntry}
               className="p-2 rounded-full"
               style={{ backgroundColor: COLORS.primary + '15' }}>
-              <Octicons name="plus" size={SIZES.iconSize.small} color={COLORS.primary} />
+              <Octicons name="plus" size={20} color={COLORS.primary} />
             </Pressable>
           </View>
         </View>
@@ -128,41 +103,28 @@ export default function WorkEntry() {
         {entries.map((entry, index) => (
           <View
             key={entry.id}
-            className="mb-4 rounded-2xl"
-            style={{ 
-              backgroundColor: COLORS.background.secondary,
-              padding: SPACING.md,
-              ...SHADOWS.small
-            }}>
+            className="mb-4 p-4 rounded-2xl"
+            style={{ backgroundColor: COLORS.background.secondary }}>
             <View className="flex-row items-center mb-3">
-              <Text style={{ 
-                fontSize: SIZES.caption,
-                color: COLORS.gray[400]
-              }}>
+              <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
                 Entry {index + 1}
               </Text>
               <View className="ml-2 px-3 py-1 rounded-full" 
                 style={{ backgroundColor: COLORS.primary + '15' }}>
-                <Text style={{ color: COLORS.primary, fontWeight: '600' }}>{entry.type}</Text>
+                <Text style={{ color: COLORS.primary }}>{entry.type}</Text>
               </View>
             </View>
             
             <View className="flex-row space-x-3">
-              {/* Input Fields */}
               <View className="flex-1">
-                <Text style={{ 
-                  fontSize: SIZES.caption,
-                  color: COLORS.gray[400],
-                  marginBottom: SPACING.xs
-                }}>Diamond</Text>
+                <Text className="text-sm mb-1" style={{ color: COLORS.gray[400] }}>
+                  Diamond
+                </Text>
                 <TextInput
+                  className="p-3 rounded-xl border"
                   style={{ 
-                    height: SIZES.inputHeight,
                     backgroundColor: COLORS.white,
-                    borderRadius: SIZES.borderRadius,
                     borderColor: COLORS.gray[200],
-                    padding: SPACING.sm,
-                    fontSize: SIZES.body,
                     color: COLORS.secondary
                   }}
                   value={entry.diamond}
@@ -177,19 +139,14 @@ export default function WorkEntry() {
                 />
               </View>
               <View className="flex-1">
-                <Text style={{ 
-                  fontSize: SIZES.caption,
-                  color: COLORS.gray[400],
-                  marginBottom: SPACING.xs
-                }}>Price</Text>
+                <Text className="text-sm mb-1" style={{ color: COLORS.gray[400] }}>
+                  Price
+                </Text>
                 <TextInput
+                  className="p-3 rounded-xl border"
                   style={{ 
-                    height: SIZES.inputHeight,
                     backgroundColor: COLORS.white,
-                    borderRadius: SIZES.borderRadius,
                     borderColor: COLORS.gray[200],
-                    padding: SPACING.sm,
-                    fontSize: SIZES.body,
                     color: COLORS.secondary
                   }}
                   value={entry.price}
@@ -204,13 +161,12 @@ export default function WorkEntry() {
                 />
               </View>
               <View className="flex-1">
-                <Text style={{ 
-                  fontSize: SIZES.caption,
-                  color: COLORS.gray[400],
-                  marginBottom: SPACING.xs
-                }}>Total</Text>
-                <View className="bg-white rounded-xl p-3 border border-gray-200">
-                  <Text className="text-base text-gray-700">
+                <Text className="text-sm mb-1" style={{ color: COLORS.gray[400] }}>
+                  Total
+                </Text>
+                <View className="p-3 rounded-xl border" 
+                  style={{ backgroundColor: COLORS.white, borderColor: COLORS.gray[200] }}>
+                  <Text style={{ color: COLORS.secondary }}>
                     ₹ {((Number(entry.diamond) || 0) * (Number(entry.price) || 0)).toFixed(2)}
                   </Text>
                 </View>
@@ -221,33 +177,16 @@ export default function WorkEntry() {
       </ScrollView>
 
       {/* Footer */}
-      <View className="px-6 pb-6" style={SHADOWS.medium}>
-        <View className="rounded-2xl mb-4" 
-          style={{ 
-            backgroundColor: COLORS.primary + '10',
-            padding: SPACING.md
-          }}>
+      <View className="px-6 pb-6">
+        <View className="rounded-2xl p-4 mb-4" style={{ backgroundColor: COLORS.primary + '10' }}>
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center">
-              <MaterialCommunityIcons 
-                name="cash-multiple" 
-                size={SIZES.iconSize.medium} 
-                color={COLORS.primary} 
-              />
-              <Text style={{ 
-                marginLeft: SPACING.sm,
-                fontSize: SIZES.h3,
-                color: COLORS.secondary,
-                fontWeight: '600'
-              }}>
+              <MaterialCommunityIcons name="cash-multiple" size={24} color={COLORS.primary} />
+              <Text className="ml-3 text-lg font-semibold" style={{ color: COLORS.secondary }}>
                 Total Amount
               </Text>
             </View>
-            <Text style={{ 
-              fontSize: SIZES.h2,
-              color: COLORS.primary,
-              fontWeight: 'bold'
-            }}>
+            <Text className="text-xl font-bold" style={{ color: COLORS.primary }}>
               ₹ {calculateTotal().toFixed(2)}
             </Text>
           </View>
@@ -255,18 +194,9 @@ export default function WorkEntry() {
 
         <Pressable 
           onPress={handleSave}
-          className="rounded-2xl"
-          style={{ 
-            backgroundColor: COLORS.primary,
-            padding: SPACING.md,
-            ...SHADOWS.small
-          }}>
-          <Text style={{ 
-            textAlign: 'center',
-            color: COLORS.white,
-            fontSize: SIZES.h4,
-            fontWeight: '600'
-          }}>
+          className="p-4 rounded-2xl"
+          style={{ backgroundColor: COLORS.primary }}>
+          <Text className="text-center text-lg font-semibold text-white">
             Save Entries
           </Text>
         </Pressable>
