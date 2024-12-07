@@ -1,14 +1,16 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Octicons } from '@expo/vector-icons';
 import { StyleSheet } from 'react-native';
 
-export const TabBarIcon = (props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
+interface TabBarIconProps {
+  name: React.ComponentProps<typeof Octicons>['name'];
   color: string;
-}) => {
-  return <FontAwesome size={28} style={styles.tabBarIcon} {...props} />;
+}
+
+export const TabBarIcon = ({ name, color }: TabBarIconProps) => {
+  return <Octicons size={28} style={styles.tabBarIcon} name={name} color={color} />;
 };
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   tabBarIcon: {
     marginBottom: -3,
   },
