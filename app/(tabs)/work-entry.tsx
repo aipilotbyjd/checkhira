@@ -1,4 +1,4 @@
-import { Text, View, TextInput, Pressable, Alert, ScrollView } from 'react-native';
+import { Text, View, TextInput, Pressable, Alert, ScrollView, Modal } from 'react-native';
 import { useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
@@ -9,6 +9,8 @@ export default function WorkEntry() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [entries, setEntries] = useState([{ id: 1, type: 'A', diamond: '', price: '' }]);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState(null);
 
   const calculateTotal = () => {
     return entries.reduce((sum, entry) => {
@@ -34,12 +36,16 @@ export default function WorkEntry() {
     setEntries([...entries, { id: Date.now(), type: nextType, diamond: '', price: '' }]);
   };
 
-  const removeEntry = () => {
+  const removeEntry = (entryId?: number) => {
     if (entries.length === 1) {
       Alert.alert('Cannot Remove', 'At least one entry is required.');
       return;
     }
-    setEntries(entries.slice(0, -1));
+    const entryToDelete = entryId 
+      ? entries.find(e => e.id === entryId) 
+      : entries[entries.length - 1];
+    setShowDeleteModal(true);
+    setEntryToDelete(entryToDelete);
   };
 
   const handleSave = () => {
@@ -83,7 +89,7 @@ export default function WorkEntry() {
           </Text>
           <View className="flex-row items-center justify-end space-x-2">
             <Pressable
-              onPress={removeEntry}
+              onPress={() => removeEntry()}
               className="mr-2 rounded-lg p-2"
               style={{ backgroundColor: COLORS.error + '15' }}>
               <Octicons name="trash" size={20} color={COLORS.error} />
@@ -103,15 +109,25 @@ export default function WorkEntry() {
             key={entry.id}
             className="mb-4 rounded-2xl p-4"
             style={{ backgroundColor: COLORS.background.secondary }}>
-            <View className="mb-3 flex-row items-center">
-              <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-                Entry {index + 1}
-              </Text>
-              <View
-                className="ml-2 rounded-full px-3 py-1"
-                style={{ backgroundColor: COLORS.primary + '15' }}>
-                <Text style={{ color: COLORS.primary }}>{entry.type}</Text>
+            <View className="mb-3 flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
+                  Entry {index + 1}
+                </Text>
+                <View
+                  className="ml-2 rounded-full px-3 py-1"
+                  style={{ backgroundColor: COLORS.primary + '15' }}>
+                  <Text style={{ color: COLORS.primary }}>{entry.type}</Text>
+                </View>
               </View>
+              {index !== 0 && (
+                <Pressable
+                  onPress={() => removeEntry(entry.id)}
+                  className="rounded-lg p-2"
+                  style={{ backgroundColor: COLORS.error + '15' }}>
+                  <Octicons name="trash" size={16} color={COLORS.error} />
+                </Pressable>
+              )}
             </View>
 
             <View className="flex-row space-x-3">
@@ -164,8 +180,8 @@ export default function WorkEntry() {
                   Total
                 </Text>
                 <View
-                  className="rounded-xl border p-3"
-                  style={{ backgroundColor: COLORS.white, borderColor: COLORS.gray[200] }}>
+                  className="rounded-xl bg-gray-200 border p-3"
+                  style={{ borderColor: COLORS.gray[200] }}>
                   <Text style={{ color: COLORS.secondary }}>
                     ₹ {((Number(entry.diamond) || 0) * (Number(entry.price) || 0)).toFixed(2)}
                   </Text>
@@ -199,6 +215,47 @@ export default function WorkEntry() {
           <Text className="text-center text-lg font-semibold text-white">Save Entries</Text>
         </Pressable>
       </View>
+
+      {/* Delete Confirmation Modal */}
+      <Modal transparent visible={showDeleteModal} animationType="fade">
+        <View className="flex-1 items-center justify-center bg-black/50">
+          <View className="mx-4 w-[90%] rounded-2xl bg-white p-6">
+            <View className="mb-4 flex-row items-center justify-between">
+              <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
+                Confirm Delete
+              </Text>
+              <Pressable onPress={() => setShowDeleteModal(false)}>
+                <Octicons name="x" size={20} color={COLORS.gray[400]} />
+              </Pressable>
+            </View>
+
+            <Text className="mb-6" style={{ color: COLORS.gray[600] }}>
+              Are you sure you want to remove Entry {entries.findIndex(e => e.id === entryToDelete?.id) + 1} (Type {entryToDelete?.type})?
+            </Text>
+
+            <View className="flex-row space-x-3">
+              <Pressable
+                onPress={() => setShowDeleteModal(false)}
+                className="flex-1 rounded-xl border p-3 mx-1"
+                style={{ borderColor: COLORS.gray[200] }}>
+                <Text className="text-center font-semibold" style={{ color: COLORS.gray[600] }}>
+                  Cancel
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setEntries(entries.filter(e => e.id !== entryToDelete?.id));
+                  setShowDeleteModal(false);
+                  setEntryToDelete(null);
+                }}
+                className="flex-1 rounded-xl p-3 mx-1"
+                style={{ backgroundColor: COLORS.error }}>
+                <Text className="text-center font-semibold text-white">Delete</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
