@@ -4,6 +4,7 @@
     "slug": "checkhira",
     "version": "1.0.0",
     "scheme": "checkhira",
+    "newArchEnabled": true,
     "web": {
       "bundler": "metro",
       "output": "static",

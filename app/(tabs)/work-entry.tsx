@@ -96,22 +96,12 @@ export default function WorkEntry() {
                 index !== entries.length - 1 ? 'border-b border-gray-200' : ''
               }`}>
               <View className="flex-1 items-center">
-                <Pressable
-                  onPress={() => {
-                    setEntries(
-                      entries.map((e) =>
-                        e.id === entry.id ? { ...e, type: getNextType(e.type) } : e
-                      )
-                    );
-                  }}
-                  className="flex-row items-center justify-center">
-                  <Text className="rounded-full bg-blue-100 px-2 py-1 text-center text-blue-800">
-                    {entry.type}
-                  </Text>
-                </Pressable>
+                <Text className="rounded-full bg-blue-100 px-2 py-1 text-center text-blue-800">
+                  {entry.type}
+                </Text>
               </View>
               <TextInput
-                className="mx-1 flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-center"
+                className="mx-1 flex-1 rounded-lg border border-gray-300 px-2 py-3 text-center"
                 value={entry.diamond}
                 placeholder="0"
                 keyboardType="numeric"
@@ -123,7 +113,7 @@ export default function WorkEntry() {
                 }}
               />
               <TextInput
-                className="mx-1 flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-center"
+                className="mx-1 flex-1 rounded-lg border border-gray-300 px-2 py-3 text-center"
                 value={entry.price}
                 placeholder="0.00"
                 keyboardType="numeric"
