@@ -41,19 +41,25 @@ export default function WorkEntry() {
     setEntries(entries.slice(0, -1));
   };
 
+
+  const handleSave = () => {
+    // TODO: Implement save functionality
+    Alert.alert('Success', 'Entries saved successfully!');
+  };
+
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-white">
       {/* Date Selector */}
-      <View className="bg-white p-4 shadow-sm">
-        <View className="mb-2 flex-row items-center">
-          <MaterialCommunityIcons name="calendar-month" size={20} color="#4B5563" />
-          <Text className="ml-2 text-base font-medium text-gray-600">Work Date</Text>
-        </View>
+      <View className="px-6 pt-6">
+        <Text className="text-2xl font-bold text-gray-800 mb-4">Work Entry</Text>
         <Pressable
           onPress={() => setShowDatePicker(true)}
-          className="flex-row items-center justify-center rounded-lg border border-gray-300 p-3">
-          <Text className="text-center text-lg">{format(selectedDate, 'MMMM dd, yyyy')}</Text>
-          <Ionicons name="chevron-down" size={20} color="#4B5563" className="ml-2" />
+          className="flex-row items-center bg-gray-50 p-4 rounded-2xl">
+          <MaterialCommunityIcons name="calendar-month" size={24} color="#3B82F6" />
+          <Text className="flex-1 ml-3 text-base text-gray-600">
+            {format(selectedDate, 'MMMM dd, yyyy')}
+          </Text>
+          <Ionicons name="chevron-down" size={20} color="#94A3B8" />
         </Pressable>
 
         {showDatePicker && (
@@ -69,91 +75,97 @@ export default function WorkEntry() {
         )}
       </View>
 
-      {/* Entries Table */}
-      <View className="flex-1 p-4">
-        {/* Headers */}
-        <View className="flex-row items-center justify-between rounded-t-lg bg-gray-100 p-3">
-          <View className="flex-1 flex-row items-center justify-center">
-            <Text className="ml-2 font-medium text-gray-700">Type</Text>
-          </View>
-          <View className="flex-1 flex-row items-center justify-center">
-            <Text className="ml-2 font-medium text-gray-700">Diamond</Text>
-          </View>
-          <View className="flex-1 flex-row items-center justify-center">
-            <Text className="ml-2 font-medium text-gray-700">Price</Text>
-          </View>
-          <View className="flex-1 flex-row items-center justify-center">
-            <Text className="ml-2 font-medium text-gray-700">Total</Text>
+      {/* Entries Section */}
+      <View className="flex-1 px-6 mt-8">
+        <View className="flex-row items-center justify-between mb-4">
+          <Text className="text-lg font-semibold text-gray-700">Entries</Text>
+          <View className="flex-row space-x-2">
+            <Pressable 
+              onPress={removeEntry}
+              className="p-2 rounded-full bg-red-50">
+              <Octicons name="trash" size={20} color="#EF4444" />
+            </Pressable>
+            <Pressable 
+              onPress={addEntry}
+              className="p-2 rounded-full bg-blue-50">
+              <Octicons name="plus" size={20} color="#3B82F6" />
+            </Pressable>
           </View>
         </View>
 
-        {/* Entries */}
-        <View className="rounded-b-lg bg-white shadow-sm">
-          {entries.map((entry, index) => (
-            <View
-              key={entry.id}
-              className={`flex-row items-center justify-between p-3 ${
-                index !== entries.length - 1 ? 'border-b border-gray-200' : ''
-              }`}>
-              <View className="flex-1 items-center">
-                <Text className="rounded-full bg-blue-100 px-2 py-1 text-center text-blue-800">
-                  {entry.type}
-                </Text>
+        {/* Entry Cards */}
+        {entries.map((entry, index) => (
+          <View
+            key={entry.id}
+            className="mb-4 bg-gray-50 rounded-2xl p-4">
+            <View className="flex-row items-center mb-3">
+              <Text className="text-sm font-medium text-gray-500">Entry {index + 1}</Text>
+              <View className="ml-2 px-3 py-1 rounded-full bg-blue-100">
+                <Text className="text-blue-700 font-medium">{entry.type}</Text>
               </View>
-              <TextInput
-                className="mx-1 flex-1 rounded-lg border border-gray-300 px-2 py-3 text-center"
-                value={entry.diamond}
-                placeholder="0"
-                keyboardType="numeric"
-                onChangeText={(text) => {
-                  const numericText = text.replace(/[^0-9]/g, '');
-                  setEntries(
-                    entries.map((e) => (e.id === entry.id ? { ...e, diamond: numericText } : e))
-                  );
-                }}
-              />
-              <TextInput
-                className="mx-1 flex-1 rounded-lg border border-gray-300 px-2 py-3 text-center"
-                value={entry.price}
-                placeholder="0.00"
-                keyboardType="numeric"
-                onChangeText={(text) => {
-                  const numericText = text.replace(/[^0-9.]/g, '');
-                  setEntries(
-                    entries.map((e) => (e.id === entry.id ? { ...e, price: numericText } : e))
-                  );
-                }}
-              />
-              <Text className="flex-1 text-center">
-                {((Number(entry.diamond) || 0) * (Number(entry.price) || 0)).toFixed(2)}
-              </Text>
             </View>
-          ))}
-        </View>
-
-        {/* Action Buttons */}
-        <View className="mt-4 flex-row justify-between space-x-4">
-          <View className="flex-1" />
-          <View className="flex-row justify-between space-x-4">
-            <Pressable onPress={removeEntry} className="mx-2 rounded-lg bg-red-500 p-3">
-              <Octicons name="trash" size={24} color="white" />
-            </Pressable>
-            <Pressable onPress={addEntry} className="mx-2 rounded-lg bg-blue-500 p-3">
-              <Octicons name="plus" size={24} color="white" />
-            </Pressable>
+            
+            <View className="flex-row space-x-3">
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Diamond</Text>
+                <TextInput
+                  className="bg-white rounded-xl p-3 text-base border border-gray-200"
+                  value={entry.diamond}
+                  placeholder="0"
+                  keyboardType="numeric"
+                  onChangeText={(text) => {
+                    const numericText = text.replace(/[^0-9]/g, '');
+                    setEntries(
+                      entries.map((e) => (e.id === entry.id ? { ...e, diamond: numericText } : e))
+                    );
+                  }}
+                />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Price</Text>
+                <TextInput
+                  className="bg-white rounded-xl p-3 text-base border border-gray-200"
+                  value={entry.price}
+                  placeholder="0.00"
+                  keyboardType="numeric"
+                  onChangeText={(text) => {
+                    const numericText = text.replace(/[^0-9.]/g, '');
+                    setEntries(
+                      entries.map((e) => (e.id === entry.id ? { ...e, price: numericText } : e))
+                    );
+                  }}
+                />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Total</Text>
+                <View className="bg-white rounded-xl p-3 border border-gray-200">
+                  <Text className="text-base text-gray-700">
+                    ₹ {((Number(entry.diamond) || 0) * (Number(entry.price) || 0)).toFixed(2)}
+                  </Text>
+                </View>
+              </View>
+            </View>
           </View>
-        </View>
+        ))}
+      </View>
 
-        {/* Footer */}
-        <View className="mt-6 rounded-lg bg-white p-4 shadow-sm">
+      {/* Footer */}
+      <View className="px-6 pb-6">
+        <View className="bg-blue-50 rounded-2xl p-4 mb-4">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center">
-              <MaterialCommunityIcons name="cash-multiple" size={24} color="#2563EB" />
-              <Text className="ml-2 text-lg font-medium text-gray-700">Total Amount</Text>
+              <MaterialCommunityIcons name="cash-multiple" size={24} color="#3B82F6" />
+              <Text className="ml-3 text-lg font-semibold text-gray-700">Total Amount</Text>
             </View>
-            <Text className="text-xl font-bold text-blue-600">{calculateTotal().toFixed(2)}</Text>
+            <Text className="text-xl font-bold text-blue-600">₹ {calculateTotal().toFixed(2)}</Text>
           </View>
         </View>
+
+        <Pressable 
+          onPress={handleSave}
+          className="bg-blue-600 rounded-2xl p-4 shadow-sm">
+          <Text className="text-center text-white font-semibold text-lg">Save Entries</Text>
+        </Pressable>
       </View>
     </View>
   );
