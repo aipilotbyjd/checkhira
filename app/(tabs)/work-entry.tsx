@@ -42,7 +42,6 @@ export default function WorkEntry() {
     setEntries(entries.slice(0, -1));
   };
 
-
   const handleSave = () => {
     // TODO: Implement save functionality
     Alert.alert('Success', 'Entries saved successfully!');
@@ -52,47 +51,49 @@ export default function WorkEntry() {
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
       {/* Header */}
       <View className="px-6 pt-6">
-        <Text className="text-2xl font-bold mb-4" style={{ color: COLORS.secondary }}>
+        <Text className="mb-4 text-2xl font-bold" style={{ color: COLORS.secondary }}>
           Work Entry
         </Text>
         <Pressable
           onPress={() => setShowDatePicker(true)}
-          className="flex-row items-center p-4 rounded-2xl"
+          className="flex-row items-center rounded-2xl p-4"
           style={{ backgroundColor: COLORS.gray[100] }}>
           <MaterialCommunityIcons name="calendar-month" size={24} color={COLORS.primary} />
-          <Text className="flex-1 ml-3 text-base" style={{ color: COLORS.gray[600] }}>
+          <Text className="ml-3 flex-1 text-base" style={{ color: COLORS.gray[600] }}>
             {format(selectedDate, 'MMMM dd, yyyy')}
           </Text>
           <Ionicons name="chevron-down" size={20} color={COLORS.gray[400]} />
         </Pressable>
 
-        {showDatePicker && <DateTimePicker
-          mode="date"
-          display="spinner"
-          value={selectedDate}
-          onChange={(event, date) => {
-            setShowDatePicker(false);
-            if (date) setSelectedDate(date);
-          }}
-        />}
+        {showDatePicker && (
+          <DateTimePicker
+            mode="date"
+            display="spinner"
+            value={selectedDate}
+            onChange={(event, date) => {
+              setShowDatePicker(false);
+              if (date) setSelectedDate(date);
+            }}
+          />
+        )}
       </View>
 
       {/* Scrollable Content */}
-      <ScrollView className="flex-1 px-6 mt-6">
-        <View className="flex-row items-center justify-between mb-4">
+      <ScrollView className="mt-6 flex-1 px-6">
+        <View className="mb-4 flex-row items-center justify-between">
           <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
             Entries
           </Text>
-          <View className="flex-row space-x-2">
-            <Pressable 
+          <View className="flex-row items-center justify-end space-x-2">
+            <Pressable
               onPress={removeEntry}
-              className="p-2 rounded-full"
+              className="mr-2 rounded-lg p-2"
               style={{ backgroundColor: COLORS.error + '15' }}>
               <Octicons name="trash" size={20} color={COLORS.error} />
             </Pressable>
-            <Pressable 
+            <Pressable
               onPress={addEntry}
-              className="p-2 rounded-full"
+              className="rounded-lg p-2"
               style={{ backgroundColor: COLORS.primary + '15' }}>
               <Octicons name="plus" size={20} color={COLORS.primary} />
             </Pressable>
@@ -103,29 +104,30 @@ export default function WorkEntry() {
         {entries.map((entry, index) => (
           <View
             key={entry.id}
-            className="mb-4 p-4 rounded-2xl"
+            className="mb-4 rounded-2xl p-4"
             style={{ backgroundColor: COLORS.background.secondary }}>
-            <View className="flex-row items-center mb-3">
+            <View className="mb-3 flex-row items-center">
               <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
                 Entry {index + 1}
               </Text>
-              <View className="ml-2 px-3 py-1 rounded-full" 
+              <View
+                className="ml-2 rounded-full px-3 py-1"
                 style={{ backgroundColor: COLORS.primary + '15' }}>
                 <Text style={{ color: COLORS.primary }}>{entry.type}</Text>
               </View>
             </View>
-            
+
             <View className="flex-row space-x-3">
-              <View className="flex-1">
-                <Text className="text-sm mb-1" style={{ color: COLORS.gray[400] }}>
+              <View className="mr-2 flex-1">
+                <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
                   Diamond
                 </Text>
                 <TextInput
-                  className="p-3 rounded-xl border"
-                  style={{ 
+                  className="rounded-xl border p-3"
+                  style={{
                     backgroundColor: COLORS.white,
                     borderColor: COLORS.gray[200],
-                    color: COLORS.secondary
+                    color: COLORS.secondary,
                   }}
                   value={entry.diamond}
                   placeholder="0"
@@ -138,16 +140,16 @@ export default function WorkEntry() {
                   }}
                 />
               </View>
-              <View className="flex-1">
-                <Text className="text-sm mb-1" style={{ color: COLORS.gray[400] }}>
+              <View className="mr-2 flex-1">
+                <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
                   Price
                 </Text>
                 <TextInput
-                  className="p-3 rounded-xl border"
-                  style={{ 
+                  className="rounded-xl border p-3"
+                  style={{
                     backgroundColor: COLORS.white,
                     borderColor: COLORS.gray[200],
-                    color: COLORS.secondary
+                    color: COLORS.secondary,
                   }}
                   value={entry.price}
                   placeholder="0.00"
@@ -161,10 +163,11 @@ export default function WorkEntry() {
                 />
               </View>
               <View className="flex-1">
-                <Text className="text-sm mb-1" style={{ color: COLORS.gray[400] }}>
+                <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
                   Total
                 </Text>
-                <View className="p-3 rounded-xl border" 
+                <View
+                  className="rounded-xl border p-3"
                   style={{ backgroundColor: COLORS.white, borderColor: COLORS.gray[200] }}>
                   <Text style={{ color: COLORS.secondary }}>
                     ₹ {((Number(entry.diamond) || 0) * (Number(entry.price) || 0)).toFixed(2)}
@@ -178,7 +181,7 @@ export default function WorkEntry() {
 
       {/* Footer */}
       <View className="px-6 pb-6">
-        <View className="rounded-2xl p-4 mb-4" style={{ backgroundColor: COLORS.primary + '10' }}>
+        <View className="mb-4 rounded-2xl p-4" style={{ backgroundColor: COLORS.primary + '10' }}>
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center">
               <MaterialCommunityIcons name="cash-multiple" size={24} color={COLORS.primary} />
@@ -192,13 +195,11 @@ export default function WorkEntry() {
           </View>
         </View>
 
-        <Pressable 
+        <Pressable
           onPress={handleSave}
-          className="p-4 rounded-2xl"
+          className="rounded-2xl p-4"
           style={{ backgroundColor: COLORS.primary }}>
-          <Text className="text-center text-lg font-semibold text-white">
-            Save Entries
-          </Text>
+          <Text className="text-center text-lg font-semibold text-white">Save Entries</Text>
         </Pressable>
       </View>
     </View>
