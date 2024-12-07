@@ -28,7 +28,9 @@ export default function WorkEntry() {
       Alert.alert('Maximum Limit', 'You can add up to 10 entries only.');
       return;
     }
-    setEntries([...entries, { id: Date.now(), type: 'A', diamond: '', price: '' }]);
+    const lastEntry = entries[entries.length - 1];
+    const nextType = getNextType(lastEntry.type);
+    setEntries([...entries, { id: Date.now(), type: nextType, diamond: '', price: '' }]);
   };
 
   const removeEntry = () => {
@@ -133,7 +135,7 @@ export default function WorkEntry() {
                 }}
               />
               <Text className="flex-1 text-center">
-                ${((Number(entry.diamond) || 0) * (Number(entry.price) || 0)).toFixed(2)}
+                {((Number(entry.diamond) || 0) * (Number(entry.price) || 0)).toFixed(2)}
               </Text>
             </View>
           ))}
