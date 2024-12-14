@@ -44,7 +44,7 @@ export default function EditPayment() {
 
     // TODO: Implement API call
     console.log('Updating payment:', { ...payment, date: selectedDate });
-    Alert.alert('Success', 'Payment updated successfully!');
+    setShowSuccessModal(true);
     router.back();
   };
 
@@ -155,6 +155,15 @@ export default function EditPayment() {
           router.back();
         }}
         message="Payment deleted successfully"
+      />
+
+      <SuccessModal
+        visible={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          router.back();
+        }}
+        message="Payment updated successfully"
       />
     </View>
   );
