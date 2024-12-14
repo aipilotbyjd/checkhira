@@ -1,21 +1,15 @@
+import React, { useState } from 'react';
 import { Text, View, Pressable, ScrollView } from 'react-native';
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
 
-export default function PaymentsList() {
+export default function AddPayment() {
   const router = useRouter();
-  // Mock data - replace with your actual data source
-  const paymentsList = [
-    {
-      id: 1,
-      date: new Date(),
-      totalAmount: 5000,
-      numberOfPayments: 3,
-    },
-    // Add more mock data as needed
-  ];
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [payments, setPayments] = useState([{ id: 1, description: '', amount: '' }]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
@@ -34,10 +28,10 @@ export default function PaymentsList() {
 
       {/* Payments List */}
       <ScrollView className="mt-6 flex-1 px-6">
-        {paymentsList.map((item) => (
+        {payments.map((item) => (
           <Pressable
             key={item.id}
-            onPress={() => router.push(`/payments/add/${item.id}`)}
+            onPress={() => router.push(`/payments/${item.id}`)}
             className="mb-4 rounded-2xl p-4"
             style={{ backgroundColor: COLORS.background.secondary }}>
             <View className="flex-row items-center justify-between">
