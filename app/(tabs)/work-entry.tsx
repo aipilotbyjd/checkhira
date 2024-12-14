@@ -4,6 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { MaterialCommunityIcons, Ionicons, FontAwesome5, Octicons } from '@expo/vector-icons';
 import { COLORS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
+import { DeleteConfirmationModal } from '../../components/DeleteConfirmationModal';
 
 export default function WorkEntry() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -41,8 +42,8 @@ export default function WorkEntry() {
       Alert.alert('Cannot Remove', 'At least one entry is required.');
       return;
     }
-    const entryToDelete = entryId 
-      ? entries.find(e => e.id === entryId) 
+    const entryToDelete = entryId
+      ? entries.find((e) => e.id === entryId)
       : entries[entries.length - 1];
     setShowDeleteModal(true);
     setEntryToDelete(entryToDelete);
@@ -180,7 +181,7 @@ export default function WorkEntry() {
                   Total
                 </Text>
                 <View
-                  className="rounded-xl bg-gray-200 border p-3"
+                  className="rounded-xl border bg-gray-200 p-3"
                   style={{ borderColor: COLORS.gray[200] }}>
                   <Text style={{ color: COLORS.secondary }}>
                     ₹ {((Number(entry.diamond) || 0) * (Number(entry.price) || 0)).toFixed(2)}
@@ -217,45 +218,21 @@ export default function WorkEntry() {
       </View>
 
       {/* Delete Confirmation Modal */}
-      <Modal transparent visible={showDeleteModal} animationType="fade">
-        <View className="flex-1 items-center justify-center bg-black/50">
-          <View className="mx-4 w-[90%] rounded-2xl bg-white p-6">
-            <View className="mb-4 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
-                Confirm Delete
-              </Text>
-              <Pressable onPress={() => setShowDeleteModal(false)}>
-                <Octicons name="x" size={20} color={COLORS.gray[400]} />
-              </Pressable>
-            </View>
-
-            <Text className="mb-6" style={{ color: COLORS.gray[600] }}>
-              Are you sure you want to remove Entry {entries.findIndex(e => e.id === entryToDelete?.id) + 1} (Type {entryToDelete?.type})?
-            </Text>
-
-            <View className="flex-row space-x-3">
-              <Pressable
-                onPress={() => setShowDeleteModal(false)}
-                className="flex-1 rounded-xl border p-3 mx-1"
-                style={{ borderColor: COLORS.gray[200] }}>
-                <Text className="text-center font-semibold" style={{ color: COLORS.gray[600] }}>
-                  Cancel
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  setEntries(entries.filter(e => e.id !== entryToDelete?.id));
-                  setShowDeleteModal(false);
-                  setEntryToDelete(null);
-                }}
-                className="flex-1 rounded-xl p-3 mx-1"
-                style={{ backgroundColor: COLORS.error }}>
-                <Text className="text-center font-semibold text-white">Delete</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <DeleteConfirmationModal
+        visible={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setEntryToDelete(null);
+        }}
+        onConfirm={() => {
+          setEntries(entries.filter((e) => e.id !== entryToDelete?.id));
+          setShowDeleteModal(false);
+          setEntryToDelete(null);
+        }}
+        message={`Are you sure you want to remove Entry ${
+          entries.findIndex((e) => e.id === entryToDelete?.id) + 1
+        } (Type ${entryToDelete?.type})?`}
+      />
     </View>
   );
 }

@@ -5,6 +5,8 @@ import { COLORS } from '../../../constants/theme';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { format } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { DeleteConfirmationModal } from '../../../components/DeleteConfirmationModal';
+import { SuccessModal } from '../../../components/SuccessModal';
 
 interface Payment {
   id: number;
@@ -135,76 +137,25 @@ export default function EditPayment() {
         </Pressable>
       </View>
 
-      <Modal transparent visible={showDeleteModal} animationType="fade">
-        <View className="flex-1 items-center justify-center bg-black/50">
-          <View className="mx-4 w-[90%] rounded-2xl bg-white p-6">
-            <View className="mb-4 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
-                Confirm Delete
-              </Text>
-              <Pressable onPress={() => setShowDeleteModal(false)}>
-                <Octicons name="x" size={20} color={COLORS.gray[400]} />
-              </Pressable>
-            </View>
+      <DeleteConfirmationModal
+        visible={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={() => {
+          console.log('Deleting payment:', id);
+          setShowDeleteModal(false);
+          setShowSuccessModal(true);
+        }}
+        message="Are you sure you want to delete this payment?"
+      />
 
-            <Text className="mb-6" style={{ color: COLORS.gray[600] }}>
-              Are you sure you want to delete this payment?
-            </Text>
-
-            <View className="flex-row space-x-3">
-              <Pressable
-                onPress={() => setShowDeleteModal(false)}
-                className="mx-1 flex-1 rounded-xl border p-3"
-                style={{ borderColor: COLORS.gray[200] }}>
-                <Text className="text-center font-semibold" style={{ color: COLORS.gray[600] }}>
-                  Cancel
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  // TODO: Implement API call
-                  console.log('Deleting payment:', id);
-                  setShowDeleteModal(false);
-                  setShowSuccessModal(true);
-                }}
-                className="mx-1 flex-1 rounded-xl p-3"
-                style={{ backgroundColor: COLORS.error }}>
-                <Text className="text-center font-semibold text-white">Delete</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal transparent visible={showSuccessModal} animationType="fade">
-        <View className="flex-1 items-center justify-center bg-black/50">
-          <View className="mx-4 w-[90%] rounded-2xl bg-white p-6">
-            <View className="mb-4 items-center">
-              <MaterialCommunityIcons name="check-circle" size={50} color={COLORS.success} />
-            </View>
-
-            <Text
-              className="mb-3 text-center text-xl font-semibold"
-              style={{ color: COLORS.secondary }}>
-              Success!
-            </Text>
-
-            <Text className="mb-6 text-center" style={{ color: COLORS.gray[600] }}>
-              Payment deleted successfully
-            </Text>
-
-            <Pressable
-              onPress={() => {
-                setShowSuccessModal(false);
-                router.back();
-              }}
-              className="rounded-xl p-3"
-              style={{ backgroundColor: COLORS.success }}>
-              <Text className="text-center font-semibold text-white">Done</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+      <SuccessModal
+        visible={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          router.back();
+        }}
+        message="Payment deleted successfully"
+      />
     </View>
   );
 }
