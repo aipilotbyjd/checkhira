@@ -11,15 +11,14 @@ export default function PaymentsList() {
     {
       id: 1,
       date: new Date(),
-      totalAmount: 5000,
+      description: 'Sample Payment',
+      amount: 5000,
       numberOfPayments: 3,
     },
-    // Add more mock data as needed
   ];
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
-      {/* Header */}
       <View className="flex-row items-center justify-between px-6 pt-6">
         <Text className="text-xl font-semibold" style={{ color: COLORS.secondary }}>
           Payments History
@@ -32,12 +31,11 @@ export default function PaymentsList() {
         </Pressable>
       </View>
 
-      {/* Payments List */}
       <ScrollView className="mt-6 flex-1 px-6">
         {paymentsList.map((item) => (
           <Pressable
             key={item.id}
-            onPress={() => router.push(`/payments/add`)}
+            onPress={() => router.push(`/payments/${item.id}/edit`)}
             className="mb-4 rounded-2xl p-4"
             style={{ backgroundColor: COLORS.background.secondary }}>
             <View className="flex-row items-center justify-between">
@@ -45,14 +43,14 @@ export default function PaymentsList() {
                 <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
                   {format(item.date, 'MMMM dd, yyyy')}
                 </Text>
-                <Text className="mt-1 text-sm" style={{ color: COLORS.gray[600] }}>
-                  {item.numberOfPayments} payments
+                <Text className="mt-1 text-base" style={{ color: COLORS.gray[600] }}>
+                  {item.description}
                 </Text>
               </View>
               <View className="flex-row items-center">
                 <MaterialCommunityIcons name="cash-multiple" size={20} color={COLORS.primary} />
                 <Text className="ml-2 text-lg font-semibold" style={{ color: COLORS.primary }}>
-                  ₹ {item.totalAmount.toFixed(2)}
+                  ₹ {item.amount.toFixed(2)}
                 </Text>
               </View>
             </View>
