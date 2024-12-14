@@ -234,12 +234,12 @@ export default function WorkEntry() {
           setEntryToDelete(null);
         }}
         onConfirm={() => {
-          setEntries(entries.filter(e => e.id !== entryToDelete?.id));
+          setEntries(entries.filter((e) => e.id !== entryToDelete?.id));
           setShowDeleteModal(false);
           setEntryToDelete(null);
         }}
         message={`Are you sure you want to remove Entry ${
-          entries.findIndex(e => e.id === entryToDelete?.id) + 1
+          entries.findIndex((e) => e.id === entryToDelete?.id) + 1
         } (Type ${entryToDelete?.type})?`}
       />
 
