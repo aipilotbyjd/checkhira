@@ -37,7 +37,7 @@ export default function PaymentsList() {
         {paymentsList.map((item) => (
           <Pressable
             key={item.id}
-            onPress={() => router.push(`/payments/add/${item.id}`)}
+            onPress={() => router.push(`/payments/add`)}
             className="mb-4 rounded-2xl p-4"
             style={{ backgroundColor: COLORS.background.secondary }}>
             <View className="flex-row items-center justify-between">
