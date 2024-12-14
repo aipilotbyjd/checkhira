@@ -5,13 +5,22 @@ import { format } from 'date-fns';
 import { MaterialCommunityIcons, Ionicons, FontAwesome5, Octicons } from '@expo/vector-icons';
 import { COLORS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
 import { DeleteConfirmationModal } from '../../components/DeleteConfirmationModal';
+import { SuccessModal } from '../../components/SuccessModal';
+import { useRouter } from 'expo-router';
 
 export default function WorkEntry() {
+  const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [entries, setEntries] = useState([{ id: 1, type: 'A', diamond: '', price: '' }]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [entryToDelete, setEntryToDelete] = useState(null);
+  const [entryToDelete, setEntryToDelete] = useState<{
+    id: number;
+    type: string;
+    diamond: string;
+    price: string;
+  } | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const calculateTotal = () => {
     return entries.reduce((sum, entry) => {
@@ -46,12 +55,12 @@ export default function WorkEntry() {
       ? entries.find((e) => e.id === entryId)
       : entries[entries.length - 1];
     setShowDeleteModal(true);
-    setEntryToDelete(entryToDelete);
+    setEntryToDelete(entryToDelete || null);
   };
 
   const handleSave = () => {
     // TODO: Implement save functionality
-    Alert.alert('Success', 'Entries saved successfully!');
+    setShowSuccessModal(true);
   };
 
   return (
@@ -232,6 +241,15 @@ export default function WorkEntry() {
         message={`Are you sure you want to remove Entry ${
           entries.findIndex((e) => e.id === entryToDelete?.id) + 1
         } (Type ${entryToDelete?.type})?`}
+      />
+
+      <SuccessModal
+        visible={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          router.push('/work-entry');
+        }}
+        message="Entries saved successfully!"
       />
     </View>
   );
