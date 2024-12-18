@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { Text, View, ScrollView, Pressable, TextInput } from 'react-native';
+import { useState, useCallback } from 'react';
+import { Text, View, ScrollView, Pressable, TextInput, Platform } from 'react-native';
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import MonthSelector from 'react-native-month-selector';
 import { COLORS } from '../../constants/theme';
 import { format } from 'date-fns';
+import moment from 'moment';
 
 export default function Reports() {
   // State management
@@ -11,12 +13,10 @@ export default function Reports() {
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     end: new Date(),
   });
-  const [showDatePicker, setShowDatePicker] = useState<{
-    show: boolean;
-    for: 'start' | 'end';
-  } | null>(null);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [filterType, setFilterType] = useState<'all' | 'polishing' | 'cutting'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'earnings'>('date');
+  const [activeTab, setActiveTab] = useState<'monthly' | 'custom'>('monthly');
 
   // Mock data - replace with actual data
   const reportData = [
@@ -39,7 +39,7 @@ export default function Reports() {
         [type]: date,
       }));
     }
-    setShowDatePicker(null);
+    setShowMonthPicker(false);
   };
 
   return (
@@ -55,7 +55,7 @@ export default function Reports() {
               onPress={() => {
                 /* Handle share */
               }}
-              className="rounded-lg p-2"
+              className="mr-2 rounded-lg p-2"
               style={{ backgroundColor: COLORS.primary + '15' }}>
               <MaterialCommunityIcons name="share-variant" size={20} color={COLORS.primary} />
             </Pressable>
@@ -71,83 +71,104 @@ export default function Reports() {
         </View>
 
         {/* Filters */}
-        <View className="mt-4 space-y-4">
-          {/* Date Range */}
-          <View className="flex-row space-x-2">
+        <View className="mt-4">
+          {/* Tab Selector */}
+          <View
+            className="mb-4 flex-row rounded-xl border"
+            style={{ borderColor: COLORS.gray[200] }}>
             <Pressable
-              onPress={() => setShowDatePicker({ show: true, for: 'start' })}
-              className="flex-1 flex-row items-center rounded-xl border p-3"
-              style={{ borderColor: COLORS.gray[200] }}>
-              <MaterialCommunityIcons name="calendar" size={20} color={COLORS.primary} />
-              <Text className="ml-2" style={{ color: COLORS.gray[600] }}>
-                {format(dateRange.start, 'dd MMM yyyy')}
+              onPress={() => setActiveTab('monthly')}
+              className="flex-1 rounded-l-xl p-3"
+              style={{
+                backgroundColor: activeTab === 'monthly' ? COLORS.primary + '15' : 'transparent',
+              }}>
+              <Text
+                className="text-center"
+                style={{
+                  color: activeTab === 'monthly' ? COLORS.primary : COLORS.gray[400],
+                }}>
+                Monthly
               </Text>
             </Pressable>
-            <Text style={{ color: COLORS.gray[400] }}>to</Text>
             <Pressable
-              onPress={() => setShowDatePicker({ show: true, for: 'end' })}
-              className="flex-1 flex-row items-center rounded-xl border p-3"
-              style={{ borderColor: COLORS.gray[200] }}>
-              <MaterialCommunityIcons name="calendar" size={20} color={COLORS.primary} />
-              <Text className="ml-2" style={{ color: COLORS.gray[600] }}>
-                {format(dateRange.end, 'dd MMM yyyy')}
+              onPress={() => setActiveTab('custom')}
+              className="flex-1 rounded-r-xl p-3"
+              style={{
+                backgroundColor: activeTab === 'custom' ? COLORS.primary + '15' : 'transparent',
+                borderLeftWidth: 1,
+                borderLeftColor: COLORS.gray[200],
+              }}>
+              <Text
+                className="text-center"
+                style={{
+                  color: activeTab === 'custom' ? COLORS.primary : COLORS.gray[400],
+                }}>
+                Custom
               </Text>
             </Pressable>
           </View>
 
-          {/* Type Filter and Sort */}
-          <View className="flex-row space-x-2">
-            <View className="flex-1">
-              <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
-                Work Type
-              </Text>
-              <View
-                className="flex-row rounded-xl border"
+          {/* Monthly Tab Content */}
+          {activeTab === 'monthly' && (
+            <>
+              <Pressable
+                onPress={() => setShowMonthPicker(true)}
+                className="flex-row items-center justify-between rounded-xl border p-3"
                 style={{ borderColor: COLORS.gray[200] }}>
-                {(['all', 'polishing', 'cutting'] as const).map((type) => (
-                  <Pressable
-                    key={type}
-                    onPress={() => setFilterType(type)}
-                    className={`flex-1 p-2 ${filterType === type ? 'bg-primary' : ''}`}
-                    style={{
-                      backgroundColor: filterType === type ? COLORS.primary : 'transparent',
-                      borderRadius: 12,
-                    }}>
-                    <Text
-                      className="text-center text-sm"
-                      style={{ color: filterType === type ? COLORS.white : COLORS.gray[600] }}>
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-            <View className="flex-1">
-              <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
-                Sort By
-              </Text>
-              <View
-                className="flex-row rounded-xl border"
+                <MaterialCommunityIcons name="calendar-month" size={20} color={COLORS.primary} />
+                <Text style={{ color: COLORS.gray[600] }}>
+                  {format(dateRange.start, 'MMMM yyyy')}
+                </Text>
+                <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.gray[400]} />
+              </Pressable>
+
+              {showMonthPicker && (
+                <View className="absolute left-0 right-0 top-32 z-50 bg-white p-4">
+                  <MonthSelector
+                    selectedDate={moment(dateRange.start)}
+                    onMonthTapped={(date) => {
+                      const startDate = date.toDate();
+                      const endDate = new Date(
+                        startDate.getFullYear(),
+                        startDate.getMonth() + 1,
+                        0
+                      );
+                      setDateRange({ start: startDate, end: endDate });
+                      setShowMonthPicker(false);
+                    }}
+                    currentDate={moment()}
+                    selectedBackgroundColor={COLORS.primary}
+                    selectedTextColor="white"
+                  />
+                </View>
+              )}
+            </>
+          )}
+
+          {/* Custom Tab Content */}
+          {activeTab === 'custom' && (
+            <View className="flex-row space-x-2">
+              <Pressable
+                onPress={() => setShowMonthPicker(true)}
+                className="flex-1 flex-row items-center rounded-xl border p-3"
                 style={{ borderColor: COLORS.gray[200] }}>
-                {(['date', 'earnings'] as const).map((sort) => (
-                  <Pressable
-                    key={sort}
-                    onPress={() => setSortBy(sort)}
-                    className={`flex-1 p-2 ${sortBy === sort ? 'bg-primary' : ''}`}
-                    style={{
-                      backgroundColor: sortBy === sort ? COLORS.primary : 'transparent',
-                      borderRadius: 12,
-                    }}>
-                    <Text
-                      className="text-center text-sm"
-                      style={{ color: sortBy === sort ? COLORS.white : COLORS.gray[600] }}>
-                      {sort.charAt(0).toUpperCase() + sort.slice(1)}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
+                <MaterialCommunityIcons name="calendar" size={20} color={COLORS.primary} />
+                <Text className="ml-2" style={{ color: COLORS.gray[600] }}>
+                  {format(dateRange.start, 'dd MMM yyyy')}
+                </Text>
+              </Pressable>
+              <Text style={{ color: COLORS.gray[400] }}>to</Text>
+              <Pressable
+                onPress={() => setShowMonthPicker(true)}
+                className="flex-1 flex-row items-center rounded-xl border p-3"
+                style={{ borderColor: COLORS.gray[200] }}>
+                <MaterialCommunityIcons name="calendar" size={20} color={COLORS.primary} />
+                <Text className="ml-2" style={{ color: COLORS.gray[600] }}>
+                  {format(dateRange.end, 'dd MMM yyyy')}
+                </Text>
+              </Pressable>
             </View>
-          </View>
+          )}
         </View>
       </View>
 
@@ -186,12 +207,12 @@ export default function Reports() {
       </ScrollView>
 
       {/* Date Picker Modal */}
-      {showDatePicker?.show && (
+      {showMonthPicker && (
         <DateTimePicker
-          value={showDatePicker.for === 'start' ? dateRange.start : dateRange.end}
+          value={showMonthPicker ? dateRange.start : dateRange.end}
           mode="date"
           display="spinner"
-          onChange={(_, date) => handleDateChange(date, showDatePicker.for)}
+          onChange={(_, date) => handleDateChange(date, showMonthPicker ? 'start' : 'end')}
         />
       )}
     </View>
