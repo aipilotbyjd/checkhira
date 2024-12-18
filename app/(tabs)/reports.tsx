@@ -17,6 +17,7 @@ export default function Reports() {
   const [filterType, setFilterType] = useState<'all' | 'polishing' | 'cutting'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'earnings'>('date');
   const [activeTab, setActiveTab] = useState<'monthly' | 'custom'>('monthly');
+  const [activeReport, setActiveReport] = useState<'work' | 'payments'>('work');
 
   // Mock data - replace with actual data
   const reportData = [
@@ -30,6 +31,21 @@ export default function Reports() {
       earnings: 1200,
     },
     // ... more entries
+  ];
+
+  const paymentsList = [
+    {
+      id: 1,
+      date: new Date(2024, 2, 15),
+      description: 'Payment 1',
+      amount: 1000,
+    },
+    {
+      id: 2,
+      date: new Date(2024, 2, 15),
+      description: 'Payment 2',
+      amount: 1000,
+    },
   ];
 
   const handleDateChange = (date: Date | undefined, type: 'start' | 'end') => {
@@ -68,6 +84,42 @@ export default function Reports() {
               <MaterialCommunityIcons name="export-variant" size={20} color={COLORS.primary} />
             </Pressable>
           </View>
+        </View>
+
+        {/* Work/Payments Tab Selector */}
+        <View
+          className="mb-4 mt-4 flex-row rounded-xl border"
+          style={{ borderColor: COLORS.gray[200] }}>
+          <Pressable
+            onPress={() => setActiveReport('work')}
+            className="flex-1 rounded-l-xl p-3"
+            style={{
+              backgroundColor: activeReport === 'work' ? COLORS.primary + '15' : 'transparent',
+            }}>
+            <Text
+              className="text-center"
+              style={{
+                color: activeReport === 'work' ? COLORS.primary : COLORS.gray[400],
+              }}>
+              Work
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setActiveReport('payments')}
+            className="flex-1 rounded-r-xl p-3"
+            style={{
+              backgroundColor: activeReport === 'payments' ? COLORS.primary + '15' : 'transparent',
+              borderLeftWidth: 1,
+              borderLeftColor: COLORS.gray[200],
+            }}>
+            <Text
+              className="text-center"
+              style={{
+                color: activeReport === 'payments' ? COLORS.primary : COLORS.gray[400],
+              }}>
+              Payments
+            </Text>
+          </Pressable>
         </View>
 
         {/* Filters */}
@@ -191,34 +243,60 @@ export default function Reports() {
       {/* Report Data */}
       <ScrollView className="flex-1">
         <View className="space-y-4 p-6">
-          {reportData.map((entry) => (
-            <Pressable
-              key={entry.id}
-              onPress={() => {
-                /* Handle entry press */
-              }}
-              className="rounded-2xl p-4"
-              style={{ backgroundColor: COLORS.background.secondary }}>
-              <View className="flex-row items-center justify-between">
-                <View>
-                  <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-                    {format(entry.date, 'dd MMM yyyy')}
-                  </Text>
-                  <Text className="mt-1 capitalize" style={{ color: COLORS.secondary }}>
-                    {entry.type}
-                  </Text>
-                </View>
-                <View className="items-end">
-                  <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-                    {entry.hours}h • {entry.diamonds} diamonds
-                  </Text>
-                  <Text className="text-base font-semibold" style={{ color: COLORS.success }}>
-                    ₹ {entry.earnings.toFixed(2)}
-                  </Text>
-                </View>
-              </View>
-            </Pressable>
-          ))}
+          {activeReport === 'work'
+            ? reportData.map((entry) => (
+                <Pressable
+                  key={entry.id}
+                  onPress={() => {
+                    /* Handle entry press */
+                  }}
+                  className="rounded-2xl p-4"
+                  style={{ backgroundColor: COLORS.background.secondary }}>
+                  <View className="flex-row items-center justify-between">
+                    <View>
+                      <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
+                        {format(entry.date, 'dd MMM yyyy')}
+                      </Text>
+                      <Text className="mt-1 capitalize" style={{ color: COLORS.secondary }}>
+                        {entry.type}
+                      </Text>
+                    </View>
+                    <View className="items-end">
+                      <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
+                        {entry.hours}h • {entry.diamonds} diamonds
+                      </Text>
+                      <Text className="text-base font-semibold" style={{ color: COLORS.success }}>
+                        ₹ {entry.earnings.toFixed(2)}
+                      </Text>
+                    </View>
+                  </View>
+                </Pressable>
+              ))
+            : paymentsList.map((payment) => (
+                <Pressable
+                  key={payment.id}
+                  onPress={() => {
+                    /* Handle payment press */
+                  }}
+                  className="rounded-2xl p-4"
+                  style={{ backgroundColor: COLORS.background.secondary }}>
+                  <View className="flex-row items-center justify-between">
+                    <View>
+                      <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
+                        {format(payment.date, 'dd MMM yyyy')}
+                      </Text>
+                      <Text className="mt-1" style={{ color: COLORS.secondary }}>
+                        {payment.description}
+                      </Text>
+                    </View>
+                    <View className="items-end">
+                      <Text className="text-base font-semibold" style={{ color: COLORS.success }}>
+                        ₹ {payment.amount.toFixed(2)}
+                      </Text>
+                    </View>
+                  </View>
+                </Pressable>
+              ))}
         </View>
       </ScrollView>
 
