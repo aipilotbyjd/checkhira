@@ -28,7 +28,33 @@ export default function Reports() {
       rate: 100,
       earnings: 1200,
     },
-    // ... more entries
+    {
+      id: 2,
+      date: new Date(2024, 2, 15),
+      type: 'polishing',
+      hours: 8,
+      diamonds: 12,
+      rate: 100,
+      earnings: 1200,
+    },
+    {
+      id: 3,
+      date: new Date(2024, 2, 15),
+      type: 'polishing',
+      hours: 8,
+      diamonds: 12,
+      rate: 100,
+      earnings: 1200,
+    },
+    {
+      id: 4,
+      date: new Date(2024, 2, 15),
+      type: 'polishing',
+      hours: 8,
+      diamonds: 12,
+      rate: 100,
+      earnings: 1200,
+    },
   ];
 
   const paymentsList = [
@@ -248,7 +274,7 @@ export default function Reports() {
                   onPress={() => {
                     /* Handle entry press */
                   }}
-                  className="rounded-2xl p-4"
+                  className="rounded-2xl p-4 mb-4"
                   style={{ backgroundColor: COLORS.background.secondary }}>
                   <View className="flex-row items-center justify-between">
                     <View>
@@ -297,16 +323,6 @@ export default function Reports() {
               ))}
         </View>
       </ScrollView>
-
-      {/* Date Picker Modal */}
-      {showMonthPicker && (
-        <DateTimePicker
-          value={showMonthPicker ? dateRange.start : dateRange.end}
-          mode="date"
-          display="spinner"
-          onChange={(_, date) => handleDateChange(date, showMonthPicker ? 'start' : 'end')}
-        />
-      )}
     </View>
   );
 }
