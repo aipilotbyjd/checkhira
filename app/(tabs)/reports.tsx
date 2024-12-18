@@ -147,26 +147,42 @@ export default function Reports() {
 
           {/* Custom Tab Content */}
           {activeTab === 'custom' && (
-            <View className="flex-row space-x-2">
-              <Pressable
-                onPress={() => setShowMonthPicker(true)}
-                className="flex-1 flex-row items-center rounded-xl border p-3"
-                style={{ borderColor: COLORS.gray[200] }}>
-                <MaterialCommunityIcons name="calendar" size={20} color={COLORS.primary} />
-                <Text className="ml-2" style={{ color: COLORS.gray[600] }}>
-                  {format(dateRange.start, 'dd MMM yyyy')}
+            <View className="space-y-4">
+              <View>
+                <Text className="mb-2 text-sm font-medium" style={{ color: COLORS.gray[600] }}>
+                  From Date
                 </Text>
-              </Pressable>
-              <Text style={{ color: COLORS.gray[400] }}>to</Text>
-              <Pressable
-                onPress={() => setShowMonthPicker(true)}
-                className="flex-1 flex-row items-center rounded-xl border p-3"
-                style={{ borderColor: COLORS.gray[200] }}>
-                <MaterialCommunityIcons name="calendar" size={20} color={COLORS.primary} />
-                <Text className="ml-2" style={{ color: COLORS.gray[600] }}>
-                  {format(dateRange.end, 'dd MMM yyyy')}
+                <Pressable
+                  onPress={() => setShowMonthPicker(true)}
+                  className="flex-row items-center justify-between rounded-xl border p-3"
+                  style={{ borderColor: COLORS.gray[200] }}>
+                  <View className="flex-row items-center">
+                    <MaterialCommunityIcons name="calendar" size={20} color={COLORS.primary} />
+                    <Text className="ml-2" style={{ color: COLORS.gray[600] }}>
+                      {format(dateRange.start, 'dd MMM yyyy')}
+                    </Text>
+                  </View>
+                  <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.gray[400]} />
+                </Pressable>
+              </View>
+
+              <View>
+                <Text className="mb-2 text-sm font-medium" style={{ color: COLORS.gray[600] }}>
+                  To Date
                 </Text>
-              </Pressable>
+                <Pressable
+                  onPress={() => setShowMonthPicker(true)}
+                  className="flex-row items-center justify-between rounded-xl border p-3"
+                  style={{ borderColor: COLORS.gray[200] }}>
+                  <View className="flex-row items-center">
+                    <MaterialCommunityIcons name="calendar" size={20} color={COLORS.primary} />
+                    <Text className="ml-2" style={{ color: COLORS.gray[600] }}>
+                      {format(dateRange.end, 'dd MMM yyyy')}
+                    </Text>
+                  </View>
+                  <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.gray[400]} />
+                </Pressable>
+              </View>
             </View>
           )}
         </View>
