@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Text, View, ScrollView, Pressable, TextInput, Platform } from 'react-native';
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import MonthSelector from 'react-native-month-selector';
+import MonthSelectorCalendar from 'react-native-month-selector';
 import { COLORS } from '../../constants/theme';
 import { format } from 'date-fns';
 import moment from 'moment';
@@ -14,8 +14,6 @@ export default function Reports() {
     end: new Date(),
   });
   const [showMonthPicker, setShowMonthPicker] = useState(false);
-  const [filterType, setFilterType] = useState<'all' | 'polishing' | 'cutting'>('all');
-  const [sortBy, setSortBy] = useState<'date' | 'earnings'>('date');
   const [activeTab, setActiveTab] = useState<'monthly' | 'custom'>('monthly');
   const [activeReport, setActiveReport] = useState<'work' | 'payments'>('work');
 
@@ -176,7 +174,7 @@ export default function Reports() {
 
               {showMonthPicker && (
                 <View className="absolute left-0 right-0 top-32 z-50 bg-white p-4">
-                  <MonthSelector
+                  <MonthSelectorCalendar
                     selectedDate={moment(dateRange.start)}
                     onMonthTapped={(date) => {
                       const startDate = date.toDate();
@@ -190,7 +188,7 @@ export default function Reports() {
                     }}
                     currentDate={moment()}
                     selectedBackgroundColor={COLORS.primary}
-                    selectedTextColor="white"
+                    selectedMonthStyle={{ color: 'white' }}
                   />
                 </View>
               )}
