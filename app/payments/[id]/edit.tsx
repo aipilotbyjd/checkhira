@@ -12,6 +12,8 @@ interface Payment {
   id: number;
   description: string;
   amount: string;
+  category?: string;
+  notes?: string;
 }
 
 export default function EditPayment() {
@@ -22,6 +24,8 @@ export default function EditPayment() {
     id: Number(id),
     description: '',
     amount: '',
+    category: '',
+    notes: '',
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -33,6 +37,8 @@ export default function EditPayment() {
       id: Number(id),
       description: 'Sample Payment',
       amount: '1000',
+      category: 'Housing',
+      notes: 'Monthly rent payment',
     });
   }, [id]);
 
@@ -82,7 +88,7 @@ export default function EditPayment() {
           <View className="mt-6 space-y-4">
             <View>
               <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
-                Description
+                Description <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
               <TextInput
                 className="rounded-xl border p-3"
@@ -91,6 +97,8 @@ export default function EditPayment() {
                   borderColor: COLORS.gray[200],
                   color: COLORS.secondary,
                 }}
+                placeholder="e.g., Monthly Rent, Electricity Bill"
+                placeholderTextColor={COLORS.gray[300]}
                 value={payment.description}
                 onChangeText={(text) => setPayment({ ...payment, description: text })}
               />
@@ -98,7 +106,7 @@ export default function EditPayment() {
 
             <View>
               <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
-                Amount
+                Category
               </Text>
               <TextInput
                 className="rounded-xl border p-3"
@@ -107,12 +115,64 @@ export default function EditPayment() {
                   borderColor: COLORS.gray[200],
                   color: COLORS.secondary,
                 }}
-                value={payment.amount}
-                keyboardType="numeric"
-                onChangeText={(text) => {
-                  const numericText = text.replace(/[^0-9.]/g, '');
-                  setPayment({ ...payment, amount: numericText });
+                placeholder="e.g., Housing, Utilities, Food"
+                placeholderTextColor={COLORS.gray[300]}
+                value={payment.category}
+                onChangeText={(text) => setPayment({ ...payment, category: text })}
+              />
+            </View>
+
+            <View>
+              <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
+                Amount <Text style={{ color: COLORS.error }}>*</Text>
+              </Text>
+              <View className="relative">
+                <Text 
+                  className="absolute left-3 top-3 text-base"
+                  style={{ color: COLORS.gray[400] }}
+                >
+                  $
+                </Text>
+                <TextInput
+                  className="rounded-xl border p-3 pl-7"
+                  style={{
+                    backgroundColor: COLORS.white,
+                    borderColor: COLORS.gray[200],
+                    color: COLORS.secondary,
+                  }}
+                  placeholder="0.00"
+                  placeholderTextColor={COLORS.gray[300]}
+                  value={payment.amount}
+                  keyboardType="numeric"
+                  onChangeText={(text) => {
+                    const numericText = text.replace(/[^0-9.]/g, '');
+                    setPayment({ ...payment, amount: numericText });
+                  }}
+                />
+              </View>
+              <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
+                Enter amount in dollars
+              </Text>
+            </View>
+
+            <View>
+              <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
+                Notes
+              </Text>
+              <TextInput
+                className="rounded-xl border p-3"
+                style={{
+                  backgroundColor: COLORS.white,
+                  borderColor: COLORS.gray[200],
+                  color: COLORS.secondary,
+                  height: 100,
                 }}
+                placeholder="Add any additional details about this payment"
+                placeholderTextColor={COLORS.gray[300]}
+                multiline={true}
+                textAlignVertical="top"
+                value={payment.notes}
+                onChangeText={(text) => setPayment({ ...payment, notes: text })}
               />
             </View>
           </View>
@@ -154,16 +214,7 @@ export default function EditPayment() {
           setShowSuccessModal(false);
           router.back();
         }}
-        message="Payment deleted successfully"
-      />
-
-      <SuccessModal
-        visible={showSuccessModal}
-        onClose={() => {
-          setShowSuccessModal(false);
-          router.back();
-        }}
-        message="Payment updated successfully"
+        message={showDeleteModal ? "Payment deleted successfully" : "Payment updated successfully"}
       />
     </View>
   );
