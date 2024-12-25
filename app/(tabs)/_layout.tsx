@@ -78,17 +78,11 @@ export default function TabLayout() {
           borderBottomWidth: 1,
           borderBottomColor: COLORS.gray[100],
         },
-        headerTitleStyle: {
-          fontSize: isSmallDevice ? SIZES.h4 - 2 : SIZES.h4,
-          fontFamily: FONTS.medium,
-          color: COLORS.secondary,
-        },
+        headerTitle: () => null,
         headerLeft: () => (
           <View style={styles.headerLeft}>
             <Image
-              source={{
-                uri: 'https://i.pinimg.com/originals/b9/f2/a6/b9f2a640b168cdb9f865185facee4cd3.png',
-              }}
+              source={require('../../assets/hirabook-logo.png')}
               style={[
                 styles.headerLogo,
                 {
@@ -101,7 +95,10 @@ export default function TabLayout() {
           </View>
         ),
         headerRight: () => (
-          <HeaderButton onPress={() => router.push('/account')} style={styles.headerButton} />
+          <HeaderButton
+            iconName="notifications-outline"
+            onPress={() => router.push('/notifications')}
+          />
         ),
         safeAreaInsets: {
           top: Platform.OS === 'ios' ? 44 : 0,
@@ -145,12 +142,6 @@ const styles = StyleSheet.create({
     maxWidth: 150,
     minHeight: 25,
     maxHeight: 35,
-  },
-  headerButton: {
-    marginRight: SPACING.md,
-    backgroundColor: COLORS.background.secondary,
-    padding: SPACING.sm,
-    borderRadius: SIZES.borderRadius,
   },
   tabIcon: {
     marginBottom: Platform.OS === 'ios' ? -5 : 0,
