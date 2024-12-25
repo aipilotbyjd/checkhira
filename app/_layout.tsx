@@ -16,6 +16,10 @@ export default function RootLayout() {
       <Stack.Screen name="work/add" options={{ title: 'Add Work Entry' }} />
       <Stack.Screen name="work/[id]/edit" options={{ title: 'Edit Work Entry' }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="account/edit-profile" options={{ title: 'Edit Profile' }} />
+      <Stack.Screen name="account/terms" options={{ title: 'Terms & Conditions' }} />
+      <Stack.Screen name="account/privacy" options={{ title: 'Privacy Policy' }} />
+      <Stack.Screen name="account/about" options={{ title: 'About App' }} />
     </Stack>
   );
 }

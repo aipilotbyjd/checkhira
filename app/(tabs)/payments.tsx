@@ -3,6 +3,7 @@ import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
+import { PAYMENT_SOURCES, PaymentSource } from '../../constants/payments';
 
 export default function PaymentsList() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function PaymentsList() {
       description: 'Sample Payment',
       amount: 5000,
       numberOfPayments: 3,
+      source: 'cash' as PaymentSource,
     },
   ];
 
@@ -61,6 +63,16 @@ export default function PaymentsList() {
                 <Text className="mt-1 text-base" style={{ color: COLORS.gray[600] }}>
                   {item.description}
                 </Text>
+                <View className="mt-1 flex-row items-center">
+                  <MaterialCommunityIcons 
+                    name={item.source === 'cash' ? 'cash' : 'bank'} 
+                    size={14} 
+                    color={COLORS.gray[400]} 
+                  />
+                  <Text className="ml-1 text-xs" style={{ color: COLORS.gray[400] }}>
+                    {PAYMENT_SOURCES.find((s) => s.value === item.source)?.label}
+                  </Text>
+                </View>
               </View>
               <View className="flex-row items-center">
                 <MaterialCommunityIcons name="cash-multiple" size={20} color={COLORS.primary} />

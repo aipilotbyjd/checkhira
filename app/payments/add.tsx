@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { DeleteConfirmationModal } from '../../components/DeleteConfirmationModal';
 import { SuccessModal } from '../../components/SuccessModal';
+import { PAYMENT_SOURCES, PaymentSource } from '../../constants/payments';
 
 interface Payment {
   id: number;
@@ -14,6 +15,7 @@ interface Payment {
   amount: string;
   category?: string;
   notes?: string;
+  source: PaymentSource;
 }
 
 export default function AddPayment() {
@@ -21,13 +23,14 @@ export default function AddPayment() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  
+
   const [payment, setPayment] = useState<Payment>({
     id: Date.now(),
     description: '',
     amount: '',
     category: '',
     notes: '',
+    source: 'cash',
   });
 
   const handleSave = () => {
@@ -35,13 +38,13 @@ export default function AddPayment() {
       Alert.alert('Invalid Entry', 'Please fill in all fields');
       return;
     }
-    
+
     // TODO: Implement API call to save payment
     const paymentData = {
       date: selectedDate,
       ...payment,
     };
-    
+
     console.log('Saving payment:', paymentData);
     setShowSuccessModal(true);
   };
@@ -113,13 +116,47 @@ export default function AddPayment() {
 
             <View>
               <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
+                Payment Source <Text style={{ color: COLORS.error }}>*</Text>
+              </Text>
+              <View className="relative">
+                <Pressable
+                  onPress={() => {
+                    Alert.alert(
+                      'Select Payment Source',
+                      '',
+                      PAYMENT_SOURCES.map((source) => ({
+                        text: source.label,
+                        onPress: () => setPayment({ ...payment, source: source.value }),
+                      })).concat([
+                        {
+                          text: 'Cancel',
+                          style: 'cancel',
+                        },
+                      ])
+                    );
+                  }}
+                  className="flex-row items-center justify-between rounded-xl border p-3"
+                  style={{
+                    backgroundColor: COLORS.white,
+                    borderColor: COLORS.gray[200],
+                  }}>
+                  <Text style={{ color: COLORS.secondary }}>
+                    {PAYMENT_SOURCES.find((s) => s.value === payment.source)?.label ||
+                      'Select Source'}
+                  </Text>
+                  <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.gray[400]} />
+                </Pressable>
+              </View>
+            </View>
+
+            <View>
+              <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
                 Amount <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
               <View className="relative">
-                <Text 
+                <Text
                   className="absolute left-3 top-3 text-base"
-                  style={{ color: COLORS.gray[400] }}
-                >
+                  style={{ color: COLORS.gray[400] }}>
                   $
                 </Text>
                 <TextInput

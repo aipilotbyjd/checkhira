@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { DeleteConfirmationModal } from '../../../components/DeleteConfirmationModal';
 import { SuccessModal } from '../../../components/SuccessModal';
+import { PAYMENT_SOURCES, PaymentSource } from '../../../constants/payments';
 
 interface Payment {
   id: number;
@@ -14,6 +15,7 @@ interface Payment {
   amount: string;
   category?: string;
   notes?: string;
+  source: PaymentSource;
 }
 
 export default function EditPayment() {
@@ -22,10 +24,11 @@ export default function EditPayment() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [payment, setPayment] = useState<Payment>({
     id: Number(id),
-    description: '',
-    amount: '',
+    description: 'Sample Payment',
+    amount: '5000',
     category: '',
     notes: '',
+    source: 'cash',
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -39,6 +42,7 @@ export default function EditPayment() {
       amount: '1000',
       category: 'Housing',
       notes: 'Monthly rent payment',
+      source: 'cash',
     });
   }, [id]);
 
@@ -127,10 +131,9 @@ export default function EditPayment() {
                 Amount <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
               <View className="relative">
-                <Text 
+                <Text
                   className="absolute left-3 top-3 text-base"
-                  style={{ color: COLORS.gray[400] }}
-                >
+                  style={{ color: COLORS.gray[400] }}>
                   $
                 </Text>
                 <TextInput
@@ -175,6 +178,41 @@ export default function EditPayment() {
                 onChangeText={(text) => setPayment({ ...payment, notes: text })}
               />
             </View>
+
+            <View>
+              <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
+                Payment Source <Text style={{ color: COLORS.error }}>*</Text>
+              </Text>
+              <View className="relative">
+                <Pressable
+                  onPress={() => {
+                    Alert.alert(
+                      'Select Payment Source',
+                      '',
+                      PAYMENT_SOURCES.map((source) => ({
+                        text: source.label,
+                        onPress: () => setPayment({ ...payment, source: source.value }),
+                      })).concat([
+                        {
+                          text: 'Cancel',
+                          style: 'cancel',
+                        },
+                      ])
+                    );
+                  }}
+                  className="flex-row items-center justify-between rounded-xl border p-3"
+                  style={{
+                    backgroundColor: COLORS.white,
+                    borderColor: COLORS.gray[200],
+                  }}>
+                  <Text style={{ color: COLORS.secondary }}>
+                    {PAYMENT_SOURCES.find((s) => s.value === payment.source)?.label ||
+                      'Select Source'}
+                  </Text>
+                  <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.gray[400]} />
+                </Pressable>
+              </View>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -214,7 +252,7 @@ export default function EditPayment() {
           setShowSuccessModal(false);
           router.back();
         }}
-        message={showDeleteModal ? "Payment deleted successfully" : "Payment updated successfully"}
+        message={showDeleteModal ? 'Payment deleted successfully' : 'Payment updated successfully'}
       />
     </View>
   );
