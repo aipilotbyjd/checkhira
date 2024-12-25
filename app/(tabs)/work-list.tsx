@@ -7,8 +7,11 @@ import { COLORS } from '../../constants/theme';
 import { format } from 'date-fns';
 import moment from 'moment';
 import ActionSheet from 'react-native-actions-sheet';
+import { useRouter } from 'expo-router';
 
-export default function Reports() {
+export default function WorkList() {
+  const router = useRouter();
+
   // State management
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -104,30 +107,22 @@ export default function Reports() {
       <View className="border-b px-6 pb-4 pt-6" style={{ borderColor: COLORS.gray[200] }}>
         <View className="flex-row items-center justify-between">
           <Text className="text-xl font-semibold" style={{ color: COLORS.secondary }}>
-            Detailed Report
+            Work List
           </Text>
           <View className="flex-row space-x-2">
+            <Pressable
+              onPress={() => {
+                router.push('/work/add');
+              }}
+              className="mr-2 rounded-lg p-2"
+              style={{ backgroundColor: COLORS.primary + '15' }}>
+              <MaterialCommunityIcons name="plus" size={20} color={COLORS.primary} />
+            </Pressable>
             <Pressable
               onPress={openFilters}
               className="mr-2 rounded-lg p-2"
               style={{ backgroundColor: COLORS.primary + '15' }}>
               <MaterialCommunityIcons name="filter-variant" size={20} color={COLORS.primary} />
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                /* Handle share */
-              }}
-              className="mr-2 rounded-lg p-2"
-              style={{ backgroundColor: COLORS.primary + '15' }}>
-              <MaterialCommunityIcons name="share-variant" size={20} color={COLORS.primary} />
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                /* Handle export */
-              }}
-              className="rounded-lg p-2"
-              style={{ backgroundColor: COLORS.primary + '15' }}>
-              <MaterialCommunityIcons name="export-variant" size={20} color={COLORS.primary} />
             </Pressable>
           </View>
         </View>
@@ -171,7 +166,7 @@ export default function Reports() {
                   onPress={() => {
                     /* Handle payment press */
                   }}
-                  className="rounded-2xl p-4 mb-4"
+                  className="mb-4 rounded-2xl p-4"
                   style={{ backgroundColor: COLORS.background.secondary }}>
                   <View className="flex-row items-center justify-between">
                     <View>

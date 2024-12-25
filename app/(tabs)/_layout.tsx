@@ -14,9 +14,9 @@ const TAB_SCREENS = [
     headerShown: true,
   },
   {
-    name: 'reports',
-    label: 'Reports',
-    icon: 'log',
+    name: 'work-list',
+    label: 'Work List',
+    icon: 'list-unordered',
     headerShown: true,
   },
   {
