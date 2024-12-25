@@ -244,14 +244,14 @@ export default function EditWork() {
         <View className="space-y-3">
           <Pressable
             onPress={handleUpdate}
-            className="rounded-2xl p-4"
+            className="mb-4 rounded-2xl p-4"
             style={{ backgroundColor: COLORS.primary }}>
             <Text className="text-center text-lg font-semibold text-white">Update Entries</Text>
           </Pressable>
 
           <Pressable
             onPress={handleDelete}
-            className="rounded-2xl p-4"
+            className="mb-4 rounded-2xl p-4"
             style={{ backgroundColor: COLORS.error + '15' }}>
             <Text className="text-center text-lg font-semibold" style={{ color: COLORS.error }}>
               Delete Entries

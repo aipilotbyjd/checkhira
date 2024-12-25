@@ -231,7 +231,7 @@ export default function AddWork() {
 
         <Pressable
           onPress={handleSave}
-          className="rounded-2xl p-4"
+          className="mb-4 rounded-2xl p-4"
           style={{ backgroundColor: COLORS.primary }}>
           <Text className="text-center text-lg font-semibold text-white">Save Entries</Text>
         </Pressable>
