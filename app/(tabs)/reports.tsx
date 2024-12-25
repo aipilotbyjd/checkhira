@@ -18,6 +18,8 @@ export default function Reports() {
   const [activeTab, setActiveTab] = useState<'monthly' | 'custom'>('monthly');
   const [activeReport, setActiveReport] = useState<'work' | 'payments'>('work');
   const [showFilters, setShowFilters] = useState(false);
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
   // Add ActionSheet ref
   const actionSheetRef = createRef<any>();
@@ -308,12 +310,12 @@ export default function Reports() {
             </View>
           ) : (
             <View>
-              <View>
+              <View className="mb-4">
                 <Text className="mb-2 text-sm font-medium" style={{ color: COLORS.gray[600] }}>
                   From Date
                 </Text>
                 <Pressable
-                  onPress={() => setShowMonthPicker(true)}
+                  onPress={() => setShowStartDatePicker(true)}
                   className="flex-row items-center justify-between rounded-xl border p-3"
                   style={{ borderColor: COLORS.gray[200] }}>
                   <View className="flex-row items-center">
@@ -324,14 +326,27 @@ export default function Reports() {
                   </View>
                   <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.gray[400]} />
                 </Pressable>
+                {showStartDatePicker && (
+                  <DateTimePicker
+                    value={dateRange.start}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setShowStartDatePicker(false);
+                      if (selectedDate) {
+                        handleDateChange(selectedDate, 'start');
+                      }
+                    }}
+                  />
+                )}
               </View>
 
-              <View>
+              <View className="mb-4">
                 <Text className="mb-2 text-sm font-medium" style={{ color: COLORS.gray[600] }}>
                   To Date
                 </Text>
                 <Pressable
-                  onPress={() => setShowMonthPicker(true)}
+                  onPress={() => setShowEndDatePicker(true)}
                   className="flex-row items-center justify-between rounded-xl border p-3"
                   style={{ borderColor: COLORS.gray[200] }}>
                   <View className="flex-row items-center">
@@ -342,6 +357,19 @@ export default function Reports() {
                   </View>
                   <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.gray[400]} />
                 </Pressable>
+                {showEndDatePicker && (
+                  <DateTimePicker
+                    value={dateRange.end}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setShowEndDatePicker(false);
+                      if (selectedDate) {
+                        handleDateChange(selectedDate, 'end');
+                      }
+                    }}
+                  />
+                )}
               </View>
             </View>
           )}
