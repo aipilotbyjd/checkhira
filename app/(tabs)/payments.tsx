@@ -19,16 +19,31 @@ export default function PaymentsList() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
-      <View className="flex-row items-center justify-between px-6 pt-6">
-        <Text className="text-xl font-semibold" style={{ color: COLORS.secondary }}>
-          Payments History
-        </Text>
-        <Pressable
-          onPress={() => router.push('/payments/add')}
-          className="rounded-lg p-2"
-          style={{ backgroundColor: COLORS.primary + '15' }}>
-          <Octicons name="plus" size={20} color={COLORS.primary} />
-        </Pressable>
+      {/* Simplified Header */}
+      <View className="border-b px-6 pb-4 pt-6" style={{ borderColor: COLORS.gray[200] }}>
+        <View className="flex-row items-center justify-between">
+          <Text className="text-xl font-semibold" style={{ color: COLORS.secondary }}>
+            Payments
+          </Text>
+          <View className="flex-row space-x-2">
+            <Pressable
+              onPress={() => {
+                router.push('/payments/add');
+              }}
+              className="mr-2 rounded-lg p-2"
+              style={{ backgroundColor: COLORS.primary + '15' }}>
+              <MaterialCommunityIcons name="plus" size={20} color={COLORS.primary} />
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                /* Handle filter */
+              }}
+              className="mr-2 rounded-lg p-2"
+              style={{ backgroundColor: COLORS.primary + '15' }}>
+              <MaterialCommunityIcons name="filter-variant" size={20} color={COLORS.primary} />
+            </Pressable>
+          </View>
+        </View>
       </View>
 
       <ScrollView className="mt-6 flex-1 px-6">
@@ -59,4 +74,4 @@ export default function PaymentsList() {
       </ScrollView>
     </View>
   );
-} 
+}
