@@ -131,60 +131,37 @@ export default function WorkList() {
       {/* Report Data */}
       <ScrollView className="flex-1">
         <View className="space-y-4 p-6">
-          {activeReport === 'work'
-            ? reportData.map((entry) => (
-                <Pressable
-                  key={entry.id}
-                  onPress={() => {
-                    /* Handle entry press */
-                  }}
-                  className="mb-4 rounded-2xl p-4"
-                  style={{ backgroundColor: COLORS.background.secondary }}>
-                  <View className="flex-row items-center justify-between">
-                    <View>
-                      <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-                        {format(entry.date, 'dd MMM yyyy')}
-                      </Text>
-                      <Text className="mt-1 capitalize" style={{ color: COLORS.secondary }}>
-                        {entry.type}
-                      </Text>
-                    </View>
-                    <View className="items-end">
-                      <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-                        {entry.hours}h • {entry.diamonds} diamonds
-                      </Text>
-                      <Text className="text-base font-semibold" style={{ color: COLORS.success }}>
-                        ₹ {entry.earnings.toFixed(2)}
-                      </Text>
-                    </View>
-                  </View>
-                </Pressable>
-              ))
-            : paymentsList.map((payment) => (
-                <Pressable
-                  key={payment.id}
-                  onPress={() => {
-                    /* Handle payment press */
-                  }}
-                  className="mb-4 rounded-2xl p-4"
-                  style={{ backgroundColor: COLORS.background.secondary }}>
-                  <View className="flex-row items-center justify-between">
-                    <View>
-                      <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-                        {format(payment.date, 'dd MMM yyyy')}
-                      </Text>
-                      <Text className="mt-1" style={{ color: COLORS.secondary }}>
-                        {payment.description}
-                      </Text>
-                    </View>
-                    <View className="items-end">
-                      <Text className="text-base font-semibold" style={{ color: COLORS.success }}>
-                        ₹ {payment.amount.toFixed(2)}
-                      </Text>
-                    </View>
-                  </View>
-                </Pressable>
-              ))}
+          {reportData.map((entry) => (
+            <Pressable
+              key={entry.id}
+              onPress={() => {
+                router.push({
+                  pathname: '/work/[id]/edit',
+                  params: { id: entry.id },
+                });
+              }}
+              className="mb-4 rounded-2xl p-4"
+              style={{ backgroundColor: COLORS.background.secondary }}>
+              <View className="flex-row items-center justify-between">
+                <View>
+                  <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
+                    {format(entry.date, 'dd MMM yyyy')}
+                  </Text>
+                  <Text className="mt-1 capitalize" style={{ color: COLORS.secondary }}>
+                    {entry.type}
+                  </Text>
+                </View>
+                <View className="items-end">
+                  <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
+                    {entry.hours}h • {entry.diamonds} diamonds
+                  </Text>
+                  <Text className="text-base font-semibold" style={{ color: COLORS.success }}>
+                    ₹ {entry.earnings.toFixed(2)}
+                  </Text>
+                </View>
+              </View>
+            </Pressable>
+          ))}
         </View>
       </ScrollView>
 
