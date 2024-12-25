@@ -77,6 +77,7 @@ export default function TabLayout() {
           height: getHeaderHeight(),
           borderBottomWidth: 1,
           borderBottomColor: COLORS.gray[100],
+          paddingTop: Platform.OS === 'ios' ? 44 : 0,
         },
         headerTitle: () => null,
         headerLeft: () => (
@@ -100,9 +101,6 @@ export default function TabLayout() {
             onPress={() => router.push('/notifications')}
           />
         ),
-        safeAreaInsets: {
-          top: Platform.OS === 'ios' ? 44 : 0,
-        },
       }}>
       {TAB_SCREENS.map((screen) => (
         <Tabs.Screen
@@ -112,12 +110,7 @@ export default function TabLayout() {
             title: screen.label,
             headerShown: screen.headerShown,
             tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon
-                name={screen.icon}
-                color={color}
-                size={width * 0.06}
-                style={[styles.tabIcon, { opacity: focused ? 1 : 0.8 }]}
-              />
+              <TabBarIcon name={screen.icon} color={color} size={width * 0.06} />
             ),
             tabBarLabelStyle: [
               styles.tabLabel,
