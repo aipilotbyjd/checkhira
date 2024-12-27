@@ -18,12 +18,7 @@
           "launchMode": "most-recent"
         }
       ],
-      [
-        "@morrowdigital/watermelondb-expo-plugin",
-        {
-          "databaseName": "hirabook"
-        }
-      ],
+      ["@morrowdigital/watermelondb-expo-plugin"],
       [
         "expo-build-properties",
         {
