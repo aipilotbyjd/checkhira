@@ -40,9 +40,7 @@
     "react-native-reanimated": "3.16.2",
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.4.0",
-    "react-native-web": "~0.19.10",
-    "rxdb": "^15.39.0",
-    "rxjs": "^7.8.1"
+    "react-native-web": "~0.19.10"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
