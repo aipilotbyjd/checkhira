@@ -1,7 +1,6 @@
 import '../global.css';
 
 import { Stack } from 'expo-router';
-import { database } from '../model';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
