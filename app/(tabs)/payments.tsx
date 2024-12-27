@@ -14,7 +14,6 @@ export default function PaymentsList() {
       date: new Date(),
       description: 'Sample Payment',
       amount: 5000,
-      numberOfPayments: 3,
       source: 'cash' as PaymentSource,
     },
   ];
@@ -64,10 +63,10 @@ export default function PaymentsList() {
                   {item.description}
                 </Text>
                 <View className="mt-1 flex-row items-center">
-                  <MaterialCommunityIcons 
-                    name={item.source === 'cash' ? 'cash' : 'bank'} 
-                    size={14} 
-                    color={COLORS.gray[400]} 
+                  <MaterialCommunityIcons
+                    name={item.source === 'cash' ? 'cash' : 'bank'}
+                    size={14}
+                    color={COLORS.gray[400]}
                   />
                   <Text className="ml-1 text-xs" style={{ color: COLORS.gray[400] }}>
                     {PAYMENT_SOURCES.find((s) => s.value === item.source)?.label}

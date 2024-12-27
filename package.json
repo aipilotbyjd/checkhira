@@ -16,8 +16,6 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
-    "@morrowdigital/watermelondb-expo-plugin": "^2.3.3",
-    "@nozbe/watermelondb": "^0.27.1",
     "@react-native-community/datetimepicker": "^8.2.0",
     "@react-navigation/native": "^7.0.0",
     "date-fns": "^4.1.0",
@@ -45,7 +43,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
-    "@babel/plugin-proposal-decorators": "^7.25.9",
     "@types/react": "~18.3.12",
     "@typescript-eslint/eslint-plugin": "^7.7.0",
     "@typescript-eslint/parser": "^7.7.0",
