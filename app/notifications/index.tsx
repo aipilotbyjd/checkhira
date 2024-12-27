@@ -81,9 +81,17 @@ const MOCK_NOTIFICATIONS = [
   },
 ];
 
+// Add these types for better type safety
+type SwipeableMethods = {
+  close: () => void;
+  openLeft: () => void;
+  openRight: () => void;
+  reset: () => void;
+};
+
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
-  const rowRefs = useRef<Map<string, typeof ReanimatedSwipeable>>(new Map());
+  const rowRefs = useRef<Map<string, SwipeableMethods>>(new Map());
   const [itemBeingDeleted, setItemBeingDeleted] = useState<string | null>(null);
 
   // Initialize animation maps with default values for all notifications
@@ -129,15 +137,11 @@ export default function NotificationsScreen() {
 
   const deleteNotification = (id: string) => {
     const fadeAnim = fadeAnims.current.get(id);
-    const slideACCnim = slideAnims.current.get(id);
+    const slideAnim = slideAnims.current.get(id);
 
-    if (!fadeAnim || !slideACCnim) return;
+    if (!fadeAnim || !slideAnim) return;
 
     setItemBeingDeleted(id);
-    const swipeable = rowRefs.current.get(id);
-    if (swipeable) {
-      swipeable.close();
-    }
 
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -145,20 +149,18 @@ export default function NotificationsScreen() {
         duration: 200,
         useNativeDriver: true,
       }),
-      Animated.spring(slideACCnim, {
+      Animated.spring(slideAnim, {
         toValue: -100,
         useNativeDriver: true,
         tension: 40,
         friction: 8,
       }),
     ]).start(() => {
-      setTimeout(() => {
-        setNotifications((current) => current.filter((n) => n.id !== id));
-        setItemBeingDeleted(null);
-        // Clean up animations for deleted item
-        fadeAnims.current.delete(id);
-        slideAnims.current.delete(id);
-      }, 100);
+      setNotifications((current) => current.filter((n) => n.id !== id));
+      setItemBeingDeleted(null);
+      // Clean up animations for deleted item
+      fadeAnims.current.delete(id);
+      slideAnims.current.delete(id);
     });
   };
 
@@ -172,17 +174,27 @@ export default function NotificationsScreen() {
     const fadeAnim = fadeAnims.current.get(item.id) || new Animated.Value(0);
     const slideAnim = slideAnims.current.get(item.id) || new Animated.Value(50);
 
-    const renderLeftActions = (prog: SharedValue<number>, drag: SharedValue<number>) => {
+    const renderLeftActions = (progress: SharedValue<number>, dragX: SharedValue<number>) => {
       const styleAnimation = useAnimatedStyle(() => ({
-        transform: [{ translateX: drag.value }],
+        transform: [{ translateX: dragX.value }],
       }));
 
       return (
-        <Reanimated.View style={styleAnimation}>
+        <Reanimated.View
+          style={[
+            {
+              flex: 1,
+              width: 80, // Fixed width for delete button
+            },
+            styleAnimation,
+          ]}>
           <Pressable
             onPress={() => deleteNotification(item.id)}
-            className="justify-center bg-red-500 pl-4 pr-8">
-            <Ionicons name="trash-outline" size={24} color="white" />
+            className="h-full w-full items-center justify-center bg-red-500">
+            <View className="items-center">
+              <Ionicons name="trash-outline" size={24} color="white" />
+              <Text className="mt-1 text-xs text-white">Delete</Text>
+            </View>
           </Pressable>
         </Reanimated.View>
       );
@@ -193,36 +205,45 @@ export default function NotificationsScreen() {
         style={{
           opacity: fadeAnim,
           transform: [
-            {
-              translateX: slideAnim,
-            },
-            {
-              translateX: itemBeingDeleted === item.id ? -100 : 0,
-            },
+            { translateX: slideAnim },
+            { translateX: itemBeingDeleted === item.id ? -100 : 0 },
           ],
           height: itemBeingDeleted === item.id ? 0 : 'auto',
-          marginBottom: itemBeingDeleted === item.id ? 0 : 16,
+          marginBottom: itemBeingDeleted === item.id ? 0 : 12,
         }}>
         <GestureHandlerRootView>
           <ReanimatedSwipeable
             ref={(ref) => {
-              if (ref && !rowRefs.current.has(item.id)) {
+              if (ref) {
                 rowRefs.current.set(item.id, ref);
               }
             }}
             renderLeftActions={renderLeftActions}
-            leftThreshold={80}
+            leftThreshold={40}
             friction={2}
-            enableTrackpadTwoFingerGesture>
+            overshootFriction={8}
+            overshootLeft={false}
+            enableTrackpadTwoFingerGesture
+            containerStyle={{ borderRadius: 16 }}
+            onSwipeableOpen={() => {
+              deleteNotification(item.id);
+            }}
+            onSwipeableWillOpen={() => {
+              // Close other open swipeables
+              [...rowRefs.current.entries()].forEach(([key, ref]) => {
+                if (key !== item.id) {
+                  ref.close();
+                }
+              });
+            }}>
             <Pressable
-              className="mb-4 overflow-hidden rounded-2xl"
+              className="overflow-hidden rounded-2xl bg-white"
               style={{
-                backgroundColor: COLORS.white,
                 shadowColor: COLORS.gray[900],
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.1,
-                shadowRadius: 12,
-                elevation: 4,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.06,
+                shadowRadius: 8,
+                elevation: 3,
               }}>
               {/* Status Bar */}
               <View
@@ -234,7 +255,7 @@ export default function NotificationsScreen() {
 
               <View className="p-4">
                 {/* Header Row */}
-                <View className="mb-3 flex-row items-center justify-between">
+                <View className="mb-2 flex-row items-center justify-between">
                   <View className="flex-row items-center">
                     <View
                       className="mr-3 rounded-full p-2"
@@ -243,17 +264,20 @@ export default function NotificationsScreen() {
                       }}>
                       <Ionicons
                         name={item.read ? 'checkmark-circle' : 'notifications'}
-                        size={24}
+                        size={20}
                         color={item.read ? COLORS.gray[400] : COLORS.primary}
                       />
                     </View>
-                    <Text className="text-base font-semibold" style={{ color: COLORS.gray[900] }}>
+                    <Text
+                      className="text-base font-semibold"
+                      style={{ color: COLORS.gray[900] }}
+                      numberOfLines={1}>
                       {item.title}
                     </Text>
                   </View>
                   {!item.read && (
                     <View
-                      className="rounded-full px-2 py-1"
+                      className="ml-2 rounded-full px-2 py-1"
                       style={{ backgroundColor: COLORS.blue[50] }}>
                       <Text className="text-xs font-medium" style={{ color: COLORS.primary }}>
                         New
@@ -263,7 +287,10 @@ export default function NotificationsScreen() {
                 </View>
 
                 {/* Message */}
-                <Text className="mb-3 text-[15px] leading-5" style={{ color: COLORS.gray[600] }}>
+                <Text
+                  className="mb-3 text-[15px] leading-5"
+                  style={{ color: COLORS.gray[600] }}
+                  numberOfLines={2}>
                   {item.message}
                 </Text>
 
