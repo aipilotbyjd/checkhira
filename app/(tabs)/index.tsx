@@ -71,7 +71,7 @@ export default function Home() {
         </Text>
         <View className="flex-row space-x-4">
           <Pressable
-            onPress={() => router.push('/work/add')}
+            onPress={() => router.push('/work-list')}
             className="flex-1 rounded-2xl p-5 mr-2"
             style={{ backgroundColor: COLORS.background.secondary }}>
             <MaterialCommunityIcons name="clock-outline" size={28} color={COLORS.primary} />

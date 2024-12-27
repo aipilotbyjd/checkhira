@@ -77,7 +77,6 @@ export default function TabLayout() {
           height: getHeaderHeight(),
           borderBottomWidth: 1,
           borderBottomColor: COLORS.gray[100],
-          paddingTop: Platform.OS === 'ios' ? 44 : 0,
         },
         headerTitle: () => null,
         headerLeft: () => (
@@ -101,6 +100,9 @@ export default function TabLayout() {
             onPress={() => router.push('/notifications')}
           />
         ),
+        safeAreaInsets: {
+          top: Platform.OS === 'ios' ? 44 : 0,
+        },
       }}>
       {TAB_SCREENS.map((screen) => (
         <Tabs.Screen
