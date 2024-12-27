@@ -72,7 +72,7 @@ export default function Home() {
         <View className="flex-row space-x-4">
           <Pressable
             onPress={() => router.push('/work-list')}
-            className="flex-1 rounded-2xl p-5 mr-2"
+            className="mr-2 flex-1 rounded-2xl p-5"
             style={{ backgroundColor: COLORS.background.secondary }}>
             <MaterialCommunityIcons name="clock-outline" size={28} color={COLORS.primary} />
             <Text className="mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
@@ -109,7 +109,7 @@ export default function Home() {
         <View className="flex-row space-x-4">
           <Pressable
             onPress={() => router.push('/work/add')}
-            className="flex-1 flex-row items-center rounded-xl px-4 py-4 mr-2"
+            className="mr-2 flex-1 flex-row items-center rounded-xl px-4 py-4"
             style={{ backgroundColor: COLORS.primary + '15' }}>
             <MaterialCommunityIcons name="pencil-plus" size={22} color={COLORS.primary} />
             <Text className="ml-3 font-medium" style={{ color: COLORS.primary }}>

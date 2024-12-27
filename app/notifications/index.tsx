@@ -3,7 +3,9 @@ import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRef, useState, useEffect } from 'react';
-import { Swipeable } from 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 
 // Updated mock data
 const MOCK_NOTIFICATIONS = [
@@ -81,7 +83,7 @@ const MOCK_NOTIFICATIONS = [
 
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
-  const rowRefs = useRef<Map<string, Swipeable>>(new Map());
+  const rowRefs = useRef<Map<string, typeof ReanimatedSwipeable>>(new Map());
   const [itemBeingDeleted, setItemBeingDeleted] = useState<string | null>(null);
 
   // Initialize animation maps with default values for all notifications
@@ -127,9 +129,9 @@ export default function NotificationsScreen() {
 
   const deleteNotification = (id: string) => {
     const fadeAnim = fadeAnims.current.get(id);
-    const slideAnim = slideAnims.current.get(id);
+    const slideACCnim = slideAnims.current.get(id);
 
-    if (!fadeAnim || !slideAnim) return;
+    if (!fadeAnim || !slideACCnim) return;
 
     setItemBeingDeleted(id);
     const swipeable = rowRefs.current.get(id);
@@ -143,7 +145,7 @@ export default function NotificationsScreen() {
         duration: 200,
         useNativeDriver: true,
       }),
-      Animated.spring(slideAnim, {
+      Animated.spring(slideACCnim, {
         toValue: -100,
         useNativeDriver: true,
         tension: 40,
@@ -170,13 +172,21 @@ export default function NotificationsScreen() {
     const fadeAnim = fadeAnims.current.get(item.id) || new Animated.Value(0);
     const slideAnim = slideAnims.current.get(item.id) || new Animated.Value(50);
 
-    const renderLeftActions = () => (
-      <Pressable
-        onPress={() => deleteNotification(item.id)}
-        className="justify-center bg-red-500 pl-4 pr-8">
-        <Ionicons name="trash-outline" size={24} color="white" />
-      </Pressable>
-    );
+    const renderLeftActions = (prog: SharedValue<number>, drag: SharedValue<number>) => {
+      const styleAnimation = useAnimatedStyle(() => ({
+        transform: [{ translateX: drag.value }],
+      }));
+
+      return (
+        <Reanimated.View style={styleAnimation}>
+          <Pressable
+            onPress={() => deleteNotification(item.id)}
+            className="justify-center bg-red-500 pl-4 pr-8">
+            <Ionicons name="trash-outline" size={24} color="white" />
+          </Pressable>
+        </Reanimated.View>
+      );
+    };
 
     return (
       <Animated.View
@@ -193,93 +203,94 @@ export default function NotificationsScreen() {
           height: itemBeingDeleted === item.id ? 0 : 'auto',
           marginBottom: itemBeingDeleted === item.id ? 0 : 16,
         }}>
-        <Swipeable
-          ref={(ref) => {
-            if (ref && !rowRefs.current.has(item.id)) {
-              rowRefs.current.set(item.id, ref);
-            }
-          }}
-          renderLeftActions={renderLeftActions}
-          overshootLeft={false}
-          leftThreshold={80}
-          friction={2}
-          tension={80}>
-          <Pressable
-            className="mb-4 overflow-hidden rounded-2xl"
-            style={{
-              backgroundColor: COLORS.white,
-              shadowColor: COLORS.gray[900],
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.1,
-              shadowRadius: 12,
-              elevation: 4,
-            }}>
-            {/* Status Bar */}
-            <View
-              className="h-1 w-full"
+        <GestureHandlerRootView>
+          <ReanimatedSwipeable
+            ref={(ref) => {
+              if (ref && !rowRefs.current.has(item.id)) {
+                rowRefs.current.set(item.id, ref);
+              }
+            }}
+            renderLeftActions={renderLeftActions}
+            leftThreshold={80}
+            friction={2}
+            enableTrackpadTwoFingerGesture>
+            <Pressable
+              className="mb-4 overflow-hidden rounded-2xl"
               style={{
-                backgroundColor: item.read ? COLORS.gray[200] : COLORS.primary,
-              }}
-            />
+                backgroundColor: COLORS.white,
+                shadowColor: COLORS.gray[900],
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 12,
+                elevation: 4,
+              }}>
+              {/* Status Bar */}
+              <View
+                className="h-1 w-full"
+                style={{
+                  backgroundColor: item.read ? COLORS.gray[200] : COLORS.primary,
+                }}
+              />
 
-            <View className="p-4">
-              {/* Header Row */}
-              <View className="mb-3 flex-row items-center justify-between">
-                <View className="flex-row items-center">
-                  <View
-                    className="mr-3 rounded-full p-2"
-                    style={{
-                      backgroundColor: item.read ? COLORS.gray[50] : COLORS.blue[50],
-                    }}>
-                    <Ionicons
-                      name={item.read ? 'checkmark-circle' : 'notifications'}
-                      size={24}
-                      color={item.read ? COLORS.gray[400] : COLORS.primary}
-                    />
-                  </View>
-                  <Text className="text-base font-semibold" style={{ color: COLORS.gray[900] }}>
-                    {item.title}
-                  </Text>
-                </View>
-                {!item.read && (
-                  <View
-                    className="rounded-full px-2 py-1"
-                    style={{ backgroundColor: COLORS.blue[50] }}>
-                    <Text className="text-xs font-medium" style={{ color: COLORS.primary }}>
-                      New
+              <View className="p-4">
+                {/* Header Row */}
+                <View className="mb-3 flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View
+                      className="mr-3 rounded-full p-2"
+                      style={{
+                        backgroundColor: item.read ? COLORS.gray[50] : COLORS.blue[50],
+                      }}>
+                      <Ionicons
+                        name={item.read ? 'checkmark-circle' : 'notifications'}
+                        size={24}
+                        color={item.read ? COLORS.gray[400] : COLORS.primary}
+                      />
+                    </View>
+                    <Text className="text-base font-semibold" style={{ color: COLORS.gray[900] }}>
+                      {item.title}
                     </Text>
                   </View>
-                )}
-              </View>
+                  {!item.read && (
+                    <View
+                      className="rounded-full px-2 py-1"
+                      style={{ backgroundColor: COLORS.blue[50] }}>
+                      <Text className="text-xs font-medium" style={{ color: COLORS.primary }}>
+                        New
+                      </Text>
+                    </View>
+                  )}
+                </View>
 
-              {/* Message */}
-              <Text className="mb-3 text-[15px] leading-5" style={{ color: COLORS.gray[600] }}>
-                {item.message}
-              </Text>
-
-              {/* Footer */}
-              <View className="flex-row items-center justify-between">
-                <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                  {new Date(item.timestamp).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                {/* Message */}
+                <Text className="mb-3 text-[15px] leading-5" style={{ color: COLORS.gray[600] }}>
+                  {item.message}
                 </Text>
 
-                {item.read && (
-                  <View className="flex-row items-center">
-                    <Ionicons name="time-outline" size={14} color={COLORS.gray[400]} />
-                    <Text className="ml-1 text-xs" style={{ color: COLORS.gray[400] }}>
-                      Read
-                    </Text>
-                  </View>
-                )}
+                {/* Footer */}
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                    {new Date(item.timestamp).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </Text>
+
+                  {item.read && (
+                    <View className="flex-row items-center">
+                      <Ionicons name="time-outline" size={14} color={COLORS.gray[400]} />
+                      <Text className="ml-1 text-xs" style={{ color: COLORS.gray[400] }}>
+                        Read
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </View>
-            </View>
-          </Pressable>
-        </Swipeable>
+            </Pressable>
+          </ReanimatedSwipeable>
+        </GestureHandlerRootView>
       </Animated.View>
     );
   };
