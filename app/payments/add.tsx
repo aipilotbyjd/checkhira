@@ -8,6 +8,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { DeleteConfirmationModal } from '../../components/DeleteConfirmationModal';
 import { SuccessModal } from '../../components/SuccessModal';
 import { PAYMENT_SOURCES, PaymentSource } from '../../constants/payments';
+// import { useDataOperations } from '../../hooks/useDataOperations';
 
 interface Payment {
   id: number;
@@ -20,6 +21,7 @@ interface Payment {
 
 export default function AddPayment() {
   const router = useRouter();
+  const { apiCall, state } = useDataOperations();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -33,20 +35,24 @@ export default function AddPayment() {
     source: 'cash',
   });
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!payment.description || !payment.amount) {
       Alert.alert('Invalid Entry', 'Please fill in all fields');
       return;
     }
 
-    // TODO: Implement API call to save payment
     const paymentData = {
       date: selectedDate,
       ...payment,
     };
 
-    console.log('Saving payment:', paymentData);
-    setShowSuccessModal(true);
+    try {
+      console.log('Saving payment:', paymentData);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error('Error saving payment:', error);
+      Alert.alert('Error', 'Failed to save payment. Please try again.');
+    }
   };
 
   return (

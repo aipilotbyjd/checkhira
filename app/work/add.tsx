@@ -62,8 +62,9 @@ export default function AddWork() {
     setEntryToDelete(entryToDelete || null);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // TODO: Implement API call to save work entries
+    console.log('Saving work:', entries);
     const workData = {
       date: selectedDate,
       entries: entries,
