@@ -5,10 +5,8 @@ import { COLORS, SIZES } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { DeleteConfirmationModal } from '../../components/DeleteConfirmationModal';
 import { SuccessModal } from '../../components/SuccessModal';
 import { PAYMENT_SOURCES, PaymentSource } from '../../constants/payments';
-// import { useDataOperations } from '../../hooks/useDataOperations';
 
 interface Payment {
   id: number;
