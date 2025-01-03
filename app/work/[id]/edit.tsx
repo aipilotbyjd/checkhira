@@ -24,9 +24,11 @@ export default function EditWork() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<WorkEntry | null>(null);
+  const [name, setName] = useState('');
 
   useEffect(() => {
     // Mock data - replace with actual API call
+    setName('John Doe');
     setEntries([
       { id: 1, type: 'A', diamond: '10', price: '100' },
       { id: 2, type: 'B', diamond: '20', price: '200' },
@@ -70,10 +72,16 @@ export default function EditWork() {
   };
 
   const handleUpdate = () => {
+    if (!name.trim()) {
+      Alert.alert('Required Field', 'Please enter a name.');
+      return;
+    }
+
     // TODO: Implement API call to update work entries
     const workData = {
       id: Number(id),
       date: selectedDate,
+      name: name.trim(),
       entries: entries,
       total: calculateTotal(),
     };
@@ -112,6 +120,25 @@ export default function EditWork() {
             }}
           />
         )}
+      </View>
+
+      {/* Add name field */}
+      <View className="px-6">
+        <Text className="mb-2 mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
+          Name <Text style={{ color: COLORS.error }}>*</Text>
+        </Text>
+        <TextInput
+          className="rounded-xl border p-3"
+          style={{
+            backgroundColor: COLORS.white,
+            borderColor: COLORS.gray[200],
+            color: COLORS.secondary,
+          }}
+          value={name}
+          onChangeText={setName}
+          placeholder="Enter name"
+          placeholderTextColor={COLORS.gray[400]}
+        />
       </View>
 
       {/* Scrollable Content */}

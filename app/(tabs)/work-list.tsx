@@ -82,7 +82,7 @@ export default function WorkList() {
           <View className="flex-row space-x-3">
             <Pressable
               onPress={() => router.push('/work/add')}
-              className="rounded-full p-3"
+              className="mr-2 rounded-full p-3"
               style={{ backgroundColor: COLORS.primary }}>
               <MaterialCommunityIcons name="plus" size={22} color="white" />
             </Pressable>

@@ -90,7 +90,7 @@ export default function EditPayment() {
           )}
 
           <View className="mt-6 space-y-4">
-            <View>
+            {/* <View>
               <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
                 Description <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
@@ -124,7 +124,7 @@ export default function EditPayment() {
                 value={payment.category}
                 onChangeText={(text) => setPayment({ ...payment, category: text })}
               />
-            </View>
+            </View> */}
 
             <View>
               <Text className="mb-3 text-sm" style={{ color: COLORS.gray[400] }}>
