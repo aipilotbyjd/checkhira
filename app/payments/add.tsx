@@ -21,7 +21,6 @@ interface Payment {
 
 export default function AddPayment() {
   const router = useRouter();
-  const { apiCall, state } = useDataOperations();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
