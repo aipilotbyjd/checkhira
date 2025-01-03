@@ -2,11 +2,16 @@ import { Text, View, Pressable, ScrollView } from 'react-native';
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
-import { format } from 'date-fns';
+import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
+import { useState, useRef } from 'react';
 import { PAYMENT_SOURCES, PaymentSource } from '../../constants/payments';
 
 export default function PaymentsList() {
   const router = useRouter();
+  const actionSheetRef = useRef<ActionSheetRef>(null);
+  const [currentFilter, setCurrentFilter] = useState('all');
+
   // Mock data - replace with your actual data source
   const paymentsList = [
     {
@@ -23,6 +28,31 @@ export default function PaymentsList() {
       source: 'bank' as PaymentSource,
     },
   ];
+
+  const handleFilter = (filter: string) => {
+    setCurrentFilter(filter);
+    actionSheetRef.current?.hide();
+  };
+
+  const filteredPaymentsList = paymentsList.filter((item) => {
+    const itemDate = new Date(item.date);
+    const today = new Date();
+
+    switch (currentFilter) {
+      case 'today':
+        return format(itemDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+      case 'week':
+        const weekStart = startOfWeek(today);
+        const weekEnd = endOfWeek(today);
+        return isWithinInterval(itemDate, { start: weekStart, end: weekEnd });
+      case 'month':
+        return (
+          itemDate.getMonth() === today.getMonth() && itemDate.getFullYear() === today.getFullYear()
+        );
+      default:
+        return true;
+    }
+  });
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
@@ -50,12 +80,14 @@ export default function PaymentsList() {
               <MaterialCommunityIcons name="plus" size={22} color="white" />
             </Pressable>
             <Pressable
-              onPress={() => {
-                /* Handle filter */
-              }}
+              onPress={() => actionSheetRef.current?.show()}
               className="rounded-full p-3"
               style={{ backgroundColor: COLORS.gray[100] }}>
-              <MaterialCommunityIcons name="filter-variant" size={22} color={COLORS.gray[600]} />
+              <MaterialCommunityIcons
+                name="filter-variant"
+                size={22}
+                color={currentFilter === 'all' ? COLORS.gray[600] : COLORS.primary}
+              />
             </Pressable>
           </View>
         </View>
@@ -73,7 +105,7 @@ export default function PaymentsList() {
         </View>
 
         {/* Payments list */}
-        {paymentsList.map((item) => (
+        {filteredPaymentsList.map((item) => (
           <Pressable
             key={item.id}
             onPress={() => router.push(`/payments/${item.id}/edit`)}
@@ -112,6 +144,43 @@ export default function PaymentsList() {
           </Pressable>
         ))}
       </ScrollView>
+
+      <ActionSheet
+        ref={actionSheetRef}
+        containerStyle={{ backgroundColor: COLORS.background.primary }}>
+        <View className="p-4">
+          <Text className="mb-4 text-lg font-bold" style={{ color: COLORS.secondary }}>
+            Filter Payments
+          </Text>
+
+          {[
+            { label: 'All', value: 'all' },
+            { label: 'Today', value: 'today' },
+            { label: 'This Week', value: 'week' },
+            { label: 'This Month', value: 'month' },
+          ].map((option) => (
+            <Pressable
+              key={option.value}
+              onPress={() => handleFilter(option.value)}
+              className="flex-row items-center justify-between py-4"
+              style={{
+                borderBottomWidth: 1,
+                borderBottomColor: COLORS.gray[200],
+              }}>
+              <Text
+                className="text-base"
+                style={{
+                  color: currentFilter === option.value ? COLORS.primary : COLORS.secondary,
+                }}>
+                {option.label}
+              </Text>
+              {currentFilter === option.value && (
+                <MaterialCommunityIcons name="check" size={20} color={COLORS.primary} />
+              )}
+            </Pressable>
+          ))}
+        </View>
+      </ActionSheet>
     </View>
   );
 }
