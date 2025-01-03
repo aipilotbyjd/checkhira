@@ -81,7 +81,7 @@ export default function AddPayment() {
           )}
 
           <View className="mt-6 space-y-4">
-            <View>
+            {/* <View>
               <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
                 Description <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
@@ -97,9 +97,9 @@ export default function AddPayment() {
                 value={payment.description}
                 onChangeText={(text) => setPayment({ ...payment, description: text })}
               />
-            </View>
+            </View> */}
 
-            <View>
+            {/* <View>
               <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
                 Category
               </Text>
@@ -115,55 +115,43 @@ export default function AddPayment() {
                 value={payment.category}
                 onChangeText={(text) => setPayment({ ...payment, category: text })}
               />
-            </View>
+            </View> */}
 
             <View>
-              <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
+              <Text className="mb-3 text-sm" style={{ color: COLORS.gray[400] }}>
                 Payment Source <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
-              <View className="relative">
-                <Pressable
-                  onPress={() => {
-                    Alert.alert(
-                      'Select Payment Source',
-                      '',
-                      PAYMENT_SOURCES.map((source) => ({
-                        text: source.label,
-                        onPress: () => setPayment({ ...payment, source: source.value }),
-                      })).concat([
-                        {
-                          text: 'Cancel',
-                          style: 'cancel',
-                        },
-                      ])
-                    );
-                  }}
-                  className="flex-row items-center justify-between rounded-xl border p-3"
-                  style={{
-                    backgroundColor: COLORS.white,
-                    borderColor: COLORS.gray[200],
-                  }}>
-                  <Text style={{ color: COLORS.secondary }}>
-                    {PAYMENT_SOURCES.find((s) => s.value === payment.source)?.label ||
-                      'Select Source'}
-                  </Text>
-                  <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.gray[400]} />
-                </Pressable>
+              <View className="flex-row flex-wrap gap-2">
+                {PAYMENT_SOURCES.map((source) => (
+                  <Pressable
+                    key={source.value}
+                    onPress={() => setPayment({ ...payment, source: source.value })}
+                    className={`flex-row items-center rounded-full px-4 py-2 ${
+                      payment.source === source.value ? 'bg-primary' : 'bg-white'
+                    }`}
+                    style={{
+                      borderWidth: 1,
+                      borderColor:
+                        payment.source === source.value ? COLORS.primary : COLORS.gray[200],
+                    }}>
+                    <Text
+                      style={{
+                        color: payment.source === source.value ? COLORS.black : COLORS.secondary,
+                      }}>
+                      {source.label}
+                    </Text>
+                  </Pressable>
+                ))}
               </View>
             </View>
 
             <View>
-              <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
+              <Text className="mb-2 text-sm mt-3" style={{ color: COLORS.gray[400] }}>
                 Amount <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
               <View className="relative">
-                <Text
-                  className="absolute left-3 top-3 text-base"
-                  style={{ color: COLORS.gray[400] }}>
-                  $
-                </Text>
                 <TextInput
-                  className="rounded-xl border p-3 pl-7"
+                  className="rounded-xl border p-3"
                   style={{
                     backgroundColor: COLORS.white,
                     borderColor: COLORS.gray[200],
@@ -185,7 +173,7 @@ export default function AddPayment() {
             </View>
 
             <View>
-              <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
+              <Text className="mb-2 text-sm mt-3" style={{ color: COLORS.gray[400] }}>
                 Notes
               </Text>
               <TextInput
