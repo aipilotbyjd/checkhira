@@ -20,12 +20,6 @@ const TAB_SCREENS = [
     headerShown: true,
   },
   {
-    name: 'work-entry',
-    label: 'Work Entry',
-    icon: 'plus-circle',
-    headerShown: true,
-  },
-  {
     name: 'payments',
     label: 'Payments',
     icon: 'credit-card',
