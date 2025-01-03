@@ -2,7 +2,7 @@ import { View, Text, ScrollView, Pressable, Image } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
-import { format } from 'date-fns';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 
 export default function Home() {
   const router = useRouter();
@@ -13,34 +13,50 @@ export default function Home() {
     return 'Good Evening';
   };
 
-  // Mock data - replace with actual data
-  const todayStats = {
-    hours: 8,
-    earnings: 500,
-    pendingAmount: 1200,
+  // Enhanced mock data
+  const stats = {
+    today: {
+      hours: 8,
+      earnings: 500,
+      pendingAmount: 1200,
+    },
+    weekly: {
+      hours: 42,
+      earnings: 3200,
+      completedTasks: 15,
+    },
+    monthly: {
+      earnings: 12500,
+      averageHours: 7.5,
+    },
   };
 
   const recentActivities = [
     {
       id: 1,
       type: 'work',
-      description: 'Logged 8 hours for polishing',
-      time: '2 hours ago',
-      icon: 'clock-outline',
+      description: 'Completed polishing task',
+      amount: '₹500',
+      time: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      icon: 'clock-check-outline',
+      color: COLORS.success,
     },
     {
       id: 2,
       type: 'payment',
-      description: 'Received ₹500 payment',
-      time: '5 hours ago',
-      icon: 'cash',
+      description: 'Payment received from ABC Corp',
+      amount: '₹1,200',
+      time: new Date(Date.now() - 5 * 60 * 60 * 1000),
+      icon: 'cash-check',
+      color: COLORS.primary,
     },
     {
       id: 3,
       type: 'work',
       description: 'Added new work entry',
-      time: '1 day ago',
+      time: new Date(Date.now() - 24 * 60 * 60 * 1000),
       icon: 'notebook-outline',
+      color: COLORS.primary,
     },
   ];
 
@@ -64,91 +80,155 @@ export default function Home() {
         </Pressable>
       </View>
 
-      {/* Today's Highlights */}
-      <View className="mt-8 px-6">
-        <Text className="mb-4 text-lg font-semibold" style={{ color: COLORS.secondary }}>
-          Today's Highlights
-        </Text>
-        <View className="flex-row space-x-4">
-          <Pressable
-            onPress={() => router.push('/work-list')}
-            className="mr-2 flex-1 rounded-2xl p-5"
-            style={{ backgroundColor: COLORS.background.secondary }}>
-            <MaterialCommunityIcons name="clock-outline" size={28} color={COLORS.primary} />
-            <Text className="mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
-              Today's Work
-            </Text>
-            <Text className="mt-2 text-lg font-semibold" style={{ color: COLORS.secondary }}>
-              {todayStats.hours} hours
-            </Text>
-            <Text className="mt-1 text-sm" style={{ color: COLORS.primary }}>
-              ₹{todayStats.earnings} earned
-            </Text>
+      {/* Summary Cards */}
+      <View className="mt-6 px-6">
+        <View className="mb-4 flex-row items-center justify-between">
+          <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
+            This Week ({format(startOfWeek(new Date()), 'd MMM')} -{' '}
+            {format(endOfWeek(new Date()), 'd MMM')})
+          </Text>
+          <Pressable onPress={() => router.push('/stats')}>
+            <Text style={{ color: COLORS.primary }}>See All</Text>
           </Pressable>
+        </View>
 
-          <Pressable
-            onPress={() => router.push('/payments')}
-            className="flex-1 rounded-2xl p-5"
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="space-x-4">
+          <View
+            className="w-48 rounded-2xl p-5"
+            style={{ backgroundColor: COLORS.background.secondary }}>
+            <MaterialCommunityIcons name="clock-check-outline" size={28} color={COLORS.primary} />
+            <Text className="mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
+              Weekly Hours
+            </Text>
+            <Text className="mt-2 text-xl font-semibold" style={{ color: COLORS.secondary }}>
+              {stats.weekly.hours}h
+            </Text>
+            <Text className="mt-1 text-sm" style={{ color: COLORS.success }}>
+              +{stats.today.hours}h today
+            </Text>
+          </View>
+
+          <View
+            className="w-48 rounded-2xl p-5"
             style={{ backgroundColor: COLORS.background.secondary }}>
             <MaterialCommunityIcons name="cash-multiple" size={28} color={COLORS.primary} />
             <Text className="mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
-              Pending Payments
+              Weekly Earnings
             </Text>
-            <Text className="mt-2 text-lg font-semibold" style={{ color: COLORS.secondary }}>
-              ₹{todayStats.pendingAmount}
+            <Text className="mt-2 text-xl font-semibold" style={{ color: COLORS.secondary }}>
+              ₹{stats.weekly.earnings}
             </Text>
-          </Pressable>
-        </View>
+            <Text className="mt-1 text-sm" style={{ color: COLORS.success }}>
+              ₹{stats.today.earnings} today
+            </Text>
+          </View>
+
+          <View
+            className="w-48 rounded-2xl p-5"
+            style={{ backgroundColor: COLORS.background.secondary }}>
+            <MaterialCommunityIcons
+              name="chart-timeline-variant"
+              size={28}
+              color={COLORS.primary}
+            />
+            <Text className="mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
+              Monthly Avg
+            </Text>
+            <Text className="mt-2 text-xl font-semibold" style={{ color: COLORS.secondary }}>
+              {stats.monthly.averageHours}h/day
+            </Text>
+            <Text className="mt-1 text-sm" style={{ color: COLORS.primary }}>
+              ₹{stats.monthly.earnings} earned
+            </Text>
+          </View>
+        </ScrollView>
       </View>
 
-      {/* Quick Actions */}
+      {/* Quick Actions - Enhanced version */}
       <View className="mt-8 px-6">
         <Text className="mb-4 text-lg font-semibold" style={{ color: COLORS.secondary }}>
           Quick Actions
         </Text>
-        <View className="flex-row space-x-4">
+        <View className="grid grid-cols-2 gap-4">
           <Pressable
             onPress={() => router.push('/work/add')}
-            className="mr-2 flex-1 flex-row items-center rounded-xl px-4 py-4"
+            className="flex-row items-center rounded-xl p-4"
             style={{ backgroundColor: COLORS.primary + '15' }}>
-            <MaterialCommunityIcons name="pencil-plus" size={22} color={COLORS.primary} />
-            <Text className="ml-3 font-medium" style={{ color: COLORS.primary }}>
-              Add Work Entry
+            <MaterialCommunityIcons name="pencil-plus" size={24} color={COLORS.primary} />
+            <Text className="ml-3 flex-1 font-medium" style={{ color: COLORS.primary }}>
+              Log Work
             </Text>
           </Pressable>
 
           <Pressable
             onPress={() => router.push('/payments/add')}
-            className="flex-1 flex-row items-center rounded-xl px-4 py-4"
+            className="flex-row items-center rounded-xl p-4"
             style={{ backgroundColor: COLORS.primary + '15' }}>
-            <MaterialCommunityIcons name="cash-plus" size={22} color={COLORS.primary} />
-            <Text className="ml-3 font-medium" style={{ color: COLORS.primary }}>
-              Add Payment
+            <MaterialCommunityIcons name="cash-plus" size={24} color={COLORS.primary} />
+            <Text className="ml-3 flex-1 font-medium" style={{ color: COLORS.primary }}>
+              Request Payment
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push('/reports')}
+            className="flex-row items-center rounded-xl p-4"
+            style={{ backgroundColor: COLORS.primary + '15' }}>
+            <MaterialCommunityIcons name="file-document-outline" size={24} color={COLORS.primary} />
+            <Text className="ml-3 flex-1 font-medium" style={{ color: COLORS.primary }}>
+              View Reports
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push('/calendar')}
+            className="flex-row items-center rounded-xl p-4"
+            style={{ backgroundColor: COLORS.primary + '15' }}>
+            <MaterialCommunityIcons name="calendar-month" size={24} color={COLORS.primary} />
+            <Text className="ml-3 flex-1 font-medium" style={{ color: COLORS.primary }}>
+              Schedule
             </Text>
           </Pressable>
         </View>
       </View>
 
-      {/* Recent Activities */}
+      {/* Recent Activities - Enhanced version */}
       <View className="mt-8 px-6 pb-8">
-        <Text className="mb-4 text-lg font-semibold" style={{ color: COLORS.secondary }}>
-          Recent Activities
-        </Text>
+        <View className="mb-4 flex-row items-center justify-between">
+          <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
+            Recent Activities
+          </Text>
+          <Pressable onPress={() => router.push('/activities')}>
+            <Text style={{ color: COLORS.primary }}>See All</Text>
+          </Pressable>
+        </View>
+
         {recentActivities.map((activity) => (
-          <View
+          <Pressable
             key={activity.id}
+            onPress={() => router.push(`/activity/${activity.id}`)}
             className="mb-4 flex-row items-center rounded-xl p-4"
             style={{ backgroundColor: COLORS.background.secondary }}>
-            <MaterialCommunityIcons name={activity.icon} size={26} color={COLORS.primary} />
+            <View className="rounded-full p-2" style={{ backgroundColor: activity.color + '15' }}>
+              <MaterialCommunityIcons name={activity.icon} size={26} color={activity.color} />
+            </View>
             <View className="ml-4 flex-1">
               <Text className="text-base font-medium" style={{ color: COLORS.secondary }}>
                 {activity.description}
               </Text>
-              <Text className="mt-1 text-sm" style={{ color: COLORS.gray[400] }}>
-                {activity.time}
-              </Text>
+              <View className="mt-1 flex-row items-center">
+                {activity.amount && (
+                  <Text className="mr-2 text-sm" style={{ color: activity.color }}>
+                    {activity.amount}
+                  </Text>
+                )}
+                <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
+                  {activity.time instanceof Date ? format(activity.time, 'h:mm a') : activity.time}
+                </Text>
+              </View>
             </View>
-          </View>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.gray[400]} />
+          </Pressable>
         ))}
       </View>
     </ScrollView>
