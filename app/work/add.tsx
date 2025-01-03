@@ -25,6 +25,7 @@ export default function AddWork() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<WorkEntry | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [name, setName] = useState('');
 
   const calculateTotal = () => {
     return entries.reduce((sum, entry) => {
@@ -63,14 +64,17 @@ export default function AddWork() {
   };
 
   const handleSave = async () => {
-    // TODO: Implement API call to save work entries
-    console.log('Saving work:', entries);
+    if (!name.trim()) {
+      Alert.alert('Required Field', 'Please enter a name.');
+      return;
+    }
+
     const workData = {
       date: selectedDate,
+      name: name.trim(),
       entries: entries,
       total: calculateTotal(),
     };
-
     console.log('Saving work:', workData);
     setShowSuccessModal(true);
   };
@@ -101,6 +105,25 @@ export default function AddWork() {
             }}
           />
         )}
+      </View>
+
+      {/* add name field */}
+      <View className="px-6">
+        <Text className="mb-2 mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
+          Name <Text style={{ color: COLORS.error }}>*</Text>
+        </Text>
+        <TextInput
+          className="rounded-xl border p-3"
+          style={{
+            backgroundColor: COLORS.white,
+            borderColor: COLORS.gray[200],
+            color: COLORS.secondary,
+          }}
+          value={name}
+          onChangeText={setName}
+          placeholder="Enter name"
+          placeholderTextColor={COLORS.gray[400]}
+        />
       </View>
 
       {/* Scrollable Content */}
