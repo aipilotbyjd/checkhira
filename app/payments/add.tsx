@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SuccessModal } from '../../components/SuccessModal';
 import { PAYMENT_SOURCES, PaymentSource } from '../../constants/payments';
+import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 
 interface Payment {
   id: number;
@@ -32,6 +33,8 @@ export default function AddPayment() {
     source: 'cash',
   });
 
+  const { createPayment, isLoading } = usePaymentOperations();
+
   const handleSave = async () => {
     if (!payment.description || !payment.amount) {
       Alert.alert('Invalid Entry', 'Please fill in all fields');
@@ -40,15 +43,16 @@ export default function AddPayment() {
 
     const paymentData = {
       date: selectedDate,
-      ...payment,
+      description: payment.description.trim(),
+      amount: payment.amount,
+      category: payment.category,
+      notes: payment.notes,
+      source: payment.source,
     };
 
-    try {
-      console.log('Saving payment:', paymentData);
+    const result = await createPayment(paymentData);
+    if (result) {
       setShowSuccessModal(true);
-    } catch (error) {
-      console.error('Error saving payment:', error);
-      Alert.alert('Error', 'Failed to save payment. Please try again.');
     }
   };
 
@@ -146,7 +150,7 @@ export default function AddPayment() {
             </View>
 
             <View>
-              <Text className="mb-2 text-sm mt-3" style={{ color: COLORS.gray[400] }}>
+              <Text className="mb-2 mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
                 Amount <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
               <View className="relative">
@@ -173,7 +177,7 @@ export default function AddPayment() {
             </View>
 
             <View>
-              <Text className="mb-2 text-sm mt-3" style={{ color: COLORS.gray[400] }}>
+              <Text className="mb-2 mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
                 Notes
               </Text>
               <TextInput

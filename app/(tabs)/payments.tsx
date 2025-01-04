@@ -1,33 +1,39 @@
-import { Text, View, Pressable, ScrollView } from 'react-native';
+import { Text, View, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { PAYMENT_SOURCES, PaymentSource } from '../../constants/payments';
+import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 
 export default function PaymentsList() {
   const router = useRouter();
   const actionSheetRef = useRef<ActionSheetRef>(null);
   const [currentFilter, setCurrentFilter] = useState('all');
+  const { getAllPayments, isLoading } = usePaymentOperations();
+  const [paymentsList, setPaymentsList] = useState([]);
 
-  // Mock data - replace with your actual data source
-  const paymentsList = [
-    {
-      id: 1,
-      date: new Date(),
-      amount: 5000,
-      source: 'cash' as PaymentSource,
-    },
-    // Add more mock data for better testing
-    {
-      id: 2,
-      date: new Date(2024, 2, 15),
-      amount: 7500,
-      source: 'bank' as PaymentSource,
-    },
-  ];
+  useEffect(() => {
+    const loadPayments = async () => {
+      const data = await getAllPayments();
+      if (data) {
+        setPaymentsList(data);
+      }
+    };
+
+    loadPayments();
+  }, []);
+
+  // Add loading indicator
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
 
   const handleFilter = (filter: string) => {
     setCurrentFilter(filter);

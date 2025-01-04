@@ -7,6 +7,7 @@ import { COLORS } from '../../../constants/theme';
 import { DeleteConfirmationModal } from '../../../components/DeleteConfirmationModal';
 import { SuccessModal } from '../../../components/SuccessModal';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useWorkOperations } from '../../../hooks/useWorkOperations';
 
 interface WorkEntry {
   id: number;
@@ -25,14 +26,21 @@ export default function EditWork() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<WorkEntry | null>(null);
   const [name, setName] = useState('');
+  const { updateWork, deleteWork, getWork, isLoading } = useWorkOperations();
 
   useEffect(() => {
-    // Mock data - replace with actual API call
-    setName('John Doe');
-    setEntries([
-      { id: 1, type: 'A', diamond: '10', price: '100' },
-      { id: 2, type: 'B', diamond: '20', price: '200' },
-    ]);
+    const loadWorkEntry = async () => {
+      if (!id) return;
+
+      const data = await getWork(Number(id));
+      if (data) {
+        setName(data.name);
+        setSelectedDate(new Date(data.date));
+        setEntries(data.entries);
+      }
+    };
+
+    loadWorkEntry();
   }, [id]);
 
   const calculateTotal = () => {
@@ -71,27 +79,32 @@ export default function EditWork() {
     setEntryToDelete(entryToDelete || null);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!name.trim()) {
       Alert.alert('Required Field', 'Please enter a name.');
       return;
     }
 
-    // TODO: Implement API call to update work entries
     const workData = {
-      id: Number(id),
       date: selectedDate,
       name: name.trim(),
       entries: entries,
       total: calculateTotal(),
     };
 
-    console.log('Updating work:', workData);
-    setShowSuccessModal(true);
+    const result = await updateWork(Number(id), workData);
+    if (result) {
+      setShowSuccessModal(true);
+    }
   };
 
-  const handleDelete = () => {
-    setShowDeleteModal(true);
+  const handleDelete = async () => {
+    const result = await deleteWork(Number(id));
+    if (result) {
+      setShowSuccessModal(true);
+      // Navigate back after successful deletion
+      router.back();
+    }
   };
 
   return (

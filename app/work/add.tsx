@@ -7,6 +7,7 @@ import { COLORS } from '../../constants/theme';
 import { DeleteConfirmationModal } from '../../components/DeleteConfirmationModal';
 import { SuccessModal } from '../../components/SuccessModal';
 import { useRouter } from 'expo-router';
+import { useWorkOperations } from '../../hooks/useWorkOperations';
 
 interface WorkEntry {
   id: number;
@@ -26,6 +27,7 @@ export default function AddWork() {
   const [entryToDelete, setEntryToDelete] = useState<WorkEntry | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [name, setName] = useState('');
+  const { createWork, isLoading } = useWorkOperations();
 
   const calculateTotal = () => {
     return entries.reduce((sum, entry) => {
@@ -75,8 +77,11 @@ export default function AddWork() {
       entries: entries,
       total: calculateTotal(),
     };
-    console.log('Saving work:', workData);
-    setShowSuccessModal(true);
+
+    const result = await createWork(workData);
+    if (result) {
+      setShowSuccessModal(true);
+    }
   };
 
   return (

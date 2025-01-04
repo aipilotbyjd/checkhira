@@ -1,15 +1,38 @@
-import { Text, View, ScrollView, Pressable } from 'react-native';
+import { Text, View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useWorkOperations } from '../../hooks/useWorkOperations';
 
 export default function WorkList() {
   const router = useRouter();
   const actionSheetRef = useRef<ActionSheetRef>(null);
   const [currentFilter, setCurrentFilter] = useState('all');
+  const { getAllWork, isLoading } = useWorkOperations();
+  const [workList, setWorkList] = useState([]);
+
+  useEffect(() => {
+    const loadWorkList = async () => {
+      const data = await getAllWork();
+      if (data) {
+        setWorkList(data);
+      }
+    };
+
+    loadWorkList();
+  }, []);
+
+  // Add loading indicator
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
 
   // Mock data - replace with actual data
   const workList = [

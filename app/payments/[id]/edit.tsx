@@ -8,6 +8,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { DeleteConfirmationModal } from '../../../components/DeleteConfirmationModal';
 import { SuccessModal } from '../../../components/SuccessModal';
 import { PAYMENT_SOURCES, PaymentSource } from '../../../constants/payments';
+import { usePaymentOperations } from '../../../hooks/usePaymentOperations';
 
 interface Payment {
   id: number;
@@ -33,33 +34,49 @@ export default function EditPayment() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const { updatePayment, deletePayment, getPayment, isLoading } = usePaymentOperations();
 
   useEffect(() => {
-    // Mock data - replace with actual API call
-    setPayment({
-      id: Number(id),
-      description: 'Sample Payment',
-      amount: '1000',
-      category: 'Housing',
-      notes: 'Monthly rent payment',
-      source: 'cash',
-    });
+    const loadPayment = async () => {
+      if (!id) return;
+      
+      const data = await getPayment(Number(id));
+      if (data) {
+        setPayment(data);
+        setSelectedDate(new Date(data.date));
+      }
+    };
+
+    loadPayment();
   }, [id]);
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!payment.description || !payment.amount) {
       Alert.alert('Invalid Entry', 'Please fill in all fields');
       return;
     }
 
-    // TODO: Implement API call
-    console.log('Updating payment:', { ...payment, date: selectedDate });
-    setShowSuccessModal(true);
-    router.back();
+    const paymentData = {
+      date: selectedDate,
+      description: payment.description.trim(),
+      amount: payment.amount,
+      category: payment.category,
+      notes: payment.notes,
+      source: payment.source,
+    };
+
+    const result = await updatePayment(Number(id), paymentData);
+    if (result) {
+      setShowSuccessModal(true);
+    }
   };
 
-  const handleDelete = () => {
-    setShowDeleteModal(true);
+  const handleDelete = async () => {
+    const result = await deletePayment(Number(id));
+    if (result) {
+      setShowSuccessModal(true);
+      router.back();
+    }
   };
 
   return (
