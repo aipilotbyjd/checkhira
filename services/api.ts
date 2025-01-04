@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 
-const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://your-api-url.com';
+const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://hirabook.icu/api/v1';
 
 export const api = {
   baseUrl: API_URL,

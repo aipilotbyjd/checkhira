@@ -34,25 +34,25 @@ export default function WorkList() {
     );
   }
 
-  // Mock data - replace with actual data
-  const workList = [
-    {
-      id: 1,
-      date: new Date(),
-      type: 'polishing',
-      hours: 8,
-      diamonds: 12,
-      earnings: 5000,
-    },
-    {
-      id: 2,
-      date: new Date(2024, 2, 15),
-      type: 'cutting',
-      hours: 6,
-      diamonds: 8,
-      earnings: 3500,
-    },
-  ];
+  // // Mock data - replace with actual data
+  // const workList = [
+  //   {
+  //     id: 1,
+  //     date: new Date(),
+  //     type: 'polishing',
+  //     hours: 8,
+  //     diamonds: 12,
+  //     earnings: 5000,
+  //   },
+  //   {
+  //     id: 2,
+  //     date: new Date(2024, 2, 15),
+  //     type: 'cutting',
+  //     hours: 6,
+  //     diamonds: 8,
+  //     earnings: 3500,
+  //   },
+  // ];
 
   // Calculate today's total
   const todayTotal = workList

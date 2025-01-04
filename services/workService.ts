@@ -16,7 +16,7 @@ export interface WorkEntryPayload {
 
 export const workService = {
   async createWork(data: WorkEntryPayload) {
-    const response = await fetch(`${api.baseUrl}/api/work`, {
+    const response = await fetch(`${api.baseUrl}/works`, {
       method: 'POST',
       headers: api.headers,
       body: JSON.stringify(data),
@@ -25,7 +25,7 @@ export const workService = {
   },
 
   async updateWork(id: number, data: WorkEntryPayload) {
-    const response = await fetch(`${api.baseUrl}/api/work/${id}`, {
+    const response = await fetch(`${api.baseUrl}/works/${id}`, {
       method: 'PUT',
       headers: api.headers,
       body: JSON.stringify(data),
@@ -34,7 +34,7 @@ export const workService = {
   },
 
   async deleteWork(id: number) {
-    const response = await fetch(`${api.baseUrl}/api/work/${id}`, {
+    const response = await fetch(`${api.baseUrl}/works/${id}`, {
       method: 'DELETE',
       headers: api.headers,
     });
@@ -42,14 +42,14 @@ export const workService = {
   },
 
   async getWork(id: number) {
-    const response = await fetch(`${api.baseUrl}/api/work/${id}`, {
+    const response = await fetch(`${api.baseUrl}/works/${id}`, {
       headers: api.headers,
     });
     return handleResponse(response);
   },
 
   async getAllWork() {
-    const response = await fetch(`${api.baseUrl}/api/work`, {
+    const response = await fetch(`${api.baseUrl}/works`, {
       headers: api.headers,
     });
     return handleResponse(response);
