@@ -13,13 +13,15 @@ export default function PaymentsList() {
   const actionSheetRef = useRef<ActionSheetRef>(null);
   const [currentFilter, setCurrentFilter] = useState('all');
   const { getAllPayments, isLoading } = usePaymentOperations();
-  const [paymentsList, setPaymentsList] = useState([]);
+  const [paymentsList, setPaymentsList] = useState<any[]>([]);
 
   useEffect(() => {
     const loadPayments = async () => {
       const data = await getAllPayments();
-      if (data) {
+      if (data && Array.isArray(data)) {
         setPaymentsList(data);
+      } else {
+        setPaymentsList([]);
       }
     };
 

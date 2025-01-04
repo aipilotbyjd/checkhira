@@ -2,23 +2,59 @@ import { Text, View, ScrollView, Pressable, ActivityIndicator } from 'react-nati
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
-import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { format, startOfWeek, endOfWeek, isWithinInterval, isValid } from 'date-fns';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import { useState, useRef, useEffect } from 'react';
 import { useWorkOperations } from '../../hooks/useWorkOperations';
+
+interface Work {
+  id: number;
+  name: string;
+  description: string;
+  date: string | Date;
+  user_id: number;
+  is_active: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: null | string;
+  work_items: WorkItem[];
+}
+
+// Add interface for work item
+interface WorkItem {
+  id: number;
+  type: string;
+  diamond: string | null;
+  price: string | null;
+  work_id: number;
+  is_active: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: null | string;
+}
 
 export default function WorkList() {
   const router = useRouter();
   const actionSheetRef = useRef<ActionSheetRef>(null);
   const [currentFilter, setCurrentFilter] = useState('all');
   const { getAllWork, isLoading } = useWorkOperations();
-  const [workList, setWorkList] = useState([]);
+  const [workList, setWorkList] = useState<Work[]>([]);
 
   useEffect(() => {
     const loadWorkList = async () => {
       const data = await getAllWork();
-      if (data) {
-        setWorkList(data);
+      console.log(data);
+      if (data && Array.isArray(data)) {
+        // Ensure dates are properly converted
+        const formattedData = data.map((item: any) => ({
+          ...item,
+          date: new Date(item.date),
+        }));
+        setWorkList(formattedData);
+      } else {
+        // Handle case where data is not an array
+        console.warn('Work data is not in expected format:', data);
+        setWorkList([]);
       }
     };
 
@@ -56,8 +92,19 @@ export default function WorkList() {
 
   // Calculate today's total
   const todayTotal = workList
-    .filter((item) => format(item.date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd'))
-    .reduce((sum, item) => sum + item.earnings, 0);
+    .filter((item) => {
+      const itemDate = new Date(item.date);
+      return (
+        isValid(itemDate) && format(itemDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
+      );
+    })
+    .reduce((sum, item) => {
+      // Sum up all work_items prices
+      const itemTotal = item.work_items.reduce((itemSum, workItem) => {
+        return itemSum + (Number(workItem.price) || 0);
+      }, 0);
+      return sum + itemTotal;
+    }, 0);
 
   const handleFilter = (filter: string) => {
     setCurrentFilter(filter);
@@ -65,7 +112,10 @@ export default function WorkList() {
   };
 
   const filteredWorkList = workList.filter((item) => {
+    // Ensure we have a valid date
     const itemDate = new Date(item.date);
+    if (!isValid(itemDate)) return false;
+
     const today = new Date();
 
     switch (currentFilter) {
@@ -83,6 +133,8 @@ export default function WorkList() {
         return true;
     }
   });
+
+  console.log(filteredWorkList);
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
@@ -151,18 +203,18 @@ export default function WorkList() {
             <View className="flex-row items-center justify-between">
               <View>
                 <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-                  {format(item.date, 'dd MMM yyyy')}
+                  {format(new Date(item.date), 'dd MMM yyyy')}
                 </Text>
-                <Text className="mt-1 text-base capitalize" style={{ color: COLORS.secondary }}>
-                  {item.type}
+                <Text className="mt-1 text-base" style={{ color: COLORS.secondary }}>
+                  {item.name}
                 </Text>
               </View>
               <View className="items-end">
                 <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-                  {item.hours}h • {item.diamonds} diamonds
+                  {item.work_items.reduce((sum, wi) => sum + (Number(wi.diamond) || 0), 0)} diamonds
                 </Text>
                 <Text className="mt-1 text-lg font-semibold" style={{ color: COLORS.success }}>
-                  ₹ {item.earnings.toFixed(2)}
+                  ₹ {item.work_items.reduce((sum, wi) => sum + (Number(wi.price) || 0), 0).toFixed(2)}
                 </Text>
               </View>
             </View>
