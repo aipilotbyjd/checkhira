@@ -35,8 +35,8 @@ export default function EditWork() {
       const data = await getWork(Number(id));
       if (data) {
         setName(data.name);
-        setSelectedDate(new Date(data.date));
-        setEntries(data.entries);
+        setSelectedDate(parseCustomDate(data.date));
+        setEntries(data.work_items);
       }
     };
 
@@ -340,4 +340,26 @@ export default function EditWork() {
       />
     </View>
   );
+}
+
+function parseCustomDate(dateString: string | Date): Date {
+  // If it's already a Date object, return it
+  if (dateString instanceof Date) {
+    return dateString;
+  }
+
+  if (!dateString) return new Date();
+
+  // Handle DD-MM-YYYY format
+  const parts = dateString.split('-').map((num) => parseInt(num, 10));
+  if (parts.length === 3) {
+    const [day, month, year] = parts;
+    if (day && month && year) {
+      // Note: month - 1 because JavaScript months are 0-based
+      return new Date(year, month - 1, day);
+    }
+  }
+
+  // Fallback to standard date parsing
+  return new Date(dateString);
 }

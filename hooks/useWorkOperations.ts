@@ -60,7 +60,7 @@ export const useWorkOperations = () => {
     setError(null);
     try {
       const response = await workService.getWork(id);
-      return response;
+      return response.data;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch work entry';
       setError(errorMessage);
