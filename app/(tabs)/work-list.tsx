@@ -45,11 +45,12 @@ export default function WorkList() {
       const data = await getAllWork();
       console.log(data);
       if (data && Array.isArray(data)) {
-        // Ensure dates are properly converted
+        // Parse dates in DD-MM-YYYY format
         const formattedData = data.map((item: any) => ({
           ...item,
-          date: new Date(item.date),
+          date: parseCustomDate(item.date),
         }));
+        console.log(formattedData);
         setWorkList(formattedData);
       } else {
         // Handle case where data is not an array
@@ -112,8 +113,7 @@ export default function WorkList() {
   };
 
   const filteredWorkList = workList.filter((item) => {
-    // Ensure we have a valid date
-    const itemDate = new Date(item.date);
+    const itemDate = parseCustomDate(item.date as string);
     if (!isValid(itemDate)) return false;
 
     const today = new Date();
@@ -214,7 +214,8 @@ export default function WorkList() {
                   {item.work_items.reduce((sum, wi) => sum + (Number(wi.diamond) || 0), 0)} diamonds
                 </Text>
                 <Text className="mt-1 text-lg font-semibold" style={{ color: COLORS.success }}>
-                  ₹ {item.work_items.reduce((sum, wi) => sum + (Number(wi.price) || 0), 0).toFixed(2)}
+                  ₹{' '}
+                  {item.work_items.reduce((sum, wi) => sum + (Number(wi.price) || 0), 0).toFixed(2)}
                 </Text>
               </View>
             </View>
@@ -260,4 +261,26 @@ export default function WorkList() {
       </ActionSheet>
     </View>
   );
+}
+
+function parseCustomDate(dateString: string | Date): Date {
+  // If it's already a Date object, return it
+  if (dateString instanceof Date) {
+    return dateString;
+  }
+
+  if (!dateString) return new Date();
+  
+  // Handle DD-MM-YYYY format
+  const parts = dateString.split('-').map(num => parseInt(num, 10));
+  if (parts.length === 3) {
+    const [day, month, year] = parts;
+    if (day && month && year) {
+      // Note: month - 1 because JavaScript months are 0-based
+      return new Date(year, month - 1, day);
+    }
+  }
+  
+  // Fallback to standard date parsing
+  return new Date(dateString);
 }
