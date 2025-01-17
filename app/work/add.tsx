@@ -8,6 +8,7 @@ import { DeleteConfirmationModal } from '../../components/DeleteConfirmationModa
 import { SuccessModal } from '../../components/SuccessModal';
 import { useRouter } from 'expo-router';
 import { useWorkOperations } from '../../hooks/useWorkOperations';
+import { formatDateForAPI } from '../../utils/dateFormatter';
 
 interface WorkEntry {
   id: number;
@@ -71,16 +72,32 @@ export default function AddWork() {
       return;
     }
 
+    // Validate entries
+    const hasEmptyFields = entries.some((entry) => !entry.diamond || !entry.price);
+    if (hasEmptyFields) {
+      Alert.alert('Invalid Entries', 'Please fill in all diamond and price fields.');
+      return;
+    }
+
     const workData = {
-      date: selectedDate,
+      date: formatDateForAPI(selectedDate),
       name: name.trim(),
-      entries: entries,
+      entries: entries.map((entry) => ({
+        id: entry.id,
+        type: entry.type,
+        diamond: entry.diamond,
+        price: entry.price,
+      })),
       total: calculateTotal(),
     };
 
-    const result = await createWork(workData);
-    if (result) {
-      setShowSuccessModal(true);
+    try {
+      const result = await createWork(workData);
+      if (result) {
+        setShowSuccessModal(true);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save work entries. Please try again.');
     }
   };
 

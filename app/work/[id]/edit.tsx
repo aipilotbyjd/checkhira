@@ -1,4 +1,4 @@
-import { Text, View, TextInput, Pressable, Alert, ScrollView } from 'react-native';
+import { Text, View, TextInput, Pressable, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
@@ -8,6 +8,7 @@ import { DeleteConfirmationModal } from '../../../components/DeleteConfirmationM
 import { SuccessModal } from '../../../components/SuccessModal';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWorkOperations } from '../../../hooks/useWorkOperations';
+import { formatDateForAPI, parseCustomDate } from '../../../utils/dateFormatter';
 
 interface WorkEntry {
   id: number;
@@ -32,11 +33,21 @@ export default function EditWork() {
     const loadWorkEntry = async () => {
       if (!id) return;
 
-      const data = await getWork(Number(id));
-      if (data) {
-        setName(data.name);
-        setSelectedDate(parseCustomDate(data.date));
-        setEntries(data.work_items);
+      try {
+        const data = await getWork(Number(id));
+        if (data) {
+          setName(data.name);
+          setSelectedDate(parseCustomDate(data.date));
+          setEntries(data.work_items.map(item => ({
+            id: item.id,
+            type: item.type,
+            diamond: item.diamond?.toString() || '',
+            price: item.price?.toString() || ''
+          })));
+        }
+      } catch (error) {
+        Alert.alert('Error', 'Failed to load work entry. Please try again.');
+        router.back();
       }
     };
 
@@ -85,16 +96,32 @@ export default function EditWork() {
       return;
     }
 
+    // Validate entries
+    const hasEmptyFields = entries.some(entry => !entry.diamond || !entry.price);
+    if (hasEmptyFields) {
+      Alert.alert('Invalid Entries', 'Please fill in all diamond and price fields.');
+      return;
+    }
+
     const workData = {
-      date: selectedDate,
+      date: formatDateForAPI(selectedDate),
       name: name.trim(),
-      entries: entries,
+      entries: entries.map(entry => ({
+        id: entry.id,
+        type: entry.type,
+        diamond: entry.diamond,
+        price: entry.price
+      })),
       total: calculateTotal(),
     };
 
-    const result = await updateWork(Number(id), workData);
-    if (result) {
-      setShowSuccessModal(true);
+    try {
+      const result = await updateWork(Number(id), workData);
+      if (result) {
+        setShowSuccessModal(true);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update work entries. Please try again.');
     }
   };
 
@@ -106,6 +133,14 @@ export default function EditWork() {
       router.back();
     }
   };
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
@@ -340,26 +375,4 @@ export default function EditWork() {
       />
     </View>
   );
-}
-
-function parseCustomDate(dateString: string | Date): Date {
-  // If it's already a Date object, return it
-  if (dateString instanceof Date) {
-    return dateString;
-  }
-
-  if (!dateString) return new Date();
-
-  // Handle DD-MM-YYYY format
-  const parts = dateString.split('-').map((num) => parseInt(num, 10));
-  if (parts.length === 3) {
-    const [day, month, year] = parts;
-    if (day && month && year) {
-      // Note: month - 1 because JavaScript months are 0-based
-      return new Date(year, month - 1, day);
-    }
-  }
-
-  // Fallback to standard date parsing
-  return new Date(dateString);
 }

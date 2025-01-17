@@ -108,7 +108,10 @@ export default function PaymentsList() {
             Today's Total
           </Text>
           <Text className="mt-2 text-3xl font-bold" style={{ color: COLORS.primary }}>
-            ₹ {paymentsList.reduce((sum, item) => sum + item.amount, 0).toFixed(2)}
+            ₹ {Number(paymentsList
+                .filter(item => format(new Date(item.date), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd'))
+                .reduce((sum, item) => sum + item.amount, 0))
+                .toFixed(2)}
           </Text>
         </View>
 
@@ -129,7 +132,7 @@ export default function PaymentsList() {
             <View className="flex-row items-center justify-between">
               <View>
                 <Text className="text-base font-medium" style={{ color: COLORS.secondary }}>
-                  ₹ {item.amount.toFixed(2)}
+                  ₹ {Number(item.amount).toFixed(2)}
                 </Text>
                 <View className="mt-2 flex-row items-center">
                   <MaterialCommunityIcons

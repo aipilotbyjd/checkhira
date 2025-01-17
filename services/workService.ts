@@ -8,7 +8,7 @@ export interface WorkEntry {
 }
 
 export interface WorkEntryPayload {
-  date: Date;
+  date: string;
   name: string;
   entries: WorkEntry[];
   total: number;
