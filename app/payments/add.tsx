@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Text, View, Pressable, ScrollView, TextInput, Alert } from 'react-native';
 import { Octicons, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../../constants/theme';
@@ -17,19 +17,19 @@ interface Payment {
   source: string;
 }
 
-const PAYMENT_SOURCES = [
-  { label: 'Cash', value: 'cash' },
-  { label: 'Bank Transfer', value: 'bank_transfer' },
-  { label: 'UPI', value: 'upi' },
-  { label: 'Check', value: 'check' },
-  { label: 'Card', value: 'card' },
-] as const;
+interface PaymentSource {
+  id: number;
+  name: string;
+  icon: string;
+}
 
 export default function AddPayment() {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [paymentSources, setPaymentSources] = useState<PaymentSource[]>([]);
+  const [isLoadingSources, setIsLoadingSources] = useState(true);
 
   const [payment, setPayment] = useState<Payment>({
     id: Date.now(),
@@ -40,7 +40,36 @@ export default function AddPayment() {
     source: 'cash',
   });
 
-  const { createPayment, isLoading } = usePaymentOperations();
+  const { createPayment, getPaymentSources, isLoading } = usePaymentOperations();
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoadingSources(true);
+      const sources = await getPaymentSources();
+      if (sources) {
+        setPaymentSources(sources);
+      }
+      setIsLoadingSources(false);
+    };
+
+    loadData();
+  }, []);
+
+  const renderPaymentSourcesSkeleton = () => (
+    <View className="flex-row flex-wrap gap-2">
+      {[1, 2, 3].map((i) => (
+        <View
+          key={i}
+          className="flex-row items-center rounded-full px-4 py-2"
+          style={{
+            backgroundColor: COLORS.gray[100],
+            width: 120,
+            height: 40,
+          }}
+        />
+      ))}
+    </View>
+  );
 
   const handleSave = async () => {
     if (!payment.description || !payment.amount) {
@@ -132,28 +161,47 @@ export default function AddPayment() {
               <Text className="mb-3 text-sm" style={{ color: COLORS.gray[400] }}>
                 Payment Source <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
-              <View className="flex-row flex-wrap gap-2">
-                {PAYMENT_SOURCES.map((source) => (
-                  <Pressable
-                    key={source.value}
-                    onPress={() => setPayment({ ...payment, source: source.value })}
-                    className={`flex-row items-center rounded-full px-4 py-2 ${
-                      payment.source === source.value ? 'bg-primary' : 'bg-white'
-                    }`}
-                    style={{
-                      borderWidth: 1,
-                      borderColor:
-                        payment.source === source.value ? COLORS.primary : COLORS.gray[200],
-                    }}>
-                    <Text
+              {isLoadingSources ? (
+                renderPaymentSourcesSkeleton()
+              ) : (
+                <View className="flex-row flex-wrap gap-2">
+                  {paymentSources.map((source) => (
+                    <Pressable
+                      key={source.id}
+                      onPress={() => setPayment({ ...payment, source: source.name.toLowerCase() })}
+                      className={`flex-row items-center rounded-full px-4 py-2 ${
+                        payment.source === source.name.toLowerCase() ? 'bg-primary' : 'bg-white'
+                      }`}
                       style={{
-                        color: payment.source === source.value ? COLORS.black : COLORS.secondary,
+                        borderWidth: 1,
+                        borderColor:
+                          payment.source === source.name.toLowerCase()
+                            ? COLORS.primary
+                            : COLORS.gray[200],
                       }}>
-                      {source.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
+                      <MaterialCommunityIcons
+                        name={source.icon as any}
+                        size={20}
+                        color={
+                          payment.source === source.name.toLowerCase()
+                            ? COLORS.black
+                            : COLORS.secondary
+                        }
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text
+                        style={{
+                          color:
+                            payment.source === source.name.toLowerCase()
+                              ? COLORS.black
+                              : COLORS.secondary,
+                        }}>
+                        {source.name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
             </View>
 
             <View>

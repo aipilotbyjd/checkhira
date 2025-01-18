@@ -49,4 +49,11 @@ export const paymentService = {
     });
     return handleResponse(response);
   },
+
+  async getPaymentSources() {
+    const response = await fetch(`${api.baseUrl}/payments/sources`, {
+      headers: api.headers,
+    });
+    return handleResponse(response);
+  },
 };

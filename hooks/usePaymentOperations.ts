@@ -87,6 +87,22 @@ export const usePaymentOperations = () => {
     }
   };
 
+  const getPaymentSources = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await paymentService.getPaymentSources();
+      return response.data;
+    } catch (err) {
+      const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch payment sources';
+      setError(errorMessage);
+      Alert.alert('Error', errorMessage);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     isLoading,
     error,
@@ -95,5 +111,6 @@ export const usePaymentOperations = () => {
     deletePayment,
     getPayment,
     getAllPayments,
+    getPaymentSources,
   };
 };

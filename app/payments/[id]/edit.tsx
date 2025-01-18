@@ -18,13 +18,11 @@ interface Payment {
   source: string;
 }
 
-const PAYMENT_SOURCES = [
-  { label: 'Cash', value: 'cash' },
-  { label: 'Bank Transfer', value: 'bank_transfer' },
-  { label: 'UPI', value: 'upi' },
-  { label: 'Check', value: 'check' },
-  { label: 'Card', value: 'card' },
-] as const;
+interface PaymentSource {
+  id: number;
+  name: string;
+  icon: string;
+}
 
 export default function EditPayment() {
   const router = useRouter();
@@ -41,20 +39,33 @@ export default function EditPayment() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const { updatePayment, deletePayment, getPayment, isLoading } = usePaymentOperations();
+  const [paymentSources, setPaymentSources] = useState<PaymentSource[]>([]);
+  const { updatePayment, deletePayment, getPayment, getPaymentSources, isLoading } =
+    usePaymentOperations();
+  const [isLoadingSources, setIsLoadingSources] = useState(true);
 
   useEffect(() => {
-    const loadPayment = async () => {
+    const loadData = async () => {
+      setIsLoadingSources(true);
       if (!id) return;
-      
+
       const data = await getPayment(Number(id));
       if (data) {
         setPayment(data);
-        setSelectedDate(new Date(data.date));
+        const parsedDate = new Date(data.date);
+        setSelectedDate(
+          parsedDate instanceof Date && !isNaN(parsedDate.getTime()) ? parsedDate : new Date()
+        );
       }
+
+      const sources = await getPaymentSources();
+      if (sources) {
+        setPaymentSources(sources);
+      }
+      setIsLoadingSources(false);
     };
 
-    loadPayment();
+    loadData();
   }, [id]);
 
   const handleUpdate = async () => {
@@ -86,6 +97,22 @@ export default function EditPayment() {
     }
   };
 
+  const renderPaymentSourcesSkeleton = () => (
+    <View className="flex-row flex-wrap gap-2">
+      {[1, 2, 3].map((i) => (
+        <View
+          key={i}
+          className="flex-row items-center rounded-full px-4 py-2"
+          style={{
+            backgroundColor: COLORS.gray[100],
+            width: 120,
+            height: 40,
+          }}
+        />
+      ))}
+    </View>
+  );
+
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
       <ScrollView className="flex-1">
@@ -96,7 +123,9 @@ export default function EditPayment() {
             style={{ backgroundColor: COLORS.gray[100] }}>
             <Octicons name="calendar" size={24} color={COLORS.primary} />
             <Text className="ml-3 flex-1 text-base" style={{ color: COLORS.gray[600] }}>
-              {format(selectedDate, 'MMMM dd, yyyy')}
+              {selectedDate instanceof Date && !isNaN(selectedDate.getTime())
+                ? format(selectedDate, 'MMMM dd, yyyy')
+                : 'Select a date'}
             </Text>
             <Ionicons name="chevron-down" size={20} color={COLORS.gray[400]} />
           </Pressable>
@@ -154,28 +183,47 @@ export default function EditPayment() {
               <Text className="mb-3 text-sm" style={{ color: COLORS.gray[400] }}>
                 Payment Source <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
-              <View className="flex-row flex-wrap gap-2">
-                {PAYMENT_SOURCES.map((source) => (
-                  <Pressable
-                    key={source.value}
-                    onPress={() => setPayment({ ...payment, source: source.value })}
-                    className={`flex-row items-center rounded-full px-4 py-2 ${
-                      payment.source === source.value ? 'bg-primary' : 'bg-white'
-                    }`}
-                    style={{
-                      borderWidth: 1,
-                      borderColor:
-                        payment.source === source.value ? COLORS.primary : COLORS.gray[200],
-                    }}>
-                    <Text
+              {isLoadingSources ? (
+                renderPaymentSourcesSkeleton()
+              ) : (
+                <View className="flex-row flex-wrap gap-2">
+                  {paymentSources.map((source) => (
+                    <Pressable
+                      key={source.id}
+                      onPress={() => setPayment({ ...payment, source: source.name.toLowerCase() })}
+                      className={`flex-row items-center rounded-full px-4 py-2 ${
+                        payment.source === source.name.toLowerCase() ? 'bg-primary' : 'bg-white'
+                      }`}
                       style={{
-                        color: payment.source === source.value ? COLORS.black : COLORS.secondary,
+                        borderWidth: 1,
+                        borderColor:
+                          payment.source === source.name.toLowerCase()
+                            ? COLORS.primary
+                            : COLORS.gray[200],
                       }}>
-                      {source.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
+                      <MaterialCommunityIcons
+                        name={source.icon as any}
+                        size={20}
+                        color={
+                          payment.source === source.name.toLowerCase()
+                            ? COLORS.black
+                            : COLORS.secondary
+                        }
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text
+                        style={{
+                          color:
+                            payment.source === source.name.toLowerCase()
+                              ? COLORS.black
+                              : COLORS.secondary,
+                        }}>
+                        {source.name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
             </View>
 
             <View>
