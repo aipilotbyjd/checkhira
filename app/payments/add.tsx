@@ -10,7 +10,7 @@ import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 
 interface Payment {
   id: number;
-  amount: string;
+  amount: number;
   category?: string;
   description?: string;
   source_id: number;
@@ -32,7 +32,7 @@ export default function AddPayment() {
 
   const [payment, setPayment] = useState<Payment>({
     id: Date.now(),
-    amount: '',
+    amount: '' as any,
     category: '',
     description: '',
     source_id: 1,
@@ -75,10 +75,16 @@ export default function AddPayment() {
       return;
     }
 
+    const numericAmount = payment.amount;
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      Alert.alert('Invalid Amount', 'Please enter a valid positive number');
+      return;
+    }
+
     const paymentData = {
       date: selectedDate,
-      amount: payment.amount,
-      category: payment.category,
+      amount: numericAmount,
+      category: payment.category || undefined,
       description: payment.description.trim(),
       source_id: payment.source_id,
     };
@@ -207,10 +213,13 @@ export default function AddPayment() {
                   placeholder="0.00"
                   placeholderTextColor={COLORS.gray[300]}
                   value={payment.amount}
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   onChangeText={(text) => {
                     const numericText = text.replace(/[^0-9.]/g, '');
-                    setPayment({ ...payment, amount: numericText });
+                    const parts = numericText.split('.');
+                    const formattedText =
+                      parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : numericText;
+                    setPayment({ ...payment, amount: formattedText });
                   }}
                 />
               </View>

@@ -2,7 +2,7 @@ import { api, handleResponse } from './api';
 
 export interface PaymentPayload {
   date: Date;
-  amount: string;
+  amount: number;
   category?: string;
   description: string;
   source_id: number;

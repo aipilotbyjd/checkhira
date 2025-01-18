@@ -74,7 +74,7 @@ export default function EditPayment() {
 
     const paymentData = {
       date: selectedDate,
-      amount: payment.amount,
+      amount: Number(payment.amount),
       category: payment.category,
       description: payment.description.trim(),
       source_id: payment.source_id,
