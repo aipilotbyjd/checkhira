@@ -2,11 +2,10 @@ import { api, handleResponse } from './api';
 
 export interface PaymentPayload {
   date: Date;
-  description: string;
   amount: string;
   category?: string;
-  notes?: string;
-  source: string;
+  description: string;
+  source_id: number;
 }
 
 export const paymentService = {

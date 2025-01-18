@@ -11,11 +11,10 @@ import { usePaymentOperations } from '../../../hooks/usePaymentOperations';
 
 interface Payment {
   id: number;
-  description: string;
   amount: string;
   category?: string;
-  notes?: string;
-  source: string;
+  description?: string;
+  source_id: number;
 }
 
 interface PaymentSource {
@@ -30,11 +29,10 @@ export default function EditPayment() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [payment, setPayment] = useState<Payment>({
     id: Number(id),
-    description: 'Sample Payment',
-    amount: '5000',
+    amount: '',
     category: '',
-    notes: '',
-    source: 'cash',
+    description: '',
+    source_id: 0,
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -79,8 +77,8 @@ export default function EditPayment() {
       description: payment.description.trim(),
       amount: payment.amount,
       category: payment.category,
-      notes: payment.notes,
-      source: payment.source,
+      description: payment.description,
+      source_id: payment.source_id,
     };
 
     const result = await updatePayment(Number(id), paymentData);
@@ -190,33 +188,24 @@ export default function EditPayment() {
                   {paymentSources.map((source) => (
                     <Pressable
                       key={source.id}
-                      onPress={() => setPayment({ ...payment, source: source.name.toLowerCase() })}
+                      onPress={() => setPayment({ ...payment, source_id: source.id })}
                       className={`flex-row items-center rounded-full px-4 py-2 ${
-                        payment.source === source.name.toLowerCase() ? 'bg-primary' : 'bg-white'
+                        payment.source_id === source.id ? 'bg-primary' : 'bg-white'
                       }`}
                       style={{
                         borderWidth: 1,
                         borderColor:
-                          payment.source === source.name.toLowerCase()
-                            ? COLORS.primary
-                            : COLORS.gray[200],
+                          payment.source_id === source.id ? COLORS.primary : COLORS.gray[200],
                       }}>
                       <MaterialCommunityIcons
                         name={source.icon as any}
                         size={20}
-                        color={
-                          payment.source === source.name.toLowerCase()
-                            ? COLORS.black
-                            : COLORS.secondary
-                        }
+                        color={payment.source_id === source.id ? COLORS.black : COLORS.secondary}
                         style={{ marginRight: 8 }}
                       />
                       <Text
                         style={{
-                          color:
-                            payment.source === source.name.toLowerCase()
-                              ? COLORS.black
-                              : COLORS.secondary,
+                          color: payment.source_id === source.id ? COLORS.black : COLORS.secondary,
                         }}>
                         {source.name}
                       </Text>
@@ -269,8 +258,8 @@ export default function EditPayment() {
                 placeholderTextColor={COLORS.gray[300]}
                 multiline={true}
                 textAlignVertical="top"
-                value={payment.notes}
-                onChangeText={(text) => setPayment({ ...payment, notes: text })}
+                value={payment.description}
+                onChangeText={(text) => setPayment({ ...payment, description: text })}
               />
             </View>
           </View>
