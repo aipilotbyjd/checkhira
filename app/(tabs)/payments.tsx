@@ -4,7 +4,7 @@ import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 import { useFocusEffect } from 'expo-router';
 
@@ -23,31 +23,31 @@ export default function PaymentsList() {
 
   useEffect(() => {
     loadPayments({ page: 1 });
-  }, []);
+  }, [currentFilter]);
 
-  // Add focus effect to refresh data when screen is focused
   useFocusEffect(
     useCallback(() => {
       loadPayments({ page: 1 });
-    }, [])
+    }, [currentFilter])
   );
 
   const loadPayments = async ({ page = 1 }: { page?: number }) => {
     try {
-      // Only show full loader for initial load
       if (page === 1) {
         setPaymentsList([]);
         setIsLoadingSub(true);
       }
 
       const data = await getAllPayments({ page });
-      setTotal(data.total);
 
       if (data.payments && data.payments.data) {
+        const newPayments = data.payments.data;
+
         if (page === 1) {
-          setPaymentsList(data.payments.data);
+          setPaymentsList(newPayments);
+          setTotal(data.total || 0);
         } else {
-          setPaymentsList((prev) => [...prev, ...data.payments.data]);
+          setPaymentsList((prev) => [...prev, ...newPayments]);
         }
 
         setHasMorePages(data.payments.current_page < data.payments.last_page);
@@ -57,24 +57,63 @@ export default function PaymentsList() {
       console.error('Error loading payments:', error);
     } finally {
       setIsLoadingSub(false);
+      setIsLoadingMore(false);
+      setRefreshing(false);
     }
   };
 
-  const handleLoadMore = async () => {
+  const handleFilter = (filter: string) => {
+    setCurrentFilter(filter);
+    setCurrentPage(1);
+    setPaymentsList([]);
+    actionSheetRef.current?.hide();
+  };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setCurrentPage(1);
+    await loadPayments({ page: 1 });
+  }, [currentFilter]);
+
+  const handleLoadMore = useCallback(async () => {
     if (!hasMorePages || isLoadingMore) return;
 
     setIsLoadingMore(true);
     await loadPayments({ page: currentPage + 1 });
-    setIsLoadingMore(false);
-  };
+  }, [currentPage, hasMorePages, isLoadingMore]);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadPayments({ page: 1 });
-    setRefreshing(false);
-  };
+  const filteredPaymentsList = useMemo(
+    () =>
+      paymentsList.filter((item) => {
+        const itemDate = new Date(item.date);
+        const today = new Date();
 
-  // Modify the loading condition to only show full screen loader when no data exists
+        switch (currentFilter) {
+          case 'today':
+            return format(itemDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+          case 'week':
+            const weekStart = startOfWeek(today);
+            const weekEnd = endOfWeek(today);
+            return isWithinInterval(itemDate, { start: weekStart, end: weekEnd });
+          case 'month':
+            return (
+              itemDate.getMonth() === today.getMonth() &&
+              itemDate.getFullYear() === today.getFullYear()
+            );
+          default:
+            return true;
+        }
+      }),
+    [paymentsList, currentFilter]
+  );
+
+  const displayTotal = useMemo(() => {
+    if (currentFilter === 'all') {
+      return Number(total);
+    }
+    return filteredPaymentsList.reduce((sum, item) => sum + Number(item.amount), 0);
+  }, [currentFilter, total, filteredPaymentsList]);
+
   if (isLoading && currentPage === 1 && paymentsList.length === 0) {
     return (
       <View className="flex-1 items-center justify-center">
@@ -83,34 +122,8 @@ export default function PaymentsList() {
     );
   }
 
-  const handleFilter = (filter: string) => {
-    setCurrentFilter(filter);
-    actionSheetRef.current?.hide();
-  };
-
-  const filteredPaymentsList = paymentsList.filter((item) => {
-    const itemDate = new Date(item.date);
-    const today = new Date();
-
-    switch (currentFilter) {
-      case 'today':
-        return format(itemDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
-      case 'week':
-        const weekStart = startOfWeek(today);
-        const weekEnd = endOfWeek(today);
-        return isWithinInterval(itemDate, { start: weekStart, end: weekEnd });
-      case 'month':
-        return (
-          itemDate.getMonth() === today.getMonth() && itemDate.getFullYear() === today.getFullYear()
-        );
-      default:
-        return true;
-    }
-  });
-
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
-      {/* Header with shadow */}
       <View
         className="border-b px-6 pb-4 pt-6"
         style={{
@@ -169,25 +182,27 @@ export default function PaymentsList() {
         }}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
-        
-        {/* Show loading indicator if it's initial load but we have some data */}
         {isLoading && currentPage === 1 && paymentsList.length > 0 && (
           <View className="py-4">
             <ActivityIndicator size="small" color={COLORS.primary} />
           </View>
         )}
 
-        {/* Today's total section */}
         <View className="my-6 rounded-xl p-4" style={{ backgroundColor: COLORS.primary + '15' }}>
           <Text className="text-sm font-medium" style={{ color: COLORS.gray[600] }}>
-            Today's Total
+            {currentFilter === 'all'
+              ? 'Total'
+              : currentFilter === 'today'
+                ? "Today's Total"
+                : currentFilter === 'week'
+                  ? "This Week's Total"
+                  : "This Month's Total"}
           </Text>
           <Text className="mt-2 text-3xl font-bold" style={{ color: COLORS.primary }}>
-            ₹ {Number(total).toFixed(2)}
+            ₹ {Number(displayTotal).toFixed(2)}
           </Text>
         </View>
 
-        {/* Payments list */}
         {filteredPaymentsList.map((item) => (
           <Pressable
             key={item.id}
@@ -227,7 +242,6 @@ export default function PaymentsList() {
           </Pressable>
         ))}
 
-        {/* Loading indicator for pagination */}
         {isLoadingMore && (
           <View className="py-4">
             <ActivityIndicator size="small" color={COLORS.primary} />
