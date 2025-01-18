@@ -11,6 +11,10 @@ export default function RootLayout() {
   return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/register" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/phone-login" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/forgot-password" options={{ headerShown: false }} />
       <Stack.Screen name="payments/add" options={{ title: 'Add Payment' }} />
       <Stack.Screen name="payments/[id]/edit" options={{ title: 'Edit Payment' }} />
       <Stack.Screen name="work/add" options={{ title: 'Add Work Entry' }} />
