@@ -212,14 +212,14 @@ export default function AddPayment() {
                   }}
                   placeholder="0.00"
                   placeholderTextColor={COLORS.gray[300]}
-                  value={payment.amount}
+                  value={payment.amount.toString()}
                   keyboardType="decimal-pad"
                   onChangeText={(text) => {
                     const numericText = text.replace(/[^0-9.]/g, '');
                     const parts = numericText.split('.');
                     const formattedText =
                       parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : numericText;
-                    setPayment({ ...payment, amount: formattedText });
+                    setPayment({ ...payment, amount: Number(formattedText) });
                   }}
                 />
               </View>
@@ -265,7 +265,7 @@ export default function AddPayment() {
         visible={showSuccessModal}
         onClose={() => {
           setShowSuccessModal(false);
-          router.back();
+          router.replace('/(tabs)/payments');
         }}
         message="Payment added successfully"
       />

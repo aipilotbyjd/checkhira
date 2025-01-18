@@ -72,10 +72,16 @@ export default function EditPayment() {
       return;
     }
 
+    const numericAmount = payment.amount;
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      Alert.alert('Invalid Amount', 'Please enter a valid positive number');
+      return;
+    }
+
     const paymentData = {
       date: selectedDate,
-      amount: Number(payment.amount),
-      category: payment.category,
+      amount: numericAmount,
+      category: payment.category || undefined,
       description: payment.description.trim(),
       source_id: payment.source_id,
     };
@@ -90,7 +96,6 @@ export default function EditPayment() {
     const result = await deletePayment(Number(id));
     if (result) {
       setShowSuccessModal(true);
-      router.back();
     }
   };
 
@@ -274,7 +279,7 @@ export default function EditPayment() {
         </Pressable>
 
         <Pressable
-          onPress={handleDelete}
+          onPress={() => setShowDeleteModal(true)}
           className="rounded-2xl p-4"
           style={{ backgroundColor: COLORS.error + '15' }}>
           <Text className="text-center text-lg font-semibold" style={{ color: COLORS.error }}>
@@ -287,9 +292,8 @@ export default function EditPayment() {
         visible={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={() => {
-          console.log('Deleting payment:', id);
+          handleDelete();
           setShowDeleteModal(false);
-          setShowSuccessModal(true);
         }}
         message="Are you sure you want to delete this payment?"
       />
@@ -298,7 +302,7 @@ export default function EditPayment() {
         visible={showSuccessModal}
         onClose={() => {
           setShowSuccessModal(false);
-          router.back();
+          router.replace('/(tabs)/payments');
         }}
         message={showDeleteModal ? 'Payment deleted successfully' : 'Payment updated successfully'}
       />

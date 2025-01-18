@@ -4,8 +4,9 @@ import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { usePaymentOperations } from '../../hooks/usePaymentOperations';
+import { useFocusEffect } from 'expo-router';
 
 export default function PaymentsList() {
   const router = useRouter();
@@ -23,6 +24,13 @@ export default function PaymentsList() {
   useEffect(() => {
     loadPayments({ page: 1 });
   }, []);
+
+  // Add focus effect to refresh data when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      loadPayments({ page: 1 });
+    }, [])
+  );
 
   const loadPayments = async ({ page = 1 }: { page?: number }) => {
     try {
