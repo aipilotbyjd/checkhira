@@ -72,7 +72,7 @@ export default function EditPayment() {
       return;
     }
 
-    const numericAmount = payment.amount;
+    const numericAmount = parseFloat(payment.amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
       Alert.alert('Invalid Amount', 'Please enter a valid positive number');
       return;
