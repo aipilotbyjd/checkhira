@@ -1,17 +1,22 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
-import { Link } from 'expo-router';
+import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
+import { Link, useRouter } from 'expo-router';
 import { COLORS } from '../../constants/theme';
 import { AuthHeader } from '../../components/AuthHeader';
 import { AuthInput } from '../../components/AuthInput';
 import { SocialLoginButton } from '../../components/SocialLoginButton';
+import { useAuth } from '../../contexts/AuthContext';
+import { authService } from '../../services/authService';
 
 export default function Login() {
+  const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const newErrors: Record<string, string> = {};
 
     if (!email) newErrors.email = 'Email is required';
@@ -20,8 +25,20 @@ export default function Login() {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      // TODO: Implement login logic
-      console.log('Login:', { email, password });
+      setIsLoading(true);
+      try {
+        const response = await authService.login({ email, password });
+        if (response.status) {
+          await login(response.data);
+          router.replace('/(tabs)');
+        } else {
+          Alert.alert('Error', response.message || 'Login failed');
+        }
+      } catch (error) {
+        Alert.alert('Error', 'Failed to login. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -69,8 +86,11 @@ export default function Login() {
           <Pressable
             onPress={handleLogin}
             className="mb-6 rounded-xl p-4"
-            style={{ backgroundColor: COLORS.primary }}>
-            <Text className="text-center text-lg font-semibold text-white">Sign In</Text>
+            style={{ backgroundColor: COLORS.primary }}
+            disabled={isLoading}>
+            <Text className="text-center text-lg font-semibold text-white">
+              {isLoading ? 'Signing in...' : 'Sign In'}
+            </Text>
           </Pressable>
 
           <View className="mb-6 flex-row items-center">

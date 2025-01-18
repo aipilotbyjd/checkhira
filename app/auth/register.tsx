@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
-import { Link } from 'expo-router';
+import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
+import { Link, useRouter } from 'expo-router';
 import { COLORS } from '../../constants/theme';
 import { AuthHeader } from '../../components/AuthHeader';
 import { AuthInput } from '../../components/AuthInput';
 import { SocialLoginButton } from '../../components/SocialLoginButton';
+import { authService } from '../../services/authService';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function Register() {
+  const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -15,8 +19,9 @@ export default function Register() {
     c_password: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.first_name) newErrors.first_name = 'First name is required';
@@ -31,8 +36,20 @@ export default function Register() {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      // TODO: Implement register logic
-      console.log('Register:', formData);
+      setIsLoading(true);
+      try {
+        const response = await authService.register(formData);
+        if (response.status) {
+          await login(response.data);
+          router.replace('/(tabs)');
+        } else {
+          Alert.alert('Error', response.message || 'Registration failed');
+        }
+      } catch (error) {
+        Alert.alert('Error', 'Failed to register. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -99,7 +116,8 @@ export default function Register() {
           <Pressable
             onPress={handleRegister}
             className="mb-6 rounded-xl p-4"
-            style={{ backgroundColor: COLORS.primary }}>
+            style={{ backgroundColor: COLORS.primary }}
+            disabled={isLoading}>
             <Text className="text-center text-lg font-semibold text-white">Sign Up</Text>
           </Pressable>
 
