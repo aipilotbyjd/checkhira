@@ -5,7 +5,6 @@ import { useRouter } from 'expo-router';
 import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import { useState, useRef, useEffect } from 'react';
-import { PAYMENT_SOURCES, PaymentSource } from '../../constants/payments';
 import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 
 export default function PaymentsList() {
@@ -136,12 +135,12 @@ export default function PaymentsList() {
                 </Text>
                 <View className="mt-2 flex-row items-center">
                   <MaterialCommunityIcons
-                    name={item.source === 'cash' ? 'cash' : 'bank'}
+                    name={item.source.icon}
                     size={16}
                     color={COLORS.gray[500]}
                   />
                   <Text className="ml-2 text-sm" style={{ color: COLORS.gray[500] }}>
-                    {PAYMENT_SOURCES.find((s) => s.value === item.source)?.label}
+                    {item.source.name}
                   </Text>
                 </View>
                 <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>

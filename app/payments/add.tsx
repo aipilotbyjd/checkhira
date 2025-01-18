@@ -6,7 +6,6 @@ import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SuccessModal } from '../../components/SuccessModal';
-import { PAYMENT_SOURCES, PaymentSource } from '../../constants/payments';
 import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 
 interface Payment {
@@ -15,8 +14,16 @@ interface Payment {
   amount: string;
   category?: string;
   notes?: string;
-  source: PaymentSource;
+  source: string;
 }
+
+const PAYMENT_SOURCES = [
+  { label: 'Cash', value: 'cash' },
+  { label: 'Bank Transfer', value: 'bank_transfer' },
+  { label: 'UPI', value: 'upi' },
+  { label: 'Check', value: 'check' },
+  { label: 'Card', value: 'card' },
+] as const;
 
 export default function AddPayment() {
   const router = useRouter();
