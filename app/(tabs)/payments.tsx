@@ -1,4 +1,4 @@
-import { Text, View, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { Text, View, Pressable, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
@@ -18,6 +18,7 @@ export default function PaymentsList() {
   const [hasMorePages, setHasMorePages] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isLoadingSub, setIsLoadingSub] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadPayments({ page: 1 });
@@ -57,6 +58,12 @@ export default function PaymentsList() {
     setIsLoadingMore(true);
     await loadPayments({ page: currentPage + 1 });
     setIsLoadingMore(false);
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadPayments({ page: 1 });
+    setRefreshing(false);
   };
 
   // Modify the loading condition to only show full screen loader when no data exists
@@ -134,6 +141,14 @@ export default function PaymentsList() {
 
       <ScrollView
         className="flex-1 px-4"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.primary]}
+            tintColor={COLORS.primary}
+          />
+        }
         onScroll={({ nativeEvent }) => {
           const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
           const paddingToBottom = 50;
