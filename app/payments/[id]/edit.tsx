@@ -257,7 +257,7 @@ export default function EditPayment() {
                 placeholderTextColor={COLORS.gray[300]}
                 multiline={true}
                 textAlignVertical="top"
-                value={payment.description}
+                value={payment.description || ''}
                 onChangeText={(text) => setPayment({ ...payment, description: text })}
               />
             </View>
