@@ -13,22 +13,54 @@ export default function PaymentsList() {
   const [currentFilter, setCurrentFilter] = useState('all');
   const { getAllPayments, isLoading } = usePaymentOperations();
   const [paymentsList, setPaymentsList] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMorePages, setHasMorePages] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isLoadingSub, setIsLoadingSub] = useState(false);
 
   useEffect(() => {
-    const loadPayments = async () => {
-      const data = await getAllPayments();
-      if (data && Array.isArray(data)) {
-        setPaymentsList(data);
-      } else {
-        setPaymentsList([]);
-      }
-    };
-
-    loadPayments();
+    loadPayments({ page: 1 });
   }, []);
 
-  // Add loading indicator
-  if (isLoading) {
+  const loadPayments = async ({ page = 1 }: { page?: number }) => {
+    try {
+      // Only show full loader for initial load
+      if (page === 1) {
+        setPaymentsList([]);
+        setIsLoadingSub(true);
+      }
+
+      const data = await getAllPayments({ page });
+      setTotal(data.total);
+
+      if (data.payments && data.payments.data) {
+        if (page === 1) {
+          setPaymentsList(data.payments.data);
+        } else {
+          setPaymentsList((prev) => [...prev, ...data.payments.data]);
+        }
+
+        setHasMorePages(data.payments.current_page < data.payments.last_page);
+        setCurrentPage(data.payments.current_page);
+      }
+    } catch (error) {
+      console.error('Error loading payments:', error);
+    } finally {
+      setIsLoadingSub(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (!hasMorePages || isLoadingMore) return;
+
+    setIsLoadingMore(true);
+    await loadPayments({ page: currentPage + 1 });
+    setIsLoadingMore(false);
+  };
+
+  // Modify the loading condition to only show full screen loader when no data exists
+  if (isLoading && currentPage === 1 && paymentsList.length === 0) {
     return (
       <View className="flex-1 items-center justify-center">
         <ActivityIndicator size="large" color={COLORS.primary} />
@@ -100,17 +132,35 @@ export default function PaymentsList() {
         </View>
       </View>
 
-      <ScrollView className="flex-1 px-4">
+      <ScrollView
+        className="flex-1 px-4"
+        onScroll={({ nativeEvent }) => {
+          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+          const paddingToBottom = 50;
+          const isCloseToBottom =
+            layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+
+          if (isCloseToBottom && !isLoadingMore && hasMorePages) {
+            handleLoadMore();
+          }
+        }}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}>
+        
+        {/* Show loading indicator if it's initial load but we have some data */}
+        {isLoading && currentPage === 1 && paymentsList.length > 0 && (
+          <View className="py-4">
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          </View>
+        )}
+
         {/* Today's total section */}
         <View className="my-6 rounded-xl p-4" style={{ backgroundColor: COLORS.primary + '15' }}>
           <Text className="text-sm font-medium" style={{ color: COLORS.gray[600] }}>
             Today's Total
           </Text>
           <Text className="mt-2 text-3xl font-bold" style={{ color: COLORS.primary }}>
-            ₹ {Number(paymentsList
-                .filter(item => format(new Date(item.date), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd'))
-                .reduce((sum, item) => sum + item.amount, 0))
-                .toFixed(2)}
+            ₹ {Number(total).toFixed(2)}
           </Text>
         </View>
 
@@ -153,6 +203,13 @@ export default function PaymentsList() {
             </View>
           </Pressable>
         ))}
+
+        {/* Loading indicator for pagination */}
+        {isLoadingMore && (
+          <View className="py-4">
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          </View>
+        )}
       </ScrollView>
 
       <ActionSheet

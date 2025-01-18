@@ -71,11 +71,11 @@ export const usePaymentOperations = () => {
     }
   };
 
-  const getAllPayments = async () => {
+  const getAllPayments = async ({ page = 1 }: { page?: number }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await paymentService.getAllPayments();
+      const response = await paymentService.getAllPayments({ page });
       return response.data;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch payments';

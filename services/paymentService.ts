@@ -1,5 +1,4 @@
 import { api, handleResponse } from './api';
-import { PaymentSource } from '../constants/payments';
 
 export interface PaymentPayload {
   date: Date;
@@ -7,7 +6,7 @@ export interface PaymentPayload {
   amount: string;
   category?: string;
   notes?: string;
-  source: PaymentSource;
+  source: string;
 }
 
 export const paymentService = {
@@ -44,8 +43,8 @@ export const paymentService = {
     return handleResponse(response);
   },
 
-  async getAllPayments() {
-    const response = await fetch(`${api.baseUrl}/payments`, {
+  async getAllPayments({ page = 1 }: { page?: number }) {
+    const response = await fetch(`${api.baseUrl}/payments?page=${page}`, {
       headers: api.headers,
     });
     return handleResponse(response);
