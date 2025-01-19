@@ -12,7 +12,7 @@ export const paymentService = {
   async createPayment(data: PaymentPayload) {
     const response = await fetch(`${api.baseUrl}/payments`, {
       method: 'POST',
-      headers: api.headers,
+      headers: await api.getHeaders(),
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -21,7 +21,7 @@ export const paymentService = {
   async updatePayment(id: number, data: PaymentPayload) {
     const response = await fetch(`${api.baseUrl}/payments/${id}`, {
       method: 'PUT',
-      headers: api.headers,
+      headers: await api.getHeaders(),
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -30,28 +30,30 @@ export const paymentService = {
   async deletePayment(id: number) {
     const response = await fetch(`${api.baseUrl}/payments/${id}`, {
       method: 'DELETE',
-      headers: api.headers,
+      headers: await api.getHeaders(),
     });
     return handleResponse(response);
   },
 
   async getPayment(id: number) {
     const response = await fetch(`${api.baseUrl}/payments/${id}`, {
-      headers: api.headers,
+      headers: await api.getHeaders(),
     });
     return handleResponse(response);
   },
 
   async getAllPayments({ page = 1 }: { page?: number }) {
     const response = await fetch(`${api.baseUrl}/payments?page=${page}`, {
-      headers: api.headers,
+      headers: await api.getHeaders(),
     });
-    return handleResponse(response);
+    const data = await handleResponse(response);
+    console.log(data);
+    return data;
   },
 
   async getPaymentSources() {
     const response = await fetch(`${api.baseUrl}/payments/sources`, {
-      headers: api.headers,
+      headers: await api.getHeaders(),
     });
     return handleResponse(response);
   },

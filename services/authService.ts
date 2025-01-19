@@ -29,7 +29,14 @@ export const authService = {
       headers: await api.getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
+    const result = await handleResponse(response);
+    
+    // Ensure the response includes the token
+    if (result.status && result.data && !result.data.token) {
+      throw new Error('Token not found in response');
+    }
+    
+    return result;
   },
 
   async phoneLogin(phone: string) {

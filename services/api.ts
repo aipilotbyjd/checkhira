@@ -10,7 +10,9 @@ export const api = {
   },
   async getHeaders() {
     const user = await AsyncStorage.getItem('user');
+    console.log('User:', user);
     const token = user ? JSON.parse(user).token : null;
+    console.log('Current token:', token);
     return {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
