@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Pressable, Alert } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
@@ -30,6 +30,15 @@ export default function Account() {
       href: '/account/about',
     },
   ];
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.replace('/auth/login');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
 
   if (!user) {
     return (
@@ -101,6 +110,7 @@ export default function Account() {
       {/* Logout Button */}
       <View className="mt-auto p-6">
         <TouchableOpacity
+          onPress={handleLogout}
           className="flex-row items-center justify-center rounded-2xl p-4"
           style={{ backgroundColor: COLORS.error + '15' }}>
           <MaterialCommunityIcons name="logout" size={24} color={COLORS.error} />

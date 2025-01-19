@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authService } from '../services/authService';
 
 interface User {
   id: number;
@@ -23,21 +24,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function loadUser() {
-      try {
-        const userJson = await AsyncStorage.getItem('user');
-        if (userJson) {
-          setUser(JSON.parse(userJson));
-        }
-      } catch (error) {
-        console.error('Error loading user:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
     loadUser();
   }, []);
+
+  const loadUser = async () => {
+    try {
+      const userJson = await AsyncStorage.getItem('user');
+      if (userJson) {
+        setUser(JSON.parse(userJson));
+      }
+    } catch (error) {
+      console.error('Error loading user:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = useCallback(async (userData: User) => {
     try {
@@ -51,10 +52,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
+      await authService.logout();
       await AsyncStorage.removeItem('user');
       setUser(null);
     } catch (error) {
-      console.error('Error removing user:', error);
+      console.error('Error during logout:', error);
       throw error;
     }
   }, []);

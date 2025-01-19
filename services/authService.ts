@@ -17,7 +17,7 @@ export const authService = {
   async register(data: RegisterPayload) {
     const response = await fetch(`${api.baseUrl}/register`, {
       method: 'POST',
-      headers: api.headers,
+      headers: await api.getHeaders(),
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -26,7 +26,7 @@ export const authService = {
   async login(data: LoginPayload) {
     const response = await fetch(`${api.baseUrl}/login`, {
       method: 'POST',
-      headers: api.headers,
+      headers: await api.getHeaders(),
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -35,7 +35,7 @@ export const authService = {
   async phoneLogin(phone: string) {
     const response = await fetch(`${api.baseUrl}/phone-login`, {
       method: 'POST',
-      headers: api.headers,
+      headers: await api.getHeaders(),
       body: JSON.stringify({ phone }),
     });
     return handleResponse(response);
@@ -44,7 +44,7 @@ export const authService = {
   async verifyOtp(phone: string, otp: string) {
     const response = await fetch(`${api.baseUrl}/verify-otp`, {
       method: 'POST',
-      headers: api.headers,
+      headers: await api.getHeaders(),
       body: JSON.stringify({ phone, otp }),
     });
     return handleResponse(response);
@@ -53,8 +53,16 @@ export const authService = {
   async forgotPassword(email: string) {
     const response = await fetch(`${api.baseUrl}/forgot-password`, {
       method: 'POST',
-      headers: api.headers,
+      headers: await api.getHeaders(),
       body: JSON.stringify({ email }),
+    });
+    return handleResponse(response);
+  },
+
+  async logout() {
+    const response = await fetch(`${api.baseUrl}/logout`, {
+      method: 'POST',
+      headers: await api.getHeaders(),
     });
     return handleResponse(response);
   },

@@ -18,7 +18,7 @@ export const workService = {
   async createWork(data: WorkEntryPayload) {
     const response = await fetch(`${api.baseUrl}/works`, {
       method: 'POST',
-      headers: api.headers,
+      headers: await api.getHeaders(),
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -27,7 +27,7 @@ export const workService = {
   async updateWork(id: number, data: WorkEntryPayload) {
     const response = await fetch(`${api.baseUrl}/works/${id}`, {
       method: 'PUT',
-      headers: api.headers,
+      headers: await api.getHeaders(),
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -36,21 +36,21 @@ export const workService = {
   async deleteWork(id: number) {
     const response = await fetch(`${api.baseUrl}/works/${id}`, {
       method: 'DELETE',
-      headers: api.headers,
+      headers: await api.getHeaders(),
     });
     return handleResponse(response);
   },
 
   async getWork(id: number) {
     const response = await fetch(`${api.baseUrl}/works/${id}`, {
-      headers: api.headers,
+      headers: await api.getHeaders(),
     });
     return handleResponse(response);
   },
 
   async getAllWork() {
     const response = await fetch(`${api.baseUrl}/works`, {
-      headers: api.headers,
+      headers: await api.getHeaders(),
     });
     return handleResponse(response);
   },
