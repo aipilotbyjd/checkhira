@@ -46,17 +46,13 @@ export default function Account() {
 
         <View className="space-y-4">
           <Link href="/auth/login" asChild>
-            <Pressable
-              className="rounded-xl p-4"
-              style={{ backgroundColor: COLORS.primary }}>
+            <Pressable className="rounded-xl p-4" style={{ backgroundColor: COLORS.primary }}>
               <Text className="text-center text-lg font-semibold text-white">Login</Text>
             </Pressable>
           </Link>
 
           <Link href="/auth/register" asChild>
-            <Pressable
-              className="rounded-xl border p-4"
-              style={{ borderColor: COLORS.primary }}>
+            <Pressable className="rounded-xl border p-4" style={{ borderColor: COLORS.primary }}>
               <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
                 Create Account
               </Text>
@@ -88,11 +84,11 @@ export default function Account() {
       {/* Menu Items */}
       <View className="mt-8 px-6">
         {menuItems.map((item, index) => (
-          <Link key={item.href} href={item.href} asChild>
+          <Link key={item.href} href={item.href as any} asChild>
             <TouchableOpacity
               className="mb-4 flex-row items-center rounded-2xl p-4"
               style={{ backgroundColor: COLORS.background.secondary }}>
-              <MaterialCommunityIcons name={item.icon} size={24} color={COLORS.primary} />
+              <MaterialCommunityIcons name={item.icon as any} size={24} color={COLORS.primary} />
               <Text className="ml-3 flex-1 text-base" style={{ color: COLORS.gray[600] }}>
                 {item.title}
               </Text>
