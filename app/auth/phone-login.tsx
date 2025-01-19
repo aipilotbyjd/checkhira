@@ -6,6 +6,7 @@ import { AuthHeader } from '../../components/AuthHeader';
 import { AuthInput } from '../../components/AuthInput';
 import { authService } from '../../services/authService';
 import { useAuth } from '../../contexts/AuthContext';
+import { ProtectedRoute } from '../../components/ProtectedRoute';
 
 export default function PhoneLogin() {
   const router = useRouter();
@@ -62,69 +63,73 @@ export default function PhoneLogin() {
   };
 
   return (
-    <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
-      <ScrollView className="flex-1">
-        <AuthHeader
-          title="Phone Login"
-          subtitle={showOtp ? 'Enter the OTP sent to your phone' : 'Enter your phone number to continue'}
-        />
+    <ProtectedRoute>
+      <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
+        <ScrollView className="flex-1">
+          <AuthHeader
+            title="Phone Login"
+            subtitle={
+              showOtp ? 'Enter the OTP sent to your phone' : 'Enter your phone number to continue'
+            }
+          />
 
-        <View className="px-6">
-          {!showOtp ? (
-            <>
-              <AuthInput
-                label="Phone Number"
-                icon="phone-outline"
-                placeholder="Enter your phone number"
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
-                keyboardType="phone-pad"
-                error={errors.phoneNumber}
-                required
-              />
+          <View className="px-6">
+            {!showOtp ? (
+              <>
+                <AuthInput
+                  label="Phone Number"
+                  icon="phone-outline"
+                  placeholder="Enter your phone number"
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                  keyboardType="phone-pad"
+                  error={errors.phoneNumber}
+                  required
+                />
 
-              <Pressable
-                onPress={handleSendOtp}
-                className="mb-6 rounded-xl p-4"
-                style={{ backgroundColor: COLORS.primary }}
-                disabled={isLoading}>
-                <Text className="text-center text-lg font-semibold text-white">
-                  {isLoading ? 'Sending OTP...' : 'Send OTP'}
-                </Text>
-              </Pressable>
-            </>
-          ) : (
-            <>
-              <AuthInput
-                label="OTP"
-                icon="lock-outline"
-                placeholder="Enter OTP"
-                value={otp}
-                onChangeText={setOtp}
-                keyboardType="number-pad"
-                error={errors.otp}
-                required
-              />
+                <Pressable
+                  onPress={handleSendOtp}
+                  className="mb-6 rounded-xl p-4"
+                  style={{ backgroundColor: COLORS.primary }}
+                  disabled={isLoading}>
+                  <Text className="text-center text-lg font-semibold text-white">
+                    {isLoading ? 'Sending OTP...' : 'Send OTP'}
+                  </Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <AuthInput
+                  label="OTP"
+                  icon="lock-outline"
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChangeText={setOtp}
+                  keyboardType="number-pad"
+                  error={errors.otp}
+                  required
+                />
 
-              <Pressable
-                onPress={handleVerifyOtp}
-                className="mb-6 rounded-xl p-4"
-                style={{ backgroundColor: COLORS.primary }}
-                disabled={isLoading}>
-                <Text className="text-center text-lg font-semibold text-white">
-                  {isLoading ? 'Verifying...' : 'Verify OTP'}
-                </Text>
-              </Pressable>
+                <Pressable
+                  onPress={handleVerifyOtp}
+                  className="mb-6 rounded-xl p-4"
+                  style={{ backgroundColor: COLORS.primary }}
+                  disabled={isLoading}>
+                  <Text className="text-center text-lg font-semibold text-white">
+                    {isLoading ? 'Verifying...' : 'Verify OTP'}
+                  </Text>
+                </Pressable>
 
-              <Pressable onPress={handleSendOtp} disabled={isLoading}>
-                <Text className="text-center text-sm" style={{ color: COLORS.primary }}>
-                  Resend OTP
-                </Text>
-              </Pressable>
-            </>
-          )}
-        </View>
-      </ScrollView>
-    </View>
+                <Pressable onPress={handleSendOtp} disabled={isLoading}>
+                  <Text className="text-center text-sm" style={{ color: COLORS.primary }}>
+                    Resend OTP
+                  </Text>
+                </Pressable>
+              </>
+            )}
+          </View>
+        </ScrollView>
+      </View>
+    </ProtectedRoute>
   );
 }

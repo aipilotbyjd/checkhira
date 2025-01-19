@@ -1,18 +1,26 @@
 import { useEffect } from 'react';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { View, ActivityIndicator } from 'react-native';
 import { COLORS } from '../constants/theme';
 
+const PUBLIC_ROUTES = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/phone-login',
+  '/auth/forgot-password',
+];
+
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isLoading && !user && !PUBLIC_ROUTES.includes(pathname)) {
       router.replace('/auth/login');
     }
-  }, [user, isLoading]);
+  }, [user, isLoading, pathname]);
 
   if (isLoading) {
     return (
@@ -22,7 +30,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user) {
+  if (!user && !PUBLIC_ROUTES.includes(pathname)) {
     return null;
   }
 
