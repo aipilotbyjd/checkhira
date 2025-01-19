@@ -45,11 +45,7 @@ export default function Login() {
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
       <ScrollView className="flex-1">
-        <AuthHeader
-          title="Welcome Back!"
-          subtitle="Sign in to continue"
-          showBack={false}
-        />
+        <AuthHeader title="Welcome Back!" subtitle="Sign in to continue" showBack={false} />
 
         <View className="px-6">
           <AuthInput
@@ -112,11 +108,7 @@ export default function Login() {
 
           <Link href="/auth/phone-login" asChild>
             <Pressable className="mb-6">
-              <SocialLoginButton
-                icon="phone"
-                label="Continue with Phone"
-                onPress={() => {}}
-              />
+              <SocialLoginButton icon="phone" label="Continue with Phone" onPress={() => {}} />
             </Pressable>
           </Link>
 

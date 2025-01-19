@@ -27,7 +27,7 @@ export default function PhoneLogin() {
       try {
         const response = await authService.phoneLogin(phoneNumber);
         if (response.status) {
-          setShowOtp(true);
+          router.push(`/auth/verify-otp?phone=${phoneNumber}`);
         } else {
           Alert.alert('Error', response.message || 'Failed to send OTP');
         }
