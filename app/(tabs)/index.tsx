@@ -89,7 +89,7 @@ export default function Home() {
               This Week ({format(startOfWeek(new Date()), 'd MMM')} -{' '}
               {format(endOfWeek(new Date()), 'd MMM')})
             </Text>
-            <Pressable onPress={() => router.push('/stats')}>
+            <Pressable onPress={() => router.push('/account')}>
               <Text style={{ color: COLORS.primary }}>See All</Text>
             </Pressable>
           </View>
@@ -173,7 +173,7 @@ export default function Home() {
             </Pressable>
 
             <Pressable
-              onPress={() => router.push('/reports')}
+              onPress={() => router.push('/account')}
               className="flex-row items-center rounded-xl p-4"
               style={{ backgroundColor: COLORS.primary + '15' }}>
               <MaterialCommunityIcons
@@ -187,7 +187,7 @@ export default function Home() {
             </Pressable>
 
             <Pressable
-              onPress={() => router.push('/calendar')}
+              onPress={() => router.push('/account')}
               className="flex-row items-center rounded-xl p-4"
               style={{ backgroundColor: COLORS.primary + '15' }}>
               <MaterialCommunityIcons name="calendar-month" size={24} color={COLORS.primary} />
@@ -204,7 +204,7 @@ export default function Home() {
             <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
               Recent Activities
             </Text>
-            <Pressable onPress={() => router.push('/activities')}>
+            <Pressable onPress={() => router.push('/account')}>
               <Text style={{ color: COLORS.primary }}>See All</Text>
             </Pressable>
           </View>
@@ -212,11 +212,11 @@ export default function Home() {
           {recentActivities.map((activity) => (
             <Pressable
               key={activity.id}
-              onPress={() => router.push(`/activity/${activity.id}`)}
+              onPress={() => router.push(`/account`)}
               className="mb-4 flex-row items-center rounded-xl p-4"
               style={{ backgroundColor: COLORS.background.secondary }}>
               <View className="rounded-full p-2" style={{ backgroundColor: activity.color + '15' }}>
-                <MaterialCommunityIcons name={activity.icon} size={26} color={activity.color} />
+                <MaterialCommunityIcons name={activity.icon as any} size={26} color={activity.color} />
               </View>
               <View className="ml-4 flex-1">
                 <Text className="text-base font-medium" style={{ color: COLORS.secondary }}>
