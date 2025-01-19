@@ -106,11 +106,11 @@ export default function Login() {
             }}
           />
 
-          <Link href="/auth/phone-login" asChild>
-            <Pressable className="mb-6">
+          <Pressable>
+            <Link href="/auth/phone-login" asChild>
               <SocialLoginButton icon="phone" label="Continue with Phone" onPress={() => {}} />
-            </Pressable>
-          </Link>
+            </Link>
+          </Pressable>
 
           <View className="mb-6 flex-row justify-center">
             <Text style={{ color: COLORS.gray[400] }}>Don't have an account? </Text>

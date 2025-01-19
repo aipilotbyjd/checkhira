@@ -49,4 +49,13 @@ export const authService = {
     });
     return handleResponse(response);
   },
+
+  async forgotPassword(email: string) {
+    const response = await fetch(`${api.baseUrl}/forgot-password`, {
+      method: 'POST',
+      headers: api.headers,
+      body: JSON.stringify({ email }),
+    });
+    return handleResponse(response);
+  },
 };
