@@ -4,8 +4,8 @@ import { useRouter } from 'expo-router';
 import { COLORS } from '../../constants/theme';
 import { AuthHeader } from '../../components/AuthHeader';
 import { AuthInput } from '../../components/AuthInput';
-import { useAuth } from '../../contexts/AuthContext';
 import { authService } from '../../services/authService';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function PhoneLogin() {
   const router = useRouter();
@@ -49,7 +49,7 @@ export default function PhoneLogin() {
         const response = await authService.verifyOtp(phoneNumber, otp);
         if (response.status) {
           await login(response.data);
-          router.replace('/(tabs)');
+          router.push('/(tabs)');
         } else {
           Alert.alert('Error', response.message || 'Invalid OTP');
         }

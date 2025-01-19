@@ -15,7 +15,7 @@ interface LoginPayload {
 
 export const authService = {
   async register(data: RegisterPayload) {
-    const response = await fetch(`${api.baseUrl}/auth/register`, {
+    const response = await fetch(`${api.baseUrl}/register`, {
       method: 'POST',
       headers: api.headers,
       body: JSON.stringify(data),
@@ -24,7 +24,7 @@ export const authService = {
   },
 
   async login(data: LoginPayload) {
-    const response = await fetch(`${api.baseUrl}/auth/login`, {
+    const response = await fetch(`${api.baseUrl}/login`, {
       method: 'POST',
       headers: api.headers,
       body: JSON.stringify(data),
@@ -33,7 +33,7 @@ export const authService = {
   },
 
   async phoneLogin(phone: string) {
-    const response = await fetch(`${api.baseUrl}/auth/phone-login`, {
+    const response = await fetch(`${api.baseUrl}/phone-login`, {
       method: 'POST',
       headers: api.headers,
       body: JSON.stringify({ phone }),
@@ -42,7 +42,7 @@ export const authService = {
   },
 
   async verifyOtp(phone: string, otp: string) {
-    const response = await fetch(`${api.baseUrl}/auth/verify-otp`, {
+    const response = await fetch(`${api.baseUrl}/verify-otp`, {
       method: 'POST',
       headers: api.headers,
       body: JSON.stringify({ phone, otp }),
