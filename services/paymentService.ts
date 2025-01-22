@@ -42,8 +42,8 @@ export const paymentService = {
     return handleResponse(response);
   },
 
-  async getAllPayments({ page = 1 }: { page?: number }) {
-    const response = await fetch(`${api.baseUrl}/payments?page=${page}`, {
+  async getAllPayments({ page = 1, filter = 'all' }: { page?: number; filter?: string }) {
+    const response = await fetch(`${api.baseUrl}/payments?page=${page}&filter=${filter}`, {
       headers: await api.getHeaders(),
     });
     const data = await handleResponse(response);
