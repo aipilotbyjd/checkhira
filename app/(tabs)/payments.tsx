@@ -2,11 +2,11 @@ import { Text, View, Pressable, ScrollView, ActivityIndicator, RefreshControl } 
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
-import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 import { useFocusEffect } from 'expo-router';
+import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 
 export default function PaymentsList() {
   const router = useRouter();
@@ -21,24 +21,30 @@ export default function PaymentsList() {
   const [isLoadingSub, setIsLoadingSub] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadPayments({ page: 1 });
-  }, [currentFilter]);
+  const loadPaymentsRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
-      loadPayments({ page: 1 });
+      if (!loadPaymentsRef.current) {
+        loadPaymentsRef.current = true;
+        loadPayments({ page: 1 });
+      }
+
+      return () => {
+        loadPaymentsRef.current = false;
+      };
     }, [currentFilter])
   );
 
   const loadPayments = async ({ page = 1 }: { page?: number }) => {
+    console.log('Loading payments:', { page, currentFilter, time: new Date().toISOString() });
     try {
       if (page === 1) {
         setPaymentsList([]);
         setIsLoadingSub(true);
       }
 
-      const data = await getAllPayments({ page });
+      const data = await getAllPayments({ page, filter: currentFilter });
 
       if (data.payments && data.payments.data) {
         const newPayments = data.payments.data;
@@ -82,37 +88,9 @@ export default function PaymentsList() {
     await loadPayments({ page: currentPage + 1 });
   }, [currentPage, hasMorePages, isLoadingMore]);
 
-  const filteredPaymentsList = useMemo(
-    () =>
-      paymentsList.filter((item) => {
-        const itemDate = new Date(item.date);
-        const today = new Date();
-
-        switch (currentFilter) {
-          case 'today':
-            return format(itemDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
-          case 'week':
-            const weekStart = startOfWeek(today);
-            const weekEnd = endOfWeek(today);
-            return isWithinInterval(itemDate, { start: weekStart, end: weekEnd });
-          case 'month':
-            return (
-              itemDate.getMonth() === today.getMonth() &&
-              itemDate.getFullYear() === today.getFullYear()
-            );
-          default:
-            return true;
-        }
-      }),
-    [paymentsList, currentFilter]
-  );
-
   const displayTotal = useMemo(() => {
-    if (currentFilter === 'all') {
-      return Number(total);
-    }
-    return filteredPaymentsList.reduce((sum, item) => sum + Number(item.amount), 0);
-  }, [currentFilter, total, filteredPaymentsList]);
+    return Number(total);
+  }, [total]);
 
   if (isLoading && currentPage === 1 && paymentsList.length === 0) {
     return (
@@ -203,7 +181,7 @@ export default function PaymentsList() {
           </Text>
         </View>
 
-        {filteredPaymentsList.map((item) => (
+        {paymentsList.map((item) => (
           <Pressable
             key={item.id}
             onPress={() => router.push(`/payments/${item.id}/edit`)}
