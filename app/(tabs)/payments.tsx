@@ -3,7 +3,7 @@ import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 import { useFocusEffect } from 'expo-router';
 import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
@@ -25,10 +25,7 @@ export default function PaymentsList() {
 
   useFocusEffect(
     useCallback(() => {
-      if (!loadPaymentsRef.current) {
-        loadPaymentsRef.current = true;
-        loadPayments({ page: 1 });
-      }
+      loadPayments({ page: 1 });
 
       return () => {
         loadPaymentsRef.current = false;
@@ -44,7 +41,10 @@ export default function PaymentsList() {
         setIsLoadingSub(true);
       }
 
-      const data = await getAllPayments({ page, filter: currentFilter });
+      const data = await getAllPayments({ page, filter: currentFilter } as {
+        page?: number;
+        filter: string;
+      });
 
       if (data.payments && data.payments.data) {
         const newPayments = data.payments.data;
@@ -69,9 +69,11 @@ export default function PaymentsList() {
   };
 
   const handleFilter = (filter: string) => {
-    setCurrentFilter(filter);
-    setCurrentPage(1);
-    setPaymentsList([]);
+    if (filter !== currentFilter) {
+      setCurrentFilter(filter);
+      setCurrentPage(1);
+      setPaymentsList([]);
+    }
     actionSheetRef.current?.hide();
   };
 
