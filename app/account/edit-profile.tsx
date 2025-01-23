@@ -21,6 +21,7 @@ export default function EditProfile() {
   const { isLoading, getProfile, updateProfile, pickImage, uploadProfileImage } =
     useProfileOperations();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile>({
     firstName: '',
     lastName: '',
@@ -37,7 +38,8 @@ export default function EditProfile() {
   const loadProfile = async () => {
     const data = await getProfile();
     if (data) {
-      const [firstName = '', lastName = ''] = (data.name || '').split(' ');
+      const firstName = data.first_name || '';
+      const lastName = data.last_name || '';
       setProfile({
         ...data,
         firstName,
@@ -50,10 +52,8 @@ export default function EditProfile() {
   const handleImagePick = async () => {
     const imageUri = await pickImage();
     if (imageUri) {
-      const result = await uploadProfileImage(imageUri);
-      if (result?.data?.profile_image) {
-        setProfile({ ...profile, profile_image: result.data.profile_image });
-      }
+      setSelectedImage(imageUri);
+      setProfile({ ...profile, tempImageUri: imageUri });
     }
   };
 
@@ -63,15 +63,34 @@ export default function EditProfile() {
       return;
     }
 
-    const result = await updateProfile({
-      ...profile,
-      firstName: profile.firstName,
-      lastName: profile.lastName,
-    });
-    if (result) {
-      setShowSuccessModal(true);
+    try {
+      // First upload image if selected
+      let updatedImageUrl = profile.profile_image;
+      if (selectedImage) {
+        const imageResult = await uploadProfileImage(selectedImage);
+        if (imageResult?.data?.profile_image) {
+          updatedImageUrl = imageResult.data.profile_image;
+        }
+      }
+
+      // Then update profile
+      const result = await updateProfile({
+        ...profile,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        profile_image: updatedImageUrl,
+      });
+
+      if (result) {
+        setShowSuccessModal(true);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
   };
+
+  // Update the image display in the profile section
+  const displayImage = profile.tempImageUri || profile.profile_image;
 
   if (isLoading) {
     return (
@@ -89,7 +108,7 @@ export default function EditProfile() {
           <View className="relative">
             <View className="h-24 w-24 rounded-full bg-gray-200">
               <Image
-                source={{ uri: profile.profile_image }}
+                source={{ uri: displayImage }}
                 className="h-full w-full rounded-full"
               />
             </View>

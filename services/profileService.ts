@@ -8,6 +8,7 @@ export interface UserProfile {
   phone: string;
   address: string;
   profile_image?: string;
+  tempImageUri?: string;
   email_verified_at?: string | null;
   created_at?: string;
   updated_at?: string;
