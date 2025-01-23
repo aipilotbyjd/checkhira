@@ -21,14 +21,16 @@ export default function EditProfile() {
   const { isLoading, getProfile, updateProfile, pickImage, uploadProfileImage } =
     useProfileOperations();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(
+    require('../../assets/profile_image.jpg')
+  );
   const [profile, setProfile] = useState<UserProfile>({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
     address: '',
-    profile_image: 'https://i.imgur.com/6VBx3io.png',
+    profile_image: require('../../assets/profile_image.jpg'),
   });
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export default function EditProfile() {
 
   const loadProfile = async () => {
     const data = await getProfile();
+    console.log('Profile data:', data);
     if (data) {
       const firstName = data.first_name || '';
       const lastName = data.last_name || '';
@@ -44,7 +47,7 @@ export default function EditProfile() {
         ...data,
         firstName,
         lastName,
-        profile_image: data.profile_image || 'https://i.imgur.com/6VBx3io.png',
+        profile_image: data.profile_image || require('../../assets/profile_image.jpg'),
       });
     }
   };

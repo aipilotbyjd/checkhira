@@ -13,7 +13,7 @@ export const useProfileOperations = () => {
     setError(null);
     try {
       const response = await profileService.getProfile();
-      return response;
+      return response.data;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch profile';
       setError(errorMessage);

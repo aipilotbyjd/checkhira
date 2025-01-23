@@ -81,12 +81,12 @@ export default function Account() {
       <View className="items-center px-6 pt-8">
         <View className="h-24 w-24 rounded-full bg-gray-200">
           <Image
-            source={{ uri: user.profile_image || 'https://i.imgur.com/6VBx3io.png' }}
+            source={{ uri: user.profile_image || require('../../assets/profile_image.jpg') }}
             className="h-full w-full rounded-full"
           />
         </View>
         <Text className="mt-4 text-xl font-semibold" style={{ color: COLORS.secondary }}>
-          {user.firstName} {user.lastName}
+          {user.first_name} {user.last_name}
         </Text>
         <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
           {user.email}
