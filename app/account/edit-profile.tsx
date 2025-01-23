@@ -1,37 +1,85 @@
-import { useState } from 'react';
-import { Text, View, TextInput, Pressable, Image, ScrollView, Alert } from 'react-native';
+import { useState, useEffect } from 'react';
+import {
+  Text,
+  View,
+  TextInput,
+  Pressable,
+  Image,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { SuccessModal } from '../../components/SuccessModal';
-
-interface UserProfile {
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-}
+import { useProfileOperations } from '../../hooks/useProfileOperations';
+import { UserProfile } from '../../services/profileService';
 
 export default function EditProfile() {
   const router = useRouter();
+  const { isLoading, getProfile, updateProfile, pickImage, uploadProfileImage } =
+    useProfileOperations();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1234567890',
-    address: '123 Main St, City, Country',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: '',
+    profile_image: 'https://via.placeholder.com/150',
   });
 
-  const handleSave = () => {
-    if (!profile.name || !profile.email) {
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    const data = await getProfile();
+    if (data) {
+      const [firstName = '', lastName = ''] = (data.name || '').split(' ');
+      setProfile({
+        ...data,
+        firstName,
+        lastName,
+        profile_image: data.profile_image || 'https://via.placeholder.com/150',
+      });
+    }
+  };
+
+  const handleImagePick = async () => {
+    const imageUri = await pickImage();
+    if (imageUri) {
+      const result = await uploadProfileImage(imageUri);
+      if (result?.data?.profile_image) {
+        setProfile({ ...profile, profile_image: result.data.profile_image });
+      }
+    }
+  };
+
+  const handleSave = async () => {
+    if (!profile.firstName || !profile.lastName || !profile.email) {
       Alert.alert('Invalid Entry', 'Please fill in all required fields');
       return;
     }
 
-    // TODO: Implement API call to update profile
-    console.log('Updating profile:', profile);
-    setShowSuccessModal(true);
+    const result = await updateProfile({
+      ...profile,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+    });
+    if (result) {
+      setShowSuccessModal(true);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
@@ -41,11 +89,12 @@ export default function EditProfile() {
           <View className="relative">
             <View className="h-24 w-24 rounded-full bg-gray-200">
               <Image
-                source={{ uri: 'https://via.placeholder.com/150' }}
+                source={{ uri: profile.profile_image }}
                 className="h-full w-full rounded-full"
               />
             </View>
             <Pressable
+              onPress={handleImagePick}
               className="absolute bottom-0 right-0 rounded-full p-2"
               style={{ backgroundColor: COLORS.primary }}>
               <MaterialCommunityIcons name="camera" size={20} color="white" />
@@ -57,7 +106,7 @@ export default function EditProfile() {
         <View className="mt-6 space-y-4 px-6">
           <View>
             <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
-              Full Name <Text style={{ color: COLORS.error }}>*</Text>
+              First Name <Text style={{ color: COLORS.error }}>*</Text>
             </Text>
             <TextInput
               className="rounded-xl border p-3"
@@ -66,9 +115,26 @@ export default function EditProfile() {
                 borderColor: COLORS.gray[200],
                 color: COLORS.secondary,
               }}
-              placeholder="Enter your full name"
-              value={profile.name}
-              onChangeText={(text) => setProfile({ ...profile, name: text })}
+              placeholder="Enter your first name"
+              value={profile.firstName}
+              onChangeText={(text) => setProfile({ ...profile, firstName: text })}
+            />
+          </View>
+
+          <View>
+            <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
+              Last Name <Text style={{ color: COLORS.error }}>*</Text>
+            </Text>
+            <TextInput
+              className="rounded-xl border p-3"
+              style={{
+                backgroundColor: COLORS.white,
+                borderColor: COLORS.gray[200],
+                color: COLORS.secondary,
+              }}
+              placeholder="Enter your last name"
+              value={profile.lastName}
+              onChangeText={(text) => setProfile({ ...profile, lastName: text })}
             />
           </View>
 
