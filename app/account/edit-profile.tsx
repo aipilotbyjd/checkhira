@@ -28,7 +28,7 @@ export default function EditProfile() {
     email: '',
     phone: '',
     address: '',
-    profile_image: 'https://via.placeholder.com/150',
+    profile_image: 'https://i.imgur.com/6VBx3io.png',
   });
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export default function EditProfile() {
         ...data,
         firstName,
         lastName,
-        profile_image: data.profile_image || 'https://via.placeholder.com/150',
+        profile_image: data.profile_image || 'https://i.imgur.com/6VBx3io.png',
       });
     }
   };
@@ -56,15 +56,12 @@ export default function EditProfile() {
       const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
       const filename = imageUri.split('/').pop() || '';
       const extension = filename.split('.').pop()?.toLowerCase() || '';
-      
+
       if (!validExtensions.includes(extension)) {
-        Alert.alert(
-          'Invalid File Type',
-          'Please select an image file (JPG, PNG, GIF, or SVG)'
-        );
+        Alert.alert('Invalid File Type', 'Please select an image file (JPG, PNG, GIF, or SVG)');
         return;
       }
-      
+
       setSelectedImage(imageUri);
       setProfile({ ...profile, tempImageUri: imageUri });
     }
@@ -77,25 +74,34 @@ export default function EditProfile() {
     }
 
     try {
+      // Prepare profile data excluding tempImageUri
+      const { tempImageUri, ...profileToUpdate } = profile;
+
+      // Optimistically update the UI
+      const previousProfile = { ...profile };
+      setProfile({ ...profileToUpdate, profile_image: selectedImage || profile.profile_image });
+
       // First upload image if selected
       let updatedImageUrl = profile.profile_image;
       if (selectedImage) {
         const imageResult = await uploadProfileImage(selectedImage);
         if (imageResult?.data?.profile_image) {
           updatedImageUrl = imageResult.data.profile_image;
+          setProfile({ ...profileToUpdate, profile_image: updatedImageUrl });
         }
       }
 
       // Then update profile
       const result = await updateProfile({
-        ...profile,
-        firstName: profile.firstName,
-        lastName: profile.lastName,
+        ...profileToUpdate,
         profile_image: updatedImageUrl,
       });
 
       if (result) {
         setShowSuccessModal(true);
+      } else {
+        // Revert to previous state if update fails
+        setProfile(previousProfile);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to update profile. Please try again.');
@@ -103,7 +109,8 @@ export default function EditProfile() {
   };
 
   // Update the image display in the profile section
-  const displayImage = profile.tempImageUri || profile.profile_image;
+  const displayImage =
+    profile.tempImageUri || profile.profile_image || 'https://i.imgur.com/6VBx3io.png';
 
   if (isLoading) {
     return (
@@ -120,10 +127,7 @@ export default function EditProfile() {
         <View className="items-center px-6 pt-6">
           <View className="relative">
             <View className="h-24 w-24 rounded-full bg-gray-200">
-              <Image
-                source={{ uri: displayImage }}
-                className="h-full w-full rounded-full"
-              />
+              <Image source={{ uri: displayImage }} className="h-full w-full rounded-full" />
             </View>
             <Pressable
               onPress={handleImagePick}

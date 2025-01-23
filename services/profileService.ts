@@ -14,6 +14,17 @@ export interface UserProfile {
   updated_at?: string;
 }
 
+const mapToSnakeCase = (data: UserProfile) => {
+  return {
+    first_name: data.firstName,
+    last_name: data.lastName,
+    email: data.email,
+    phone: data.phone,
+    address: data.address,
+    profile_image: data.profile_image,
+  };
+};
+
 export const profileService = {
   async getProfile() {
     const response = await fetch(`${api.baseUrl}/profile`, {
@@ -23,10 +34,14 @@ export const profileService = {
   },
 
   async updateProfile(data: UserProfile) {
+    const snakeCaseData = mapToSnakeCase(data);
     const response = await fetch(`${api.baseUrl}/profile`, {
       method: 'PUT',
-      headers: await api.getHeaders(),
-      body: JSON.stringify(data),
+      headers: {
+        'Content-Type': 'application/json',
+        ...(await api.getHeaders()),
+      },
+      body: JSON.stringify(snakeCaseData),
     });
     return handleResponse(response);
   },

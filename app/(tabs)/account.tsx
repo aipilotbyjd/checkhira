@@ -3,10 +3,13 @@ import { Link, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useAuth } from '../../contexts/AuthContext';
+import { SuccessModal } from '../../components/SuccessModal';
+import { useState } from 'react';
 
 export default function Account() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const menuItems = [
     {
@@ -78,12 +81,12 @@ export default function Account() {
       <View className="items-center px-6 pt-8">
         <View className="h-24 w-24 rounded-full bg-gray-200">
           <Image
-            source={{ uri: 'https://via.placeholder.com/150' }}
+            source={{ uri: user.profile_image || 'https://i.imgur.com/6VBx3io.png' }}
             className="h-full w-full rounded-full"
           />
         </View>
         <Text className="mt-4 text-xl font-semibold" style={{ color: COLORS.secondary }}>
-          {user.first_name}
+          {user.firstName} {user.lastName}
         </Text>
         <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
           {user.email}
@@ -92,7 +95,7 @@ export default function Account() {
 
       {/* Menu Items */}
       <View className="mt-8 px-6">
-        {menuItems.map((item, index) => (
+        {menuItems.map((item) => (
           <Link key={item.href} href={item.href as any} asChild>
             <TouchableOpacity
               className="mb-4 flex-row items-center rounded-2xl p-4"
@@ -105,20 +108,25 @@ export default function Account() {
             </TouchableOpacity>
           </Link>
         ))}
+
+        {/* Logout Button */}
+        <Pressable
+          onPress={handleLogout}
+          className="mt-4 rounded-2xl p-4"
+          style={{ backgroundColor: COLORS.error }}>
+          <Text className="text-center text-lg font-semibold text-white">Logout</Text>
+        </Pressable>
       </View>
 
-      {/* Logout Button */}
-      <View className="mt-auto p-6">
-        <TouchableOpacity
-          onPress={handleLogout}
-          className="flex-row items-center justify-center rounded-2xl p-4"
-          style={{ backgroundColor: COLORS.error + '15' }}>
-          <MaterialCommunityIcons name="logout" size={24} color={COLORS.error} />
-          <Text className="ml-2 text-base font-semibold" style={{ color: COLORS.error }}>
-            Logout
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <SuccessModal
+        visible={showSuccessModal}
+        onClose={async () => {
+          setShowSuccessModal(false);
+          await refreshUser();
+          router.back();
+        }}
+        message="Profile updated successfully!"
+      />
     </View>
   );
 }

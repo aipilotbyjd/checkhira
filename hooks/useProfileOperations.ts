@@ -13,7 +13,7 @@ export const useProfileOperations = () => {
     setError(null);
     try {
       const response = await profileService.getProfile();
-      return response.data;
+      return response;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch profile';
       setError(errorMessage);
@@ -77,6 +77,17 @@ export const useProfileOperations = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const mapToSnakeCase = (data: UserProfile) => {
+    return {
+      first_name: data.firstName,
+      last_name: data.lastName,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+      profile_image: data.profile_image,
+    };
   };
 
   return {
