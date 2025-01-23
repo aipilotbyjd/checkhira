@@ -1,12 +1,16 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService';
+import { profileService } from '../services/profileService';
 
 interface User {
   id: number;
   first_name: string;
   last_name: string;
   email: string;
+  phone: string;
+  address: string;
+  profile_image?: string;
   token: string;
 }
 
@@ -14,6 +18,7 @@ interface AuthContextType {
   user: User | null;
   login: (userData: User) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -50,6 +55,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const response = await profileService.getProfile();
+      if (response.status && response.data) {
+        const currentUser = await AsyncStorage.getItem('user');
+        if (currentUser) {
+          const parsedUser = JSON.parse(currentUser);
+          const updatedUser = {
+            ...parsedUser,
+            ...response.data,
+          };
+          await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+          setUser(updatedUser);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+      throw error;
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await authService.logout();
@@ -66,9 +92,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       login,
       logout,
+      refreshUser,
       isLoading,
     }),
-    [user, login, logout, isLoading]
+    [user, login, logout, refreshUser, isLoading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
