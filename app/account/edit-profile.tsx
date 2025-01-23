@@ -111,9 +111,15 @@ export default function EditProfile() {
     }
   };
 
-  // Update the image display in the profile section
+  // Updated the displayImage logic
   const displayImage =
-    profile.tempImageUri || profile.profile_image || 'https://i.imgur.com/6VBx3io.png';
+    profile.tempImageUri
+      ? { uri: profile.tempImageUri }
+      : typeof profile.profile_image === 'string'
+      ? { uri: profile.profile_image }
+      : profile.profile_image
+      ? profile.profile_image
+      : require('../../assets/profile_image.jpg');
 
   if (isLoading) {
     return (
@@ -130,7 +136,11 @@ export default function EditProfile() {
         <View className="items-center px-6 pt-6">
           <View className="relative">
             <View className="h-24 w-24 rounded-full bg-gray-200">
-              <Image source={{ uri: displayImage }} className="h-full w-full rounded-full" />
+              <Image 
+                source={displayImage} 
+                className="rounded-full"
+                style={{ width: 96, height: 96 }}
+              />
             </View>
             <Pressable
               onPress={handleImagePick}

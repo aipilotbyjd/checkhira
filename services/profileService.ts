@@ -38,7 +38,6 @@ export const profileService = {
     const response = await fetch(`${api.baseUrl}/profile`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
         ...(await api.getHeaders()),
       },
       body: JSON.stringify(snakeCaseData),

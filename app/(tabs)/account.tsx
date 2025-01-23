@@ -81,8 +81,13 @@ export default function Account() {
       <View className="items-center px-6 pt-8">
         <View className="h-24 w-24 rounded-full bg-gray-200">
           <Image
-            source={{ uri: user.profile_image || require('../../assets/profile_image.jpg') }}
-            className="h-full w-full rounded-full"
+            source={
+              typeof user.profile_image === 'string'
+                ? { uri: user.profile_image }
+                : require('../../assets/profile_image.jpg')
+            }
+            className="h-24 w-24 rounded-full"
+            style={{ width: '100%', height: '100%' }}
           />
         </View>
         <Text className="mt-4 text-xl font-semibold" style={{ color: COLORS.secondary }}>
