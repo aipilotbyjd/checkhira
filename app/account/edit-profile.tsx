@@ -52,6 +52,19 @@ export default function EditProfile() {
   const handleImagePick = async () => {
     const imageUri = await pickImage();
     if (imageUri) {
+      // Validate file extension
+      const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
+      const filename = imageUri.split('/').pop() || '';
+      const extension = filename.split('.').pop()?.toLowerCase() || '';
+      
+      if (!validExtensions.includes(extension)) {
+        Alert.alert(
+          'Invalid File Type',
+          'Please select an image file (JPG, PNG, GIF, or SVG)'
+        );
+        return;
+      }
+      
       setSelectedImage(imageUri);
       setProfile({ ...profile, tempImageUri: imageUri });
     }
