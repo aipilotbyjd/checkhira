@@ -1,4 +1,12 @@
-import { Text, View, TextInput, Pressable, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  Text,
+  View,
+  TextInput,
+  Pressable,
+  Alert,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
@@ -9,25 +17,25 @@ import { SuccessModal } from '../../../components/SuccessModal';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWorkOperations } from '../../../hooks/useWorkOperations';
 import { formatDateForAPI, parseCustomDate } from '../../../utils/dateFormatter';
-
-interface WorkEntry {
-  id: number;
-  type: string;
-  diamond: string;
-  price: string;
-}
+import { WorkEntry, WorkFormData, WorkResponse } from '../../../types/work';
 
 export default function EditWork() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [entries, setEntries] = useState<WorkEntry[]>([]);
+  const { updateWork, deleteWork, getWork, isLoading } = useWorkOperations();
+
+  const [formData, setFormData] = useState<WorkFormData>({
+    date: new Date(),
+    name: '',
+    entries: [],
+  });
+
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDeleteEntryModal, setShowDeleteEntryModal] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<WorkEntry | null>(null);
-  const [name, setName] = useState('');
-  const { updateWork, deleteWork, getWork, isLoading } = useWorkOperations();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const loadWorkEntry = async () => {
@@ -36,14 +44,16 @@ export default function EditWork() {
       try {
         const data = await getWork(Number(id));
         if (data) {
-          setName(data.name);
-          setSelectedDate(parseCustomDate(data.date));
-          setEntries(data.work_items.map(item => ({
-            id: item.id,
-            type: item.type,
-            diamond: item.diamond?.toString() || '',
-            price: item.price?.toString() || ''
-          })));
+          setFormData({
+            date: parseCustomDate(data.date),
+            name: data.name,
+            entries: data.work_items.map((item) => ({
+              id: item.id,
+              type: item.type,
+              diamond: item.diamond?.toString() || '',
+              price: item.price?.toString() || '',
+            })),
+          });
         }
       } catch (error) {
         Alert.alert('Error', 'Failed to load work entry. Please try again.');
@@ -55,7 +65,7 @@ export default function EditWork() {
   }, [id]);
 
   const calculateTotal = () => {
-    return entries.reduce((sum, entry) => {
+    return formData.entries.reduce((sum, entry) => {
       const diamond = Number(entry.diamond) || 0;
       const price = Number(entry.price) || 0;
       return sum + diamond * price;
@@ -69,49 +79,47 @@ export default function EditWork() {
   };
 
   const addEntry = () => {
-    if (entries.length >= 10) {
+    if (formData.entries.length >= 10) {
       Alert.alert('Maximum Limit', 'You can add up to 10 entries only.');
       return;
     }
-    const lastEntry = entries[entries.length - 1];
+    const lastEntry = formData.entries[formData.entries.length - 1];
     const nextType = getNextType(lastEntry.type);
-    setEntries([...entries, { id: Date.now(), type: nextType, diamond: '', price: '' }]);
+    setFormData({
+      ...formData,
+      entries: [...formData.entries, { id: Date.now(), type: nextType, diamond: '', price: '' }],
+    });
   };
 
   const removeEntry = (entryId?: number) => {
-    if (entries.length === 1) {
+    if (formData.entries.length === 1) {
       Alert.alert('Cannot Remove', 'At least one entry is required.');
       return;
     }
     const entryToDelete = entryId
-      ? entries.find((e) => e.id === entryId)
-      : entries[entries.length - 1];
-    setShowDeleteModal(true);
+      ? formData.entries.find((e) => e.id === entryId)
+      : formData.entries[formData.entries.length - 1];
+    setShowDeleteEntryModal(true);
     setEntryToDelete(entryToDelete || null);
   };
 
   const handleUpdate = async () => {
-    if (!name.trim()) {
+    if (!formData.name.trim()) {
       Alert.alert('Required Field', 'Please enter a name.');
       return;
     }
 
     // Validate entries
-    const hasEmptyFields = entries.some(entry => !entry.diamond || !entry.price);
+    const hasEmptyFields = formData.entries.some((entry) => !entry.diamond || !entry.price);
     if (hasEmptyFields) {
       Alert.alert('Invalid Entries', 'Please fill in all diamond and price fields.');
       return;
     }
 
     const workData = {
-      date: formatDateForAPI(selectedDate),
-      name: name.trim(),
-      entries: entries.map(entry => ({
-        id: entry.id,
-        type: entry.type,
-        diamond: entry.diamond,
-        price: entry.price
-      })),
+      date: formatDateForAPI(formData.date),
+      name: formData.name.trim(),
+      entries: formData.entries,
       total: calculateTotal(),
     };
 
@@ -126,11 +134,17 @@ export default function EditWork() {
   };
 
   const handleDelete = async () => {
-    const result = await deleteWork(Number(id));
-    if (result) {
-      setShowSuccessModal(true);
-      // Navigate back after successful deletion
-      router.back();
+    setIsDeleting(true);
+    try {
+      const result = await deleteWork(Number(id));
+      if (result) {
+        setShowSuccessModal(true);
+        router.back();
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to delete work entry. Please try again.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -152,7 +166,7 @@ export default function EditWork() {
           style={{ backgroundColor: COLORS.gray[100] }}>
           <MaterialCommunityIcons name="calendar-month" size={24} color={COLORS.primary} />
           <Text className="ml-3 flex-1 text-base" style={{ color: COLORS.gray[600] }}>
-            {format(selectedDate, 'MMMM dd, yyyy')}
+            {format(formData.date, 'MMMM dd, yyyy')}
           </Text>
           <Ionicons name="chevron-down" size={20} color={COLORS.gray[400]} />
         </Pressable>
@@ -161,10 +175,10 @@ export default function EditWork() {
           <DateTimePicker
             mode="date"
             display="spinner"
-            value={selectedDate}
+            value={formData.date}
             onChange={(event, date) => {
               setShowDatePicker(false);
-              if (date) setSelectedDate(date);
+              if (date) setFormData({ ...formData, date });
             }}
           />
         )}
@@ -182,8 +196,8 @@ export default function EditWork() {
             borderColor: COLORS.gray[200],
             color: COLORS.secondary,
           }}
-          value={name}
-          onChangeText={setName}
+          value={formData.name}
+          onChangeText={(text) => setFormData({ ...formData, name: text })}
           placeholder="Enter name"
           placeholderTextColor={COLORS.gray[400]}
         />
@@ -212,7 +226,7 @@ export default function EditWork() {
         </View>
 
         {/* Entry Cards */}
-        {entries.map((entry, index) => (
+        {formData.entries.map((entry, index) => (
           <View
             key={entry.id}
             className="mb-4 rounded-2xl p-4"
@@ -255,9 +269,12 @@ export default function EditWork() {
                   keyboardType="numeric"
                   onChangeText={(text) => {
                     const numericText = text.replace(/[^0-9]/g, '');
-                    setEntries(
-                      entries.map((e) => (e.id === entry.id ? { ...e, diamond: numericText } : e))
-                    );
+                    setFormData({
+                      ...formData,
+                      entries: formData.entries.map((e) =>
+                        e.id === entry.id ? { ...e, diamond: numericText } : e
+                      ),
+                    });
                   }}
                 />
               </View>
@@ -277,9 +294,12 @@ export default function EditWork() {
                   keyboardType="numeric"
                   onChangeText={(text) => {
                     const numericText = text.replace(/[^0-9.]/g, '');
-                    setEntries(
-                      entries.map((e) => (e.id === entry.id ? { ...e, price: numericText } : e))
-                    );
+                    setFormData({
+                      ...formData,
+                      entries: formData.entries.map((e) =>
+                        e.id === entry.id ? { ...e, price: numericText } : e
+                      ),
+                    });
                   }}
                 />
               </View>
@@ -325,11 +345,11 @@ export default function EditWork() {
           </Pressable>
 
           <Pressable
-            onPress={handleDelete}
+            onPress={() => setShowDeleteModal(true)}
             className="mb-4 rounded-2xl p-4"
             style={{ backgroundColor: COLORS.error + '15' }}>
             <Text className="text-center text-lg font-semibold" style={{ color: COLORS.error }}>
-              Delete Entries
+              Delete Work Entry
             </Text>
           </Pressable>
         </View>
@@ -337,27 +357,30 @@ export default function EditWork() {
 
       {/* Delete Entry/Work Confirmation Modal */}
       <DeleteConfirmationModal
-        visible={showDeleteModal}
+        visible={showDeleteEntryModal}
         onClose={() => {
-          setShowDeleteModal(false);
+          setShowDeleteEntryModal(false);
           setEntryToDelete(null);
         }}
         onConfirm={() => {
           if (entryToDelete) {
-            setEntries(entries.filter((e) => e.id !== entryToDelete.id));
-            setShowDeleteModal(false);
+            setFormData({
+              ...formData,
+              entries: formData.entries.filter((e) => e.id !== entryToDelete.id),
+            });
+            setShowDeleteEntryModal(false);
             setEntryToDelete(null);
           } else {
             // Delete entire work entry
             console.log('Deleting work:', id);
-            setShowDeleteModal(false);
+            setShowDeleteEntryModal(false);
             setShowSuccessModal(true);
           }
         }}
         message={
           entryToDelete
             ? `Are you sure you want to remove Entry ${
-                entries.findIndex((e) => e.id === entryToDelete.id) + 1
+                formData.entries.findIndex((e) => e.id === entryToDelete.id) + 1
               } (Type ${entryToDelete.type})?`
             : 'Are you sure you want to delete these entries?'
         }
@@ -370,7 +393,7 @@ export default function EditWork() {
           router.back();
         }}
         message={
-          showDeleteModal ? 'Entries deleted successfully!' : 'Entries updated successfully!'
+          showDeleteEntryModal ? 'Entries deleted successfully!' : 'Entries updated successfully!'
         }
       />
     </View>

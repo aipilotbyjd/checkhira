@@ -1,4 +1,12 @@
-import { Text, View, TextInput, Pressable, Alert, ScrollView } from 'react-native';
+import {
+  Text,
+  View,
+  TextInput,
+  Pressable,
+  Alert,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
@@ -9,29 +17,25 @@ import { SuccessModal } from '../../components/SuccessModal';
 import { useRouter } from 'expo-router';
 import { useWorkOperations } from '../../hooks/useWorkOperations';
 import { formatDateForAPI } from '../../utils/dateFormatter';
-
-interface WorkEntry {
-  id: number;
-  type: string;
-  diamond: string;
-  price: string;
-}
+import { WorkEntry, WorkFormData } from '../../types/work';
 
 export default function AddWork() {
   const router = useRouter();
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [entries, setEntries] = useState<WorkEntry[]>([
-    { id: 1, type: 'A', diamond: '', price: '' },
-  ]);
+  const { createWork, isLoading } = useWorkOperations();
+
+  const [formData, setFormData] = useState<WorkFormData>({
+    date: new Date(),
+    name: '',
+    entries: [{ id: 1, type: 'A', diamond: '', price: '' }],
+  });
+
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<WorkEntry | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [name, setName] = useState('');
-  const { createWork, isLoading } = useWorkOperations();
 
   const calculateTotal = () => {
-    return entries.reduce((sum, entry) => {
+    return formData.entries.reduce((sum, entry) => {
       const diamond = Number(entry.diamond) || 0;
       const price = Number(entry.price) || 0;
       return sum + diamond * price;
@@ -45,49 +49,61 @@ export default function AddWork() {
   };
 
   const addEntry = () => {
-    if (entries.length >= 10) {
+    if (formData.entries.length >= 10) {
       Alert.alert('Maximum Limit', 'You can add up to 10 entries only.');
       return;
     }
-    const lastEntry = entries[entries.length - 1];
+    const lastEntry = formData.entries[formData.entries.length - 1];
     const nextType = getNextType(lastEntry.type);
-    setEntries([...entries, { id: Date.now(), type: nextType, diamond: '', price: '' }]);
+    setFormData({
+      ...formData,
+      entries: [...formData.entries, { id: Date.now(), type: nextType, diamond: '', price: '' }],
+    });
   };
 
   const removeEntry = (entryId?: number) => {
-    if (entries.length === 1) {
+    if (formData.entries.length === 1) {
       Alert.alert('Cannot Remove', 'At least one entry is required.');
       return;
     }
     const entryToDelete = entryId
-      ? entries.find((e) => e.id === entryId)
-      : entries[entries.length - 1];
+      ? formData.entries.find((e) => e.id === entryId)
+      : formData.entries[formData.entries.length - 1];
     setShowDeleteModal(true);
     setEntryToDelete(entryToDelete || null);
   };
 
-  const handleSave = async () => {
-    if (!name.trim()) {
+  const updateEntry = (id: number, field: keyof WorkEntry, value: string) => {
+    setFormData({
+      ...formData,
+      entries: formData.entries.map((entry) =>
+        entry.id === id ? { ...entry, [field]: value } : entry
+      ),
+    });
+  };
+
+  const validateForm = (): boolean => {
+    if (!formData.name.trim()) {
       Alert.alert('Required Field', 'Please enter a name.');
-      return;
+      return false;
     }
 
-    // Validate entries
-    const hasEmptyFields = entries.some((entry) => !entry.diamond || !entry.price);
+    const hasEmptyFields = formData.entries.some((entry) => !entry.diamond || !entry.price);
     if (hasEmptyFields) {
       Alert.alert('Invalid Entries', 'Please fill in all diamond and price fields.');
-      return;
+      return false;
     }
 
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) return;
+
     const workData = {
-      date: formatDateForAPI(selectedDate),
-      name: name.trim(),
-      entries: entries.map((entry) => ({
-        id: entry.id,
-        type: entry.type,
-        diamond: entry.diamond,
-        price: entry.price,
-      })),
+      date: formatDateForAPI(formData.date),
+      name: formData.name.trim(),
+      entries: formData.entries,
       total: calculateTotal(),
     };
 
@@ -101,9 +117,17 @@ export default function AddWork() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
-      {/* Header */}
+      {/* Date Picker Section */}
       <View className="px-6 pt-6">
         <Pressable
           onPress={() => setShowDatePicker(true)}
@@ -111,7 +135,7 @@ export default function AddWork() {
           style={{ backgroundColor: COLORS.gray[100] }}>
           <MaterialCommunityIcons name="calendar-month" size={24} color={COLORS.primary} />
           <Text className="ml-3 flex-1 text-base" style={{ color: COLORS.gray[600] }}>
-            {format(selectedDate, 'MMMM dd, yyyy')}
+            {format(formData.date, 'MMMM dd, yyyy')}
           </Text>
           <Ionicons name="chevron-down" size={20} color={COLORS.gray[400]} />
         </Pressable>
@@ -120,16 +144,16 @@ export default function AddWork() {
           <DateTimePicker
             mode="date"
             display="spinner"
-            value={selectedDate}
-            onChange={(event, date) => {
+            value={formData.date}
+            onChange={(_, date) => {
               setShowDatePicker(false);
-              if (date) setSelectedDate(date);
+              if (date) setFormData({ ...formData, date });
             }}
           />
         )}
       </View>
 
-      {/* add name field */}
+      {/* Name Field */}
       <View className="px-6">
         <Text className="mb-2 mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
           Name <Text style={{ color: COLORS.error }}>*</Text>
@@ -141,14 +165,14 @@ export default function AddWork() {
             borderColor: COLORS.gray[200],
             color: COLORS.secondary,
           }}
-          value={name}
-          onChangeText={setName}
+          value={formData.name}
+          onChangeText={(text) => setFormData({ ...formData, name: text })}
           placeholder="Enter name"
           placeholderTextColor={COLORS.gray[400]}
         />
       </View>
 
-      {/* Scrollable Content */}
+      {/* Entries Section */}
       <ScrollView className="mt-6 flex-1 px-6">
         <View className="mb-4 flex-row items-center justify-between">
           <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
@@ -170,12 +194,12 @@ export default function AddWork() {
           </View>
         </View>
 
-        {/* Entry Cards */}
-        {entries.map((entry, index) => (
+        {formData.entries.map((entry, index) => (
           <View
             key={entry.id}
             className="mb-4 rounded-2xl p-4"
             style={{ backgroundColor: COLORS.background.secondary }}>
+            {/* Entry Header */}
             <View className="mb-3 flex-row items-center justify-between">
               <View className="flex-row items-center">
                 <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
@@ -197,6 +221,7 @@ export default function AddWork() {
               )}
             </View>
 
+            {/* Entry Fields */}
             <View className="flex-row space-x-3">
               <View className="mr-2 flex-1">
                 <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
@@ -214,9 +239,7 @@ export default function AddWork() {
                   keyboardType="numeric"
                   onChangeText={(text) => {
                     const numericText = text.replace(/[^0-9]/g, '');
-                    setEntries(
-                      entries.map((e) => (e.id === entry.id ? { ...e, diamond: numericText } : e))
-                    );
+                    updateEntry(entry.id, 'diamond', numericText);
                   }}
                 />
               </View>
@@ -236,9 +259,7 @@ export default function AddWork() {
                   keyboardType="numeric"
                   onChangeText={(text) => {
                     const numericText = text.replace(/[^0-9.]/g, '');
-                    setEntries(
-                      entries.map((e) => (e.id === entry.id ? { ...e, price: numericText } : e))
-                    );
+                    updateEntry(entry.id, 'price', numericText);
                   }}
                 />
               </View>
@@ -283,7 +304,7 @@ export default function AddWork() {
         </Pressable>
       </View>
 
-      {/* Delete Confirmation Modal */}
+      {/* Modals */}
       <DeleteConfirmationModal
         visible={showDeleteModal}
         onClose={() => {
@@ -291,12 +312,15 @@ export default function AddWork() {
           setEntryToDelete(null);
         }}
         onConfirm={() => {
-          setEntries(entries.filter((e) => e.id !== entryToDelete?.id));
+          setFormData({
+            ...formData,
+            entries: formData.entries.filter((e) => e.id !== entryToDelete?.id),
+          });
           setShowDeleteModal(false);
           setEntryToDelete(null);
         }}
         message={`Are you sure you want to remove Entry ${
-          entries.findIndex((e) => e.id === entryToDelete?.id) + 1
+          formData.entries.findIndex((e) => e.id === entryToDelete?.id) + 1
         } (Type ${entryToDelete?.type})?`}
       />
 
