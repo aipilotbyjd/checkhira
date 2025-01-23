@@ -33,14 +33,14 @@ export const profileService = {
     return handleResponse(response);
   },
 
-  async updateProfile(data: UserProfile) {
-    const snakeCaseData = mapToSnakeCase(data);
+  async updateProfile(formData: FormData) {
     const response = await fetch(`${api.baseUrl}/profile`, {
-      method: 'PUT',
+      method: 'POST',
       headers: {
         ...(await api.getHeaders()),
+        'Content-Type': 'multipart/form-data',
       },
-      body: JSON.stringify(snakeCaseData),
+      body: formData,
     });
     return handleResponse(response);
   },
