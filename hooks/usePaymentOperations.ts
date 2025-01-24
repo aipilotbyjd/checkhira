@@ -60,7 +60,7 @@ export const usePaymentOperations = () => {
     setError(null);
     try {
       const response = await paymentService.getPayment(id);
-      return response.data;
+      return (response as any).data;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch payment';
       setError(errorMessage);
@@ -76,7 +76,7 @@ export const usePaymentOperations = () => {
     setError(null);
     try {
       const response = await paymentService.getAllPayments({ page, filter });
-      return response.data;
+      return (response as any).data;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch payments';
       setError(errorMessage);
@@ -92,7 +92,7 @@ export const usePaymentOperations = () => {
     setError(null);
     try {
       const response = await paymentService.getPaymentSources();
-      return response.data;
+      return (response as any).data;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch payment sources';
       setError(errorMessage);

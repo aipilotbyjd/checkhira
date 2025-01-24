@@ -1,5 +1,17 @@
 import { api, handleResponse } from './api';
-import { WorkEntryPayload, WorkResponse } from '../types/work';
+import { WorkResponse } from '../types/work';
+
+export interface WorkEntryPayload {
+  date: string;
+  name: string;
+  entries: {
+    id: number;
+    type: string;
+    diamond: string;
+    price: string;
+  }[];
+  total: number;
+}
 
 export const workService = {
   async createWork(data: WorkEntryPayload) {

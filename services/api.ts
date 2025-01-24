@@ -3,16 +3,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl || 'https://hirabook.icu/api/v1';
 
+interface User {
+  token: string;
+  [key: string]: any;
+}
+
 export const api = {
   baseUrl: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
   async getHeaders() {
-    const user = await AsyncStorage.getItem('user');
-    console.log('User:', user);
-    const token = user ? JSON.parse(user).token : null;
-    console.log('Current token:', token);
+    const userStr = await AsyncStorage.getItem('user');
+    const user: User | null = userStr ? JSON.parse(userStr) : null;
+    const token = user?.token;
+    
     return {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),

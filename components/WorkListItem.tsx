@@ -11,6 +11,14 @@ type WorkListItemProps = {
 export function WorkListItem({ item }: WorkListItemProps) {
   const router = useRouter();
 
+  const calculateTotal = (workItems: Work['work_items']) => {
+    return workItems.reduce((sum, wi) => {
+      const diamond = Number(wi.diamond) || 0;
+      const price = Number(wi.price) || 0;
+      return sum + (diamond * price);
+    }, 0);
+  };
+
   return (
     <Pressable
       onPress={() => router.push(`/work/${item.id}/edit`)}
@@ -37,7 +45,7 @@ export function WorkListItem({ item }: WorkListItemProps) {
             {item.work_items.reduce((sum, wi) => sum + (Number(wi.diamond) || 0), 0)} diamonds
           </Text>
           <Text className="mt-1 text-lg font-semibold" style={{ color: COLORS.success }}>
-            ₹ {item.work_items.reduce((sum, wi) => sum + (Number(wi.price) || 0), 0).toFixed(2)}
+            ₹ {calculateTotal(item.work_items).toFixed(2)}
           </Text>
         </View>
       </View>

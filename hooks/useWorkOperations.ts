@@ -1,7 +1,18 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
-import { workService, WorkEntryPayload } from '../services/workService';
+import { workService } from '../services/workService';
+import type { WorkEntryPayload } from '../services/workService';
+import type { Work } from '../types/work';
 import { ApiError } from '../services/api';
+
+interface WorkResponse {
+  works: {
+    data: Work[];
+    current_page: number;
+    last_page: number;
+  };
+  total: number;
+}
 
 export const useWorkOperations = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -60,7 +71,7 @@ export const useWorkOperations = () => {
     setError(null);
     try {
       const response = await workService.getWork(id);
-      return response.data;
+      return (response as any).data;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch work entry';
       setError(errorMessage);
@@ -76,7 +87,7 @@ export const useWorkOperations = () => {
     setError(null);
     try {
       const response = await workService.getAllWork({ page, filter });
-      return response;
+      return response as WorkResponse;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch work entries';
       setError(errorMessage);

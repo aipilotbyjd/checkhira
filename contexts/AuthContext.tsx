@@ -58,13 +58,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = useCallback(async () => {
     try {
       const response = await profileService.getProfile();
-      if (response.status && response.data) {
+      if ((response as any).status && (response as any).data) {
         const currentUser = await AsyncStorage.getItem('user');
         if (currentUser) {
           const parsedUser = JSON.parse(currentUser);
           const updatedUser = {
             ...parsedUser,
-            ...response.data,
+            ...(response as any).data,
           };
           await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
           setUser(updatedUser);
