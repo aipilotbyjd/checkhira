@@ -46,7 +46,6 @@ export default function WorkList() {
       
       if (data?.works?.data) {
         const newWorks = data.works.data;
-        console.log('Data:', newWorks);
 
         if (page === 1) {
           setWorkList(newWorks);
