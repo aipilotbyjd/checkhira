@@ -2,7 +2,7 @@ import { Text, View, ScrollView, Pressable, ActivityIndicator, RefreshControl } 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
-import { format, startOfWeek, endOfWeek, isWithinInterval, isValid } from 'date-fns';
+import { isValid } from 'date-fns';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import { useState, useRef, useCallback } from 'react';
 import { useWorkOperations } from '../../hooks/useWorkOperations';
@@ -43,8 +43,10 @@ export default function WorkList() {
 
       const data = await getAllWork({ page, filter: currentFilter });
 
+      
       if (data?.works?.data) {
         const newWorks = data.works.data;
+        console.log('Data:', newWorks);
 
         if (page === 1) {
           setWorkList(newWorks);
