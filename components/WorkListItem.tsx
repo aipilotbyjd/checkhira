@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { COLORS } from '../constants/theme';
 import { Work } from '../types/work';
+import { dateUtils } from '../utils/dateUtils';
 
 type WorkListItemProps = {
   item: Work;
@@ -34,7 +35,7 @@ export function WorkListItem({ item }: WorkListItemProps) {
       <View className="flex-row items-center justify-between">
         <View>
           <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-            {format(new Date(item.date), 'dd MMM yyyy')}
+            {format(dateUtils.parseCustomDate(item.date), 'dd MMM yyyy')}
           </Text>
           <Text className="mt-1 text-base" style={{ color: COLORS.secondary }}>
             {item.name}
