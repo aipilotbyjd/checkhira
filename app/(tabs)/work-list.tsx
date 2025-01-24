@@ -9,6 +9,7 @@ import { useWorkOperations } from '../../hooks/useWorkOperations';
 import { useFocusEffect } from 'expo-router';
 import { Work } from '../../types/work';
 import { dateUtils } from '../../utils/dateUtils';
+import { WorkListItem } from '../../components/WorkListItem';
 
 export default function WorkList() {
   const router = useRouter();
@@ -180,11 +181,7 @@ export default function WorkList() {
 
         {/* Work list */}
         {filteredWorkList.map((item) => (
-          <WorkListItem
-            key={item.id}
-            item={item}
-            onPress={(id) => router.push(`/work/${id}/edit`)}
-          />
+          <WorkListItem key={item.id} item={item} />
         ))}
 
         {isLoadingMore && (
