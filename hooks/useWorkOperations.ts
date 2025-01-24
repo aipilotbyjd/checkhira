@@ -18,6 +18,12 @@ interface WorkResponse {
   message: string;
 }
 
+interface SingleWorkResponse {
+  status: boolean;
+  data: Work;
+  message: string;
+}
+
 export const useWorkOperations = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +81,7 @@ export const useWorkOperations = () => {
     setError(null);
     try {
       const response = await workService.getWork(id);
-      return response as WorkResponse;
+      return response as SingleWorkResponse;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch work entry';
       setError(errorMessage);

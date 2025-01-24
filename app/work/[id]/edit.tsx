@@ -47,9 +47,9 @@ export default function EditWork() {
 
         if (data) {
           setFormData({
-            date: parseCustomDate(data?.works?.data[0]?.date),
-            name: data?.works?.data[0]?.name,
-            entries: data?.works?.data[0]?.work_items.map((item: any) => ({
+            date: parseCustomDate(data?.date),
+            name: data?.name,
+            entries: data?.work_items.map((item: any) => ({
               id: item.id,
               type: item.type,
               diamond: item.diamond?.toString() || '',
@@ -141,12 +141,12 @@ export default function EditWork() {
       const result = await deleteWork(Number(id));
       if (result) {
         setShowSuccessModal(true);
-        router.back();
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to delete work entry. Please try again.');
     } finally {
       setIsDeleting(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -388,15 +388,23 @@ export default function EditWork() {
         }
       />
 
+      <DeleteConfirmationModal
+        visible={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={() => {
+          handleDelete();
+          setShowDeleteModal(false);
+        }}
+        message="Are you sure you want to delete this work entry?"
+      />
+
       <SuccessModal
         visible={showSuccessModal}
         onClose={() => {
           setShowSuccessModal(false);
           router.back();
         }}
-        message={
-          showDeleteEntryModal ? 'Entries deleted successfully!' : 'Entries updated successfully!'
-        }
+        message={showDeleteModal ? 'Work entry deleted successfully!' : 'Work entry updated successfully!'}
       />
     </View>
   );
