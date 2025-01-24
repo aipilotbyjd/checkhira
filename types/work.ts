@@ -28,8 +28,7 @@ export interface WorkResponse {
 export interface Work {
   id: number;
   name: string;
-  description: string;
-  date: string | Date;
+  date: string;
   user_id: number;
   is_active: string;
   created_at: string;
@@ -48,4 +47,11 @@ export interface WorkItem {
   created_at: string;
   updated_at: string;
   deleted_at: null | string;
+}
+
+export interface WorkEntryPayload {
+  date: string;
+  name: string;
+  entries: WorkEntry[];
+  total: number;
 }

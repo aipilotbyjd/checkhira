@@ -2,19 +2,10 @@ import { Pressable, View, Text } from 'react-native';
 import { format } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { COLORS } from '../constants/theme';
-
-type WorkItem = {
-  diamond: string | number;
-  price: string | number;
-};
+import { Work } from '../types/work';
 
 type WorkListItemProps = {
-  item: {
-    id: string;
-    date: string;
-    name: string;
-    work_items: WorkItem[];
-  };
+  item: Work;
 };
 
 export function WorkListItem({ item }: WorkListItemProps) {

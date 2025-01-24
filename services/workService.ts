@@ -1,18 +1,5 @@
-import { api, handleResponse, ApiError } from './api';
-
-export interface WorkEntry {
-  id: number;
-  type: string;
-  diamond: string;
-  price: string;
-}
-
-export interface WorkEntryPayload {
-  date: string;
-  name: string;
-  entries: WorkEntry[];
-  total: number;
-}
+import { api, handleResponse } from './api';
+import { WorkEntryPayload, WorkResponse } from '../types/work';
 
 export const workService = {
   async createWork(data: WorkEntryPayload) {
@@ -21,7 +8,7 @@ export const workService = {
       headers: await api.getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
+    return handleResponse<WorkResponse>(response);
   },
 
   async updateWork(id: number, data: WorkEntryPayload) {
@@ -30,7 +17,7 @@ export const workService = {
       headers: await api.getHeaders(),
       body: JSON.stringify(data),
     });
-    return handleResponse(response);
+    return handleResponse<WorkResponse>(response);
   },
 
   async deleteWork(id: number) {

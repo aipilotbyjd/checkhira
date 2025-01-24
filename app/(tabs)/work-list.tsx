@@ -180,8 +180,8 @@ export default function WorkList() {
         </View>
 
         {/* Work list */}
-        {filteredWorkList.map((item) => (
-          <WorkListItem key={item.id} item={item} />
+        {filteredWorkList.map((item: Work) => (
+          <WorkListItem key={item.id.toString()} item={item} />
         ))}
 
         {isLoadingMore && (
