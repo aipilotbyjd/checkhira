@@ -42,12 +42,14 @@ export default function EditWork() {
       if (!id) return;
 
       try {
-        const data = await getWork(Number(id));
+        const response = await getWork(Number(id));
+        const data = response?.data;
+
         if (data) {
           setFormData({
-            date: parseCustomDate(data.date),
-            name: data.name,
-            entries: data.work_items.map((item: any) => ({
+            date: parseCustomDate(data?.works?.data[0]?.date),
+            name: data?.works?.data[0]?.name,
+            entries: data?.works?.data[0]?.work_items.map((item: any) => ({
               id: item.id,
               type: item.type,
               diamond: item.diamond?.toString() || '',

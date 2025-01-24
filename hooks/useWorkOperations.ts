@@ -6,12 +6,16 @@ import type { Work } from '../types/work';
 import { ApiError } from '../services/api';
 
 interface WorkResponse {
-  works: {
-    data: Work[];
-    current_page: number;
-    last_page: number;
+  status: boolean;
+  data: {
+    works: {
+      current_page: number;
+      last_page: number;
+      data: Work[];
+    };
+    total: number;
   };
-  total: number;
+  message: string;
 }
 
 export const useWorkOperations = () => {

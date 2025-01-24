@@ -41,9 +41,10 @@ export default function WorkList() {
         setIsLoadingMore(true);
       }
 
-      const data = await getAllWork({ page, filter: currentFilter });
+      const response = await getAllWork({ page, filter: currentFilter });
 
-      
+      const data = response?.data;
+
       if (data?.works?.data) {
         const newWorks = data.works.data;
 
