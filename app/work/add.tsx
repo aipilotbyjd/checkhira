@@ -7,7 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { MaterialCommunityIcons, Ionicons, Octicons } from '@expo/vector-icons';
@@ -17,7 +17,8 @@ import { SuccessModal } from '../../components/SuccessModal';
 import { useRouter } from 'expo-router';
 import { useWorkOperations } from '../../hooks/useWorkOperations';
 import { formatDateForAPI } from '../../utils/dateFormatter';
-import { WorkEntry, WorkFormData } from '../../types/work';
+import { DefaultPrice, WorkEntry, WorkFormData } from '../../types/work';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AddWork() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function AddWork() {
   const [formData, setFormData] = useState<WorkFormData>({
     date: new Date(),
     name: '',
-    entries: [{ id: 1, type: 'A', diamond: '', price: '' }],
+    entries: [],
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -48,17 +49,75 @@ export default function AddWork() {
     return types[(currentIndex + 1) % types.length];
   };
 
-  const addEntry = () => {
+  useEffect(() => {
+    initializeEntriesFromDefaults();
+  }, []);
+
+  const initializeEntriesFromDefaults = async () => {
+    try {
+      const savedPrices = await AsyncStorage.getItem('defaultPrices');
+      if (savedPrices) {
+        const prices = JSON.parse(savedPrices);
+        const initialEntries = prices.map((price: DefaultPrice, index: number) => ({
+          id: Date.now() + index,
+          type: price.type,
+          diamond: '',
+          price: price.price,
+        }));
+
+        setFormData((prev) => ({
+          ...prev,
+          entries: initialEntries,
+        }));
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          entries: [{ id: Date.now(), type: 'A', diamond: '', price: '' }],
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to load default prices:', error);
+      setFormData((prev) => ({
+        ...prev,
+        entries: [{ id: Date.now(), type: 'A', diamond: '', price: '' }],
+      }));
+    }
+  };
+
+  const addEntry = async () => {
     if (formData.entries.length >= 10) {
       Alert.alert('Maximum Limit', 'You can add up to 10 entries only.');
       return;
     }
-    const lastEntry = formData.entries[formData.entries.length - 1];
-    const nextType = getNextType(lastEntry.type);
-    setFormData({
-      ...formData,
-      entries: [...formData.entries, { id: Date.now(), type: nextType, diamond: '', price: '' }],
-    });
+
+    try {
+      const savedPrices = await AsyncStorage.getItem('defaultPrices');
+      if (savedPrices) {
+        const prices = JSON.parse(savedPrices);
+        const unusedPrice = prices.find(
+          (price: DefaultPrice) => !formData.entries.some((entry) => entry.type === price.type)
+        );
+
+        if (unusedPrice) {
+          setFormData({
+            ...formData,
+            entries: [
+              ...formData.entries,
+              {
+                id: Date.now(),
+                type: unusedPrice.type,
+                diamond: '',
+                price: unusedPrice.price,
+              },
+            ],
+          });
+        } else {
+          Alert.alert('No More Types', 'All available price types are already added.');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load default prices:', error);
+    }
   };
 
   const removeEntry = (entryId?: number) => {

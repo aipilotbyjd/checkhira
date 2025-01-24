@@ -32,6 +32,11 @@ export default function Account() {
       icon: 'information',
       href: '/account/about',
     },
+    {
+      title: 'Default Prices',
+      icon: 'diamond-stone',
+      href: '/account/default-prices',
+    },
   ];
 
   const handleLogout = async () => {

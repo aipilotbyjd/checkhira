@@ -8,6 +8,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { DeleteConfirmationModal } from '../../../components/DeleteConfirmationModal';
 import { SuccessModal } from '../../../components/SuccessModal';
 import { usePaymentOperations } from '../../../hooks/usePaymentOperations';
+import { useToast } from '../../../contexts/ToastContext';
 
 interface Payment {
   id: number;
@@ -41,6 +42,7 @@ export default function EditPayment() {
   const { updatePayment, deletePayment, getPayment, getPaymentSources, isLoading } =
     usePaymentOperations();
   const [isLoadingSources, setIsLoadingSources] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const loadData = async () => {
@@ -88,14 +90,14 @@ export default function EditPayment() {
 
     const result = await updatePayment(Number(id), paymentData);
     if (result) {
-      setShowSuccessModal(true);
+      showToast('Payment updated successfully!');
     }
   };
 
   const handleDelete = async () => {
     const result = await deletePayment(Number(id));
     if (result) {
-      setShowSuccessModal(true);
+      showToast('Payment deleted successfully!');
     }
   };
 

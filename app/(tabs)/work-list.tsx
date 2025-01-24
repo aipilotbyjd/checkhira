@@ -50,7 +50,7 @@ export default function WorkList() {
 
         if (page === 1) {
           setWorkList(newWorks);
-          setTodayTotal(data.total || 0);
+          setTodayTotal(Number(data.total) || 0);
         } else {
           setWorkList((prev) => [...prev, ...newWorks]);
         }

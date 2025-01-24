@@ -12,14 +12,14 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
-import { SuccessModal } from '../../components/SuccessModal';
+import { useToast } from '../../contexts/ToastContext';
 import { useProfileOperations } from '../../hooks/useProfileOperations';
 import { UserProfile } from '../../services/profileService';
 
 export default function EditProfile() {
   const router = useRouter();
   const { isLoading, getProfile, updateProfile, pickImage } = useProfileOperations();
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const { showToast } = useToast();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [profile, setProfile] = useState<UserProfile>({
     firstName: '',
@@ -107,18 +107,18 @@ export default function EditProfile() {
 
       const result = await updateProfile(formData);
       if (result) {
-        setShowSuccessModal(true);
+        showToast('Profile updated successfully!');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+      showToast('Something went wrong!', 'error');
     }
   };
 
   const displayImage = selectedImage
     ? { uri: selectedImage }
     : profile.profile_image
-    ? { uri: profile.profile_image }
-    : require('../../assets/profile_image.jpg');
+      ? { uri: profile.profile_image }
+      : require('../../assets/profile_image.jpg');
 
   if (isLoading) {
     return (
@@ -135,11 +135,7 @@ export default function EditProfile() {
         <View className="items-center px-6 pt-6">
           <View className="relative">
             <View className="h-24 w-24 rounded-full bg-gray-200">
-              <Image 
-                source={displayImage}
-                className="h-24 w-24 rounded-full"
-                resizeMode="cover"
-              />
+              <Image source={displayImage} className="h-24 w-24 rounded-full" resizeMode="cover" />
             </View>
             <Pressable
               onPress={handleImagePick}
@@ -191,20 +187,9 @@ export default function EditProfile() {
           onPress={handleSave}
           className="rounded-2xl p-4"
           style={{ backgroundColor: COLORS.primary }}>
-          <Text className="text-center text-lg font-semibold text-white">
-            Save Changes
-          </Text>
+          <Text className="text-center text-lg font-semibold text-white">Save Changes</Text>
         </Pressable>
       </View>
-
-      <SuccessModal
-        visible={showSuccessModal}
-        onClose={() => {
-          setShowSuccessModal(false);
-          router.back();
-        }}
-        message="Profile updated successfully!"
-      />
     </View>
   );
 }

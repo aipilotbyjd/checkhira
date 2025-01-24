@@ -18,11 +18,13 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWorkOperations } from '../../../hooks/useWorkOperations';
 import { formatDateForAPI, parseCustomDate } from '../../../utils/dateFormatter';
 import { WorkEntry, WorkFormData, WorkResponse } from '../../../types/work';
+import { useToast } from '../../../contexts/ToastContext';
 
 export default function EditWork() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { updateWork, deleteWork, getWork, isLoading } = useWorkOperations();
+  const { showToast } = useToast();
 
   const [formData, setFormData] = useState<WorkFormData>({
     date: new Date(),
@@ -128,10 +130,11 @@ export default function EditWork() {
     try {
       const result = await updateWork(Number(id), workData);
       if (result) {
-        setShowSuccessModal(true);
+        showToast('Work entry updated successfully!');
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to update work entries. Please try again.');
+      showToast('Something went wrong!', 'error');
     }
   };
 
@@ -140,10 +143,11 @@ export default function EditWork() {
     try {
       const result = await deleteWork(Number(id));
       if (result) {
-        setShowSuccessModal(true);
+        showToast('Work entry deleted successfully!');
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to delete work entry. Please try again.');
+      showToast('Something went wrong!', 'error');
     } finally {
       setIsDeleting(false);
       setShowDeleteModal(false);
@@ -376,7 +380,7 @@ export default function EditWork() {
             // Delete entire work entry
             console.log('Deleting work:', id);
             setShowDeleteEntryModal(false);
-            setShowSuccessModal(true);
+            showToast('Work entry deleted successfully!');
           }
         }}
         message={
@@ -396,15 +400,6 @@ export default function EditWork() {
           setShowDeleteModal(false);
         }}
         message="Are you sure you want to delete this work entry?"
-      />
-
-      <SuccessModal
-        visible={showSuccessModal}
-        onClose={() => {
-          setShowSuccessModal(false);
-          router.back();
-        }}
-        message={showDeleteModal ? 'Work entry deleted successfully!' : 'Work entry updated successfully!'}
       />
     </View>
   );

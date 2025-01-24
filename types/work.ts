@@ -55,3 +55,13 @@ export interface WorkEntryPayload {
   entries: WorkEntry[];
   total: number;
 }
+
+export interface DefaultPrice {
+  id: number;
+  type: string;
+  price: string;
+}
+
+export interface DefaultPriceFormData {
+  prices: DefaultPrice[];
+}
