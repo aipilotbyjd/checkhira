@@ -47,7 +47,7 @@ export default function DefaultPrices() {
     try {
       await AsyncStorage.setItem('defaultPrices', JSON.stringify(formData.prices));
       showToast('Default prices saved successfully!');
-      router.push('/account');
+      router.replace('/(tabs)/account');
     } catch (error) {
       showToast('Something went wrong!', 'error');
     }

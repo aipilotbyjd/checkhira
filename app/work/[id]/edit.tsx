@@ -131,6 +131,7 @@ export default function EditWork() {
       const result = await updateWork(Number(id), workData);
       if (result) {
         showToast('Work entry updated successfully!');
+        router.replace('/(tabs)/work-list');
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to update work entries. Please try again.');
@@ -144,6 +145,7 @@ export default function EditWork() {
       const result = await deleteWork(Number(id));
       if (result) {
         showToast('Work entry deleted successfully!');
+        router.replace('/(tabs)/work-list');
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to delete work entry. Please try again.');

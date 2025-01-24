@@ -88,16 +88,26 @@ export default function EditPayment() {
       source_id: payment.source_id,
     };
 
-    const result = await updatePayment(Number(id), paymentData);
-    if (result) {
-      showToast('Payment updated successfully!');
+    try {
+      const result = await updatePayment(Number(id), paymentData);
+      if (result) {
+        showToast('Payment updated successfully!');
+        router.replace('/(tabs)/payments');
+      }
+    } catch (error) {
+      showToast('Failed to update payment', 'error');
     }
   };
 
   const handleDelete = async () => {
-    const result = await deletePayment(Number(id));
-    if (result) {
-      showToast('Payment deleted successfully!');
+    try {
+      const result = await deletePayment(Number(id));
+      if (result) {
+        showToast('Payment deleted successfully!');
+        router.replace('/(tabs)/payments');
+      }
+    } catch (error) {
+      showToast('Failed to delete payment', 'error');
     }
   };
 
