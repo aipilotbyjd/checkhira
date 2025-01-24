@@ -1,37 +1,14 @@
-import { Text, View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
-import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
+import { Text, View, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format, startOfWeek, endOfWeek, isWithinInterval, isValid } from 'date-fns';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useWorkOperations } from '../../hooks/useWorkOperations';
-
-interface Work {
-  id: number;
-  name: string;
-  description: string;
-  date: string | Date;
-  user_id: number;
-  is_active: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at: null | string;
-  work_items: WorkItem[];
-}
-
-// Add interface for work item
-interface WorkItem {
-  id: number;
-  type: string;
-  diamond: string | null;
-  price: string | null;
-  work_id: number;
-  is_active: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at: null | string;
-}
+import { useFocusEffect } from 'expo-router';
+import { Work } from '../../types/work';
+import { dateUtils } from '../../utils/dateUtils';
 
 export default function WorkList() {
   const router = useRouter();
@@ -39,102 +16,97 @@ export default function WorkList() {
   const [currentFilter, setCurrentFilter] = useState('all');
   const { getAllWork, isLoading } = useWorkOperations();
   const [workList, setWorkList] = useState<Work[]>([]);
+  const [todayTotal, setTodayTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMorePages, setHasMorePages] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const loadWorkList = async () => {
-      const data = await getAllWork();
-      console.log(data);
-      if (data && Array.isArray(data)) {
-        // Parse dates in DD-MM-YYYY format
-        const formattedData = data.map((item: any) => ({
-          ...item,
-          date: parseCustomDate(item.date),
-        }));
-        console.log(formattedData);
-        setWorkList(formattedData);
-      } else {
-        // Handle case where data is not an array
-        console.warn('Work data is not in expected format:', data);
+  const loadWorkRef = useRef(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadWork({ page: 1 });
+      return () => {
+        loadWorkRef.current = false;
+      };
+    }, [currentFilter])
+  );
+
+  const loadWork = async ({ page = 1 }: { page?: number }) => {
+    try {
+      if (page === 1) {
         setWorkList([]);
+        setIsLoadingMore(true);
       }
-    };
 
-    loadWorkList();
-  }, []);
+      const data = await getAllWork({ page, filter: currentFilter });
 
-  // Add loading indicator
-  if (isLoading) {
+      if (data?.works?.data) {
+        const newWorks = data.works.data;
+
+        if (page === 1) {
+          setWorkList(newWorks);
+          setTodayTotal(data.total || 0);
+        } else {
+          setWorkList((prev) => [...prev, ...newWorks]);
+        }
+
+        setHasMorePages(data.works.current_page < data.works.last_page);
+        setCurrentPage(data.works.current_page);
+      }
+    } catch (error) {
+      console.error('Error loading work:', error);
+    } finally {
+      setIsLoadingMore(false);
+      setRefreshing(false);
+    }
+  };
+
+  const handleFilter = (filter: string) => {
+    if (filter !== currentFilter) {
+      setCurrentFilter(filter);
+      setCurrentPage(1);
+      setWorkList([]);
+    }
+    actionSheetRef.current?.hide();
+  };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setCurrentPage(1);
+    await loadWork({ page: 1 });
+  }, [currentFilter]);
+
+  const handleLoadMore = useCallback(async () => {
+    if (!hasMorePages || isLoadingMore) return;
+    setIsLoadingMore(true);
+    await loadWork({ page: currentPage + 1 });
+  }, [currentPage, hasMorePages, isLoadingMore]);
+
+  const filteredWorkList = workList.filter((item) => {
+    const itemDate = dateUtils.parseCustomDate(item.date);
+    if (!isValid(itemDate)) return false;
+
+    switch (currentFilter) {
+      case 'today':
+        return dateUtils.isToday(itemDate);
+      case 'week':
+        return dateUtils.isThisWeek(itemDate);
+      case 'month':
+        return dateUtils.isThisMonth(itemDate);
+      default:
+        return true;
+    }
+  });
+
+  if (isLoading && currentPage === 1 && workList.length === 0) {
     return (
       <View className="flex-1 items-center justify-center">
         <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     );
   }
-
-  // // Mock data - replace with actual data
-  // const workList = [
-  //   {
-  //     id: 1,
-  //     date: new Date(),
-  //     type: 'polishing',
-  //     hours: 8,
-  //     diamonds: 12,
-  //     earnings: 5000,
-  //   },
-  //   {
-  //     id: 2,
-  //     date: new Date(2024, 2, 15),
-  //     type: 'cutting',
-  //     hours: 6,
-  //     diamonds: 8,
-  //     earnings: 3500,
-  //   },
-  // ];
-
-  // Calculate today's total
-  const todayTotal = workList
-    .filter((item) => {
-      const itemDate = new Date(item.date);
-      return (
-        isValid(itemDate) && format(itemDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
-      );
-    })
-    .reduce((sum, item) => {
-      // Sum up all work_items prices
-      const itemTotal = item.work_items.reduce((itemSum, workItem) => {
-        return itemSum + (Number(workItem.price) || 0);
-      }, 0);
-      return sum + itemTotal;
-    }, 0);
-
-  const handleFilter = (filter: string) => {
-    setCurrentFilter(filter);
-    actionSheetRef.current?.hide();
-  };
-
-  const filteredWorkList = workList.filter((item) => {
-    const itemDate = parseCustomDate(item.date as string);
-    if (!isValid(itemDate)) return false;
-
-    const today = new Date();
-
-    switch (currentFilter) {
-      case 'today':
-        return format(itemDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
-      case 'week':
-        const weekStart = startOfWeek(today);
-        const weekEnd = endOfWeek(today);
-        return isWithinInterval(itemDate, { start: weekStart, end: weekEnd });
-      case 'month':
-        return (
-          itemDate.getMonth() === today.getMonth() && itemDate.getFullYear() === today.getFullYear()
-        );
-      default:
-        return true;
-    }
-  });
-
-  console.log(filteredWorkList);
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
@@ -175,7 +147,27 @@ export default function WorkList() {
         </View>
       </View>
 
-      <ScrollView className="flex-1 px-4">
+      <ScrollView
+        className="flex-1 px-4"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.primary]}
+            tintColor={COLORS.primary}
+          />
+        }
+        onScroll={({ nativeEvent }) => {
+          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+          const paddingToBottom = 50;
+          const isCloseToBottom =
+            layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+
+          if (isCloseToBottom && !isLoadingMore && hasMorePages) {
+            handleLoadMore();
+          }
+        }}
+        scrollEventThrottle={16}>
         {/* Today's total section */}
         <View className="my-6 rounded-xl p-4" style={{ backgroundColor: COLORS.primary + '15' }}>
           <Text className="text-sm font-medium" style={{ color: COLORS.gray[600] }}>
@@ -188,39 +180,18 @@ export default function WorkList() {
 
         {/* Work list */}
         {filteredWorkList.map((item) => (
-          <Pressable
+          <WorkListItem
             key={item.id}
-            onPress={() => router.push(`/work/${item.id}/edit`)}
-            className="mb-4 rounded-xl p-4"
-            style={{
-              backgroundColor: COLORS.background.secondary,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.05,
-              shadowRadius: 2,
-              elevation: 1,
-            }}>
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-                  {format(new Date(item.date), 'dd MMM yyyy')}
-                </Text>
-                <Text className="mt-1 text-base" style={{ color: COLORS.secondary }}>
-                  {item.name}
-                </Text>
-              </View>
-              <View className="items-end">
-                <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-                  {item.work_items.reduce((sum, wi) => sum + (Number(wi.diamond) || 0), 0)} diamonds
-                </Text>
-                <Text className="mt-1 text-lg font-semibold" style={{ color: COLORS.success }}>
-                  ₹{' '}
-                  {item.work_items.reduce((sum, wi) => sum + (Number(wi.price) || 0), 0).toFixed(2)}
-                </Text>
-              </View>
-            </View>
-          </Pressable>
+            item={item}
+            onPress={(id) => router.push(`/work/${id}/edit`)}
+          />
         ))}
+
+        {isLoadingMore && (
+          <View className="py-4">
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          </View>
+        )}
       </ScrollView>
 
       <ActionSheet
@@ -261,26 +232,4 @@ export default function WorkList() {
       </ActionSheet>
     </View>
   );
-}
-
-function parseCustomDate(dateString: string | Date): Date {
-  // If it's already a Date object, return it
-  if (dateString instanceof Date) {
-    return dateString;
-  }
-
-  if (!dateString) return new Date();
-  
-  // Handle DD-MM-YYYY format
-  const parts = dateString.split('-').map(num => parseInt(num, 10));
-  if (parts.length === 3) {
-    const [day, month, year] = parts;
-    if (day && month && year) {
-      // Note: month - 1 because JavaScript months are 0-based
-      return new Date(year, month - 1, day);
-    }
-  }
-  
-  // Fallback to standard date parsing
-  return new Date(dateString);
 }

@@ -47,7 +47,7 @@ export default function EditWork() {
           setFormData({
             date: parseCustomDate(data.date),
             name: data.name,
-            entries: data.work_items.map((item) => ({
+            entries: data.work_items.map((item: any) => ({
               id: item.id,
               type: item.type,
               diamond: item.diamond?.toString() || '',

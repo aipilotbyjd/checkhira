@@ -48,8 +48,8 @@ export const workService = {
     return handleResponse(response);
   },
 
-  async getAllWork() {
-    const response = await fetch(`${api.baseUrl}/works`, {
+  async getAllWork({ page = 1, filter = 'all' }: { page?: number; filter?: string }) {
+    const response = await fetch(`${api.baseUrl}/works?page=${page}&filter=${filter}`, {
       headers: await api.getHeaders(),
     });
     return handleResponse(response);

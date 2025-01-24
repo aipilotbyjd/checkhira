@@ -24,3 +24,28 @@ export interface WorkResponse {
     work_id: number;
   }[];
 }
+
+export interface Work {
+  id: number;
+  name: string;
+  description: string;
+  date: string | Date;
+  user_id: number;
+  is_active: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: null | string;
+  work_items: WorkItem[];
+}
+
+export interface WorkItem {
+  id: number;
+  type: string;
+  diamond: string | null;
+  price: string | null;
+  work_id: number;
+  is_active: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: null | string;
+}

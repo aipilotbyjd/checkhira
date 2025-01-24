@@ -71,12 +71,12 @@ export const useWorkOperations = () => {
     }
   };
 
-  const getAllWork = async () => {
+  const getAllWork = async ({ page = 1, filter = 'all' }: { page?: number; filter?: string }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await workService.getAllWork();
-      return response.data;
+      const response = await workService.getAllWork({ page, filter });
+      return response;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch work entries';
       setError(errorMessage);
