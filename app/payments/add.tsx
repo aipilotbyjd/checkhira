@@ -55,13 +55,13 @@ export default function AddPayment() {
 
   const renderPaymentSourcesSkeleton = () => (
     <View className="flex-row flex-wrap gap-2">
-      {[1, 2, 3].map((i) => (
+      {[1, 2, 3, 4, 5, 6].map((i) => (
         <View
           key={i}
           className="flex-row items-center rounded-full px-4 py-2"
           style={{
             backgroundColor: COLORS.gray[100],
-            width: 120,
+            width: 100,
             height: 40,
           }}
         />

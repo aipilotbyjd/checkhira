@@ -1,71 +1,68 @@
 import { useState, useEffect } from 'react';
 import {
-  Text,
   View,
+  Text,
   TextInput,
   Pressable,
   Image,
   ScrollView,
-  Alert,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
-import { useToast } from '../../contexts/ToastContext';
-import { useProfileOperations } from '../../hooks/useProfileOperations';
+import * as ImagePicker from 'expo-image-picker';
 import { UserProfile } from '../../services/profileService';
+import { useProfileOperations } from '../../hooks/useProfileOperations';
+import { useToast } from '../../contexts/ToastContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function EditProfile() {
   const router = useRouter();
-  const { isLoading, getProfile, updateProfile, pickImage } = useProfileOperations();
   const { showToast } = useToast();
+  const { user, refreshUser } = useAuth();
+  const { updateProfile, isLoading } = useProfileOperations();
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [profile, setProfile] = useState<UserProfile>({
-    firstName: '',
-    lastName: '',
+  const [formData, setFormData] = useState<UserProfile>({
+    first_name: '',
+    last_name: '',
     email: '',
     phone: '',
     address: '',
     profile_image: '',
   });
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
-    const data = await getProfile();
-    if (data) {
-      setProfile({
-        firstName: data.first_name || '',
-        lastName: data.last_name || '',
-        email: data.email || '',
-        phone: data.phone || '',
-        address: data.address || '',
-        profile_image: data.profile_image || '',
+    if (user) {
+      setFormData({
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        address: user.address || '',
+        profile_image: user.profile_image || '',
       });
     }
-  };
+  }, [user]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!profile.firstName) {
-      newErrors.firstName = 'First name is required';
+    if (!formData.first_name.trim()) {
+      newErrors.first_name = 'First name is required';
     }
-    if (!profile.lastName) {
-      newErrors.lastName = 'Last name is required';
+    if (!formData.last_name.trim()) {
+      newErrors.last_name = 'Last name is required';
     }
-    if (!profile.email) {
+    if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(profile.email)) {
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
-    if (!profile.phone) {
+    if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required';
-    } else if (!/^([0-9\s\-\+\(\)]*)$/.test(profile.phone) || profile.phone.length < 10) {
+    } else if (!/^([0-9\s\-\+\(\)]*)$/.test(formData.phone) || formData.phone.length < 10) {
       newErrors.phone = 'Please enter a valid phone number';
     }
 
@@ -73,123 +70,243 @@ export default function EditProfile() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleImagePick = async () => {
-    const imageUri = await pickImage();
-    if (imageUri) {
-      setSelectedImage(imageUri);
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permission Required',
+        'Please grant camera roll permissions to change profile picture.'
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      setFormData((prev) => ({
+        ...prev,
+        profile_image: result.assets[0].uri,
+        tempImageUri: result.assets[0].uri,
+      }));
     }
   };
 
-  const handleSave = async () => {
+  const handleUpdate = async () => {
     if (!validateForm()) {
+      showToast('Please correct the errors in the form', 'error');
       return;
     }
 
     try {
-      const formData = new FormData();
-      formData.append('first_name', profile.firstName);
-      formData.append('last_name', profile.lastName);
-      formData.append('email', profile.email);
-      formData.append('phone', profile.phone);
-      formData.append('address', profile.address || '');
+      const profileData = {
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        address: formData.address?.trim() || '',
+      };
 
-      if (selectedImage) {
-        const filename = selectedImage.split('/').pop() || 'profile.jpg';
-        const match = /\.(\w+)$/.exec(filename);
+      // Only add image data if a new image was selected
+      if (formData.tempImageUri) {
+        const form = new FormData();
+        
+        // Append regular fields
+        Object.entries(profileData).forEach(([key, value]) => {
+          form.append(key, value);
+        });
+
+        // Handle image file
+        const filename = formData.tempImageUri.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename || '');
         const type = match ? `image/${match[1]}` : 'image/jpeg';
 
-        formData.append('profile_image', {
-          uri: selectedImage,
-          name: filename,
-          type,
+        // Properly format image data
+        form.append('profile_image', {
+          uri: formData.tempImageUri,
+          type: type,
+          name: filename || 'profile.jpg',
         } as any);
-      }
 
-      const result = await updateProfile(formData);
-      if (result) {
-        showToast('Profile updated successfully!');
+        const result = await updateProfile(form);
+        if (result) {
+          await refreshUser();
+          showToast('Profile updated successfully!');
+          router.back();
+        }
+      } else {
+        // If no new image, send JSON data
+        const result = await updateProfile(profileData);
+        if (result) {
+          await refreshUser();
+          showToast('Profile updated successfully!');
+          router.back();
+        }
       }
-    } catch (error) {
-      showToast('Something went wrong!', 'error');
+    } catch (error: any) {
+      if (error.status === 422) {
+        const serverErrors = error.data?.errors || {};
+        setErrors(serverErrors);
+        showToast('Please correct the errors in the form', 'error');
+      } else {
+        showToast('Failed to update profile', 'error');
+      }
     }
   };
 
-  const displayImage = selectedImage
-    ? { uri: selectedImage }
-    : profile.profile_image
-      ? { uri: profile.profile_image }
-      : require('../../assets/profile_image.jpg');
-
-  if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
-  }
-
   return (
-    <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
-      <ScrollView className="flex-1">
+    <ScrollView className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
+      <View className="p-6">
         {/* Profile Image Section */}
-        <View className="items-center px-6 pt-6">
-          <View className="relative">
+        <View className="mb-6 items-center">
+          <Pressable onPress={pickImage} className="relative">
             <View className="h-24 w-24 rounded-full bg-gray-200">
-              <Image source={displayImage} className="h-24 w-24 rounded-full" resizeMode="cover" />
+              <Image
+                source={
+                  formData.tempImageUri || formData.profile_image
+                    ? { uri: formData.tempImageUri || formData.profile_image }
+                    : require('../../assets/profile_image.jpg')
+                }
+                className="h-24 w-24 rounded-full"
+                style={{ width: '100%', height: '100%' }}
+              />
             </View>
-            <Pressable
-              onPress={handleImagePick}
+            <View
               className="absolute bottom-0 right-0 rounded-full p-2"
               style={{ backgroundColor: COLORS.primary }}>
               <MaterialCommunityIcons name="camera" size={20} color="white" />
-            </Pressable>
-          </View>
+            </View>
+          </Pressable>
         </View>
 
         {/* Form Fields */}
-        <View className="mt-6 space-y-4 px-6">
+        <View className="space-y-4">
           {/* First Name */}
           <View>
             <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
               First Name <Text style={{ color: COLORS.error }}>*</Text>
             </Text>
             <TextInput
-              className="rounded-xl border p-3"
+              className={`rounded-xl border p-3 ${errors.first_name ? 'border-error' : 'border-gray-200'}`}
               style={{
                 backgroundColor: COLORS.white,
-                borderColor: errors.firstName ? COLORS.error : COLORS.gray[200],
+                borderColor: errors.first_name ? COLORS.error : COLORS.gray[200],
                 color: COLORS.secondary,
               }}
-              placeholder="Enter your first name"
-              value={profile.firstName}
+              value={formData.first_name}
               onChangeText={(text) => {
-                setProfile({ ...profile, firstName: text });
-                if (errors.firstName) {
-                  setErrors({ ...errors, firstName: '' });
+                setFormData({ ...formData, first_name: text });
+                if (errors.first_name) {
+                  setErrors({ ...errors, first_name: '' });
                 }
               }}
+              placeholder="Enter first name"
             />
-            {errors.firstName && (
-              <Text className="mt-1 text-sm" style={{ color: COLORS.error }}>
-                {errors.firstName}
+            {errors.first_name && (
+              <Text className="mt-1 text-xs" style={{ color: COLORS.error }}>
+                {errors.first_name}
               </Text>
             )}
           </View>
 
-          {/* Similar blocks for lastName, email, phone, and address with validation messages */}
-          {/* ... */}
-        </View>
-      </ScrollView>
+          {/* Last Name */}
+          <View>
+            <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
+              Last Name <Text style={{ color: COLORS.error }}>*</Text>
+            </Text>
+            <TextInput
+              className="rounded-xl border p-3"
+              style={{
+                backgroundColor: COLORS.white,
+                borderColor: COLORS.gray[200],
+                color: COLORS.secondary,
+              }}
+              value={formData.last_name}
+              onChangeText={(text) => setFormData({ ...formData, last_name: text })}
+              placeholder="Enter last name"
+            />
+          </View>
 
-      {/* Save Button */}
-      <View className="p-6">
+          {/* Email */}
+          <View>
+            <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
+              Email <Text style={{ color: COLORS.error }}>*</Text>
+            </Text>
+            <TextInput
+              className="rounded-xl border p-3"
+              style={{
+                backgroundColor: COLORS.white,
+                borderColor: COLORS.gray[200],
+                color: COLORS.secondary,
+              }}
+              value={formData.email}
+              onChangeText={(text) => setFormData({ ...formData, email: text })}
+              placeholder="Enter email"
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+
+          {/* Phone */}
+          <View>
+            <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
+              Phone
+            </Text>
+            <TextInput
+              className="rounded-xl border p-3"
+              style={{
+                backgroundColor: COLORS.white,
+                borderColor: COLORS.gray[200],
+                color: COLORS.secondary,
+              }}
+              value={formData.phone}
+              onChangeText={(text) => setFormData({ ...formData, phone: text })}
+              placeholder="Enter phone number"
+              keyboardType="phone-pad"
+            />
+          </View>
+
+          {/* Address */}
+          <View>
+            <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
+              Address
+            </Text>
+            <TextInput
+              className="rounded-xl border p-3"
+              style={{
+                backgroundColor: COLORS.white,
+                borderColor: COLORS.gray[200],
+                color: COLORS.secondary,
+              }}
+              value={formData.address}
+              onChangeText={(text) => setFormData({ ...formData, address: text })}
+              placeholder="Enter address"
+              multiline
+              numberOfLines={3}
+            />
+          </View>
+        </View>
+
+        {/* Update Button */}
         <Pressable
-          onPress={handleSave}
-          className="rounded-2xl p-4"
-          style={{ backgroundColor: COLORS.primary }}>
-          <Text className="text-center text-lg font-semibold text-white">Save Changes</Text>
+          onPress={handleUpdate}
+          disabled={isLoading}
+          className="mt-6 rounded-xl p-4"
+          style={{
+            backgroundColor: isLoading ? COLORS.gray[400] : COLORS.primary,
+            opacity: isLoading ? 0.7 : 1,
+          }}>
+          {isLoading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text className="text-center text-lg font-semibold text-white">Update Profile</Text>
+          )}
         </Pressable>
       </View>
-    </View>
+    </ScrollView>
   );
 }
