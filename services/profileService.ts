@@ -43,12 +43,12 @@ const createFormData = (imageUri: string, body: Record<string, any> = {}) => {
   }
 
   // Append other form fields
-  Object.keys(body).forEach(key => {
+  Object.keys(body).forEach((key) => {
     formData.append(key, body[key]);
   });
 
   return formData;
-}
+};
 
 export const profileService = {
   async getProfile(): Promise<ProfileResponse> {
@@ -60,24 +60,9 @@ export const profileService = {
 
   async updateProfile(data: FormData | Partial<UserProfile>): Promise<ProfileResponse> {
     const headers = await api.getHeaders();
-    
-    // If data is UserProfile object with tempImageUri, convert to FormData
-    if (!('append' in data) && 'tempImageUri' in data) {
-      const { tempImageUri, ...profileData } = data as UserProfile;
-      const formData = createFormData(tempImageUri!, profileData);
-      delete headers['Content-Type']; // Let browser set correct content type for FormData
-      
-      const response = await fetch(`${api.baseUrl}/profile`, {
-        method: 'PUT',
-        headers,
-        body: formData,
-      });
-      return handleResponse<ProfileResponse>(response);
-    }
-    
-    // Handle regular FormData or UserProfile without image
+
     if (data instanceof FormData) {
-      delete headers['Content-Type'];
+      headers['Content-Type'] = 'multipart/form-data';
     }
 
     const response = await fetch(`${api.baseUrl}/profile`, {
