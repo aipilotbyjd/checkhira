@@ -34,6 +34,7 @@ export default function AddWork() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<WorkEntry | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const calculateTotal = () => {
     return formData.entries.reduce((sum, entry) => {
@@ -122,7 +123,7 @@ export default function AddWork() {
 
   const addEntry = async () => {
     if (formData.entries.length >= 10) {
-      Alert.alert('Maximum Limit', 'You can add up to 10 entries only.');
+      showToast('You can add up to 10 entries only.', 'error');
       return;
     }
 
@@ -202,7 +203,7 @@ export default function AddWork() {
 
   const removeEntry = (entryId?: number) => {
     if (formData.entries.length === 1) {
-      Alert.alert('Cannot Remove', 'At least one entry is required.');
+      showToast('At least one entry is required.', 'error');
       return;
     }
     const entryToDelete = entryId
@@ -223,13 +224,13 @@ export default function AddWork() {
 
   const validateForm = (): boolean => {
     if (!formData.name.trim()) {
-      Alert.alert('Required Field', 'Please enter a name.');
+      showToast('Please enter a name.', 'error');
       return false;
     }
 
     const hasEmptyFields = formData.entries.some((entry) => !entry.diamond || !entry.price);
     if (hasEmptyFields) {
-      Alert.alert('Invalid Entries', 'Please fill in all diamond and price fields.');
+      showToast('Please fill in all diamond and price fields.', 'error');
       return false;
     }
 
@@ -237,24 +238,26 @@ export default function AddWork() {
   };
 
   const handleSave = async () => {
-    if (!validateForm()) return;
-
-    const workData = {
-      date: formatDateForAPI(formData.date),
-      name: formData.name.trim(),
-      entries: formData.entries,
-      total: calculateTotal(),
-    };
+    if (!validateForm() || isSaving) return;
 
     try {
+      setIsSaving(true);
+      const workData = {
+        date: formatDateForAPI(formData.date),
+        name: formData.name.trim(),
+        entries: formData.entries,
+        total: calculateTotal(),
+      };
+
       const result = await createWork(workData);
       if (result) {
         showToast('Work entries saved successfully!');
         router.back();
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to save work entries. Please try again.');
-      showToast('Something went wrong!', 'error');
+      showToast('Failed to save work entries. Please try again.', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -439,9 +442,15 @@ export default function AddWork() {
 
         <Pressable
           onPress={handleSave}
+          disabled={isSaving}
           className="mb-4 rounded-2xl p-4"
-          style={{ backgroundColor: COLORS.primary }}>
-          <Text className="text-center text-lg font-semibold text-white">Save Entries</Text>
+          style={{ 
+            backgroundColor: isSaving ? COLORS.gray[400] : COLORS.primary,
+            opacity: isSaving ? 0.7 : 1 
+          }}>
+          <Text className="text-center text-lg font-semibold text-white">
+            {isSaving ? 'Saving...' : 'Save Entries'}
+          </Text>
         </Pressable>
       </View>
 
