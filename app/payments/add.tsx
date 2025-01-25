@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SuccessModal } from '../../components/SuccessModal';
 import { usePaymentOperations } from '../../hooks/usePaymentOperations';
+import { useAppSettings } from '../../contexts/SettingsContext';
 
 interface Payment {
   id: number;
@@ -39,19 +40,24 @@ export default function AddPayment() {
   });
 
   const { createPayment, getPaymentSources, isLoading } = usePaymentOperations();
+  const { settings } = useAppSettings();
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoadingSources(true);
-      const sources = await getPaymentSources();
-      if (sources) {
-        setPaymentSources(sources);
+      if (settings?.payment_sources) {
+        setPaymentSources(settings.payment_sources);
+      } else {
+        const sources = await getPaymentSources();
+        if (sources) {
+          setPaymentSources(sources);
+        }
       }
       setIsLoadingSources(false);
     };
 
     loadData();
-  }, []);
+  }, [settings]);
 
   const renderPaymentSourcesSkeleton = () => (
     <View className="flex-row flex-wrap gap-2">
