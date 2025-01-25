@@ -13,16 +13,17 @@ import { format } from 'date-fns';
 import { MaterialCommunityIcons, Ionicons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { DeleteConfirmationModal } from '../../components/DeleteConfirmationModal';
-import { SuccessModal } from '../../components/SuccessModal';
 import { useRouter } from 'expo-router';
 import { useWorkOperations } from '../../hooks/useWorkOperations';
 import { formatDateForAPI } from '../../utils/dateFormatter';
 import { DefaultPrice, WorkEntry, WorkFormData } from '../../types/work';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function AddWork() {
   const router = useRouter();
   const { createWork, isLoading } = useWorkOperations();
+  const { showToast } = useToast();
 
   const [formData, setFormData] = useState<WorkFormData>({
     date: new Date(),
@@ -33,7 +34,6 @@ export default function AddWork() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<WorkEntry | null>(null);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const calculateTotal = () => {
     return formData.entries.reduce((sum, entry) => {
@@ -44,7 +44,34 @@ export default function AddWork() {
   };
 
   const getNextType = (currentType: string) => {
-    const types = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+    const types = [
+      'A',
+      'B',
+      'C',
+      'D',
+      'E',
+      'F',
+      'G',
+      'H',
+      'I',
+      'J',
+      'K',
+      'L',
+      'M',
+      'N',
+      'O',
+      'P',
+      'Q',
+      'R',
+      'S',
+      'T',
+      'U',
+      'V',
+      'W',
+      'X',
+      'Y',
+      'Z',
+    ];
     const currentIndex = types.indexOf(currentType);
     return types[(currentIndex + 1) % types.length];
   };
@@ -58,17 +85,26 @@ export default function AddWork() {
       const savedPrices = await AsyncStorage.getItem('defaultPrices');
       if (savedPrices) {
         const prices = JSON.parse(savedPrices);
-        const initialEntries = prices.map((price: DefaultPrice, index: number) => ({
-          id: Date.now() + index,
-          type: price.type,
-          diamond: '',
-          price: price.price,
-        }));
+        const initialEntries = prices
+          .filter((price: DefaultPrice) => price.price.trim() !== '')
+          .map((price: DefaultPrice, index: number) => ({
+            id: Date.now() + index,
+            type: price.type,
+            diamond: '',
+            price: price.price,
+          }));
 
-        setFormData((prev) => ({
-          ...prev,
-          entries: initialEntries,
-        }));
+        if (initialEntries.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            entries: initialEntries,
+          }));
+        } else {
+          setFormData((prev) => ({
+            ...prev,
+            entries: [{ id: Date.now(), type: 'A', diamond: '', price: '' }],
+          }));
+        }
       } else {
         setFormData((prev) => ({
           ...prev,
@@ -93,7 +129,9 @@ export default function AddWork() {
     try {
       const savedPrices = await AsyncStorage.getItem('defaultPrices');
       if (savedPrices) {
-        const prices = JSON.parse(savedPrices);
+        const prices = JSON.parse(savedPrices).filter(
+          (price: DefaultPrice) => price.price.trim() !== ''
+        );
         const unusedPrice = prices.find(
           (price: DefaultPrice) => !formData.entries.some((entry) => entry.type === price.type)
         );
@@ -112,11 +150,53 @@ export default function AddWork() {
             ],
           });
         } else {
-          Alert.alert('No More Types', 'All available price types are already added.');
+          const lastEntry = formData.entries[formData.entries.length - 1];
+          const nextType = getNextType(lastEntry.type);
+          setFormData({
+            ...formData,
+            entries: [
+              ...formData.entries,
+              {
+                id: Date.now(),
+                type: nextType,
+                diamond: '',
+                price: '',
+              },
+            ],
+          });
         }
+      } else {
+        const lastEntry = formData.entries[formData.entries.length - 1];
+        const nextType = getNextType(lastEntry.type);
+        setFormData({
+          ...formData,
+          entries: [
+            ...formData.entries,
+            {
+              id: Date.now(),
+              type: nextType,
+              diamond: '',
+              price: '',
+            },
+          ],
+        });
       }
     } catch (error) {
       console.error('Failed to load default prices:', error);
+      const lastEntry = formData.entries[formData.entries.length - 1];
+      const nextType = getNextType(lastEntry.type);
+      setFormData({
+        ...formData,
+        entries: [
+          ...formData.entries,
+          {
+            id: Date.now(),
+            type: nextType,
+            diamond: '',
+            price: '',
+          },
+        ],
+      });
     }
   };
 
@@ -169,10 +249,12 @@ export default function AddWork() {
     try {
       const result = await createWork(workData);
       if (result) {
-        setShowSuccessModal(true);
+        showToast('Work entries saved successfully!');
+        router.back();
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to save work entries. Please try again.');
+      showToast('Something went wrong!', 'error');
     }
   };
 
@@ -381,15 +463,6 @@ export default function AddWork() {
         message={`Are you sure you want to remove Entry ${
           formData.entries.findIndex((e) => e.id === entryToDelete?.id) + 1
         } (Type ${entryToDelete?.type})?`}
-      />
-
-      <SuccessModal
-        visible={showSuccessModal}
-        onClose={() => {
-          setShowSuccessModal(false);
-          router.back();
-        }}
-        message="Work entries saved successfully!"
       />
     </View>
   );

@@ -11,6 +11,7 @@ const DEFAULT_TYPES = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
 export default function DefaultPrices() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [formData, setFormData] = useState<DefaultPriceFormData>({
     prices: DEFAULT_TYPES.map((type, index) => ({
       id: index + 1,
@@ -18,7 +19,6 @@ export default function DefaultPrices() {
       price: '',
     })),
   });
-  const { showToast } = useToast();
 
   useEffect(() => {
     loadDefaultPrices();
@@ -38,14 +38,16 @@ export default function DefaultPrices() {
   const updatePrice = (id: number, value: string) => {
     setFormData({
       prices: formData.prices.map((price) =>
-        price.id === id ? { ...price, price: value.toUpperCase() } : price
+        price.id === id ? { ...price, price: value } : price
       ),
     });
   };
 
   const handleSave = async () => {
     try {
-      await AsyncStorage.setItem('defaultPrices', JSON.stringify(formData.prices));
+      // Only save prices that have values
+      const validPrices = formData.prices.filter(price => price.price.trim() !== '');
+      await AsyncStorage.setItem('defaultPrices', JSON.stringify(validPrices));
       showToast('Default prices saved successfully!');
       router.replace('/(tabs)/account');
     } catch (error) {

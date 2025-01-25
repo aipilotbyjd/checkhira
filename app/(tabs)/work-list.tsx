@@ -87,22 +87,6 @@ export default function WorkList() {
     await loadWork({ page: currentPage + 1 });
   }, [currentPage, hasMorePages, isLoadingMore]);
 
-  const filteredWorkList = workList.filter((item) => {
-    const itemDate = dateUtils.parseCustomDate(item.date);
-    if (!isValid(itemDate)) return false;
-
-    switch (currentFilter) {
-      case 'today':
-        return dateUtils.isToday(itemDate);
-      case 'week':
-        return dateUtils.isThisWeek(itemDate);
-      case 'month':
-        return dateUtils.isThisMonth(itemDate);
-      default:
-        return true;
-    }
-  });
-
   if (isLoading && currentPage === 1 && workList.length === 0) {
     return (
       <View className="flex-1 items-center justify-center">
@@ -182,7 +166,7 @@ export default function WorkList() {
         </View>
 
         {/* Work list */}
-        {filteredWorkList.map((item: Work) => (
+        {workList.map((item: Work) => (
           <WorkListItem key={item.id.toString()} item={item} />
         ))}
 
