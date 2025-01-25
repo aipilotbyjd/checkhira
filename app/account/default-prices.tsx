@@ -28,7 +28,17 @@ export default function DefaultPrices() {
     try {
       const savedPrices = await AsyncStorage.getItem('defaultPrices');
       if (savedPrices) {
-        setFormData({ prices: JSON.parse(savedPrices) });
+        const parsedPrices = JSON.parse(savedPrices);
+        // Create a new array maintaining all types, merging with saved prices
+        const updatedPrices = DEFAULT_TYPES.map((type) => {
+          const savedPrice = parsedPrices.find((p: DefaultPrice) => p.type === type);
+          return {
+            id: DEFAULT_TYPES.indexOf(type) + 1,
+            type,
+            price: savedPrice ? savedPrice.price : '',
+          };
+        });
+        setFormData({ prices: updatedPrices });
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to load default prices');

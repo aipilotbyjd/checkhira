@@ -61,10 +61,6 @@ export const profileService = {
   async updateProfile(data: FormData | Partial<UserProfile>): Promise<ProfileResponse> {
     const headers = await api.getHeaders();
 
-    if (data instanceof FormData) {
-      headers['Content-Type'] = 'multipart/form-data';
-    }
-
     const response = await fetch(`${api.baseUrl}/profile`, {
       method: 'PUT',
       headers,
