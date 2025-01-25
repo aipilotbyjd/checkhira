@@ -17,6 +17,7 @@ import { UserProfile } from '../../services/profileService';
 import { useProfileOperations } from '../../hooks/useProfileOperations';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { profileService } from '../../services/profileService';
 
 export default function EditProfile() {
   const router = useRouter();
@@ -88,10 +89,21 @@ export default function EditProfile() {
     });
 
     if (!result.canceled) {
+      // Create a file object from the selected image
+      const imageUri = result.assets[0].uri;
+      const filename = imageUri.split('/').pop() || 'image.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image';
+
       setFormData((prev) => ({
         ...prev,
-        profile_image: result.assets[0].uri,
-        tempImageUri: result.assets[0].uri,
+        profile_image: imageUri,
+        tempImageUri: imageUri,
+        imageFile: {
+          uri: imageUri,
+          name: filename,
+          type: type
+        }
       }));
     }
   };
@@ -103,49 +115,25 @@ export default function EditProfile() {
     }
 
     try {
-      const profileData = {
-        first_name: formData.first_name.trim(),
-        last_name: formData.last_name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim(),
-        address: formData.address?.trim() || '',
-      };
+      const formDataToSend = new FormData();
+      
+      // Add all text fields
+      formDataToSend.append('first_name', formData.first_name);
+      formDataToSend.append('last_name', formData.last_name);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('phone', formData.phone);
+      formDataToSend.append('address', formData.address?.trim() || '');
 
-      // Only add image data if a new image was selected
-      if (formData.tempImageUri) {
-        const form = new FormData();
-        
-        // Append regular fields
-        Object.entries(profileData).forEach(([key, value]) => {
-          form.append(key, value);
-        });
+      // Add image if there's a new one
+      if (formData.imageFile) {
+        formDataToSend.append('profile_image', formData.imageFile);
+      }
 
-        // Handle image file
-        const filename = formData.tempImageUri.split('/').pop();
-        const match = /\.(\w+)$/.exec(filename || '');
-        const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-        // Properly format image data
-        form.append('profile_image', {
-          uri: formData.tempImageUri,
-          type: type,
-          name: filename || 'profile.jpg',
-        } as any);
-
-        const result = await updateProfile(form);
-        if (result) {
-          await refreshUser();
-          showToast('Profile updated successfully!');
-          router.back();
-        }
-      } else {
-        // If no new image, send JSON data
-        const result = await updateProfile(profileData);
-        if (result) {
-          await refreshUser();
-          showToast('Profile updated successfully!');
-          router.back();
-        }
+      const result = await profileService.updateProfile(formDataToSend);
+      if (result) {
+        await refreshUser();
+        showToast('Profile updated successfully!');
+        router.back();
       }
     } catch (error: any) {
       if (error.status === 422) {
