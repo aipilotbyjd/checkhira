@@ -74,10 +74,8 @@ export default function EditProfile() {
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(
-        'Permission Required',
-        'Please grant camera roll permissions to change profile picture.'
-      );
+      //show toast
+      showToast('Please grant camera roll permissions to change profile picture.', 'error');
       return;
     }
 
@@ -88,24 +86,13 @@ export default function EditProfile() {
       quality: 0.5,
     });
 
-    if (!result.canceled) {
-      // Create a file object from the selected image
-      const imageUri = result.assets[0].uri;
-      const filename = imageUri.split('/').pop() || 'image.jpg';
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : 'image';
-
-      setFormData((prev) => ({
-        ...prev,
-        profile_image: imageUri,
-        tempImageUri: imageUri,
-        imageFile: {
-          uri: imageUri,
-          name: filename,
-          type: type
-        }
-      }));
-    }
+    //set form data
+    setFormData((prev) => ({
+      ...prev,
+      profile_image: result?.assets?.[0]?.uri || '',
+      tempImageUri: result?.assets?.[0]?.uri || '',
+      imageFile: result?.assets?.[0] as any,
+    }));
   };
 
   const handleUpdate = async () => {
@@ -116,7 +103,7 @@ export default function EditProfile() {
 
     try {
       const formDataToSend = new FormData();
-      
+
       // Add all text fields
       formDataToSend.append('first_name', formData.first_name);
       formDataToSend.append('last_name', formData.last_name);
@@ -125,9 +112,12 @@ export default function EditProfile() {
       formDataToSend.append('address', formData.address?.trim() || '');
 
       // Add image if there's a new one
+      console.log(formData.imageFile);
       if (formData.imageFile) {
-        formDataToSend.append('profile_image', formData.imageFile);
+        formDataToSend.append('profile_image', formData.imageFile as any);
       }
+
+      console.log(formDataToSend);
 
       const result = await profileService.updateProfile(formDataToSend);
       if (result) {
