@@ -3,9 +3,9 @@ import { api, handleResponse } from './api';
 export interface Notification {
   id: string;
   title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
+  description: string;
+  created_at: string;
+  read_at: string;
 }
 
 export const notificationService = {
@@ -13,7 +13,7 @@ export const notificationService = {
     const response = await fetch(`${api.baseUrl}/notifications`, {
       headers: await api.getHeaders(),
     });
-    return handleResponse<{ data: Notification[] }>(response);
+    return handleResponse<{ data: { data: Notification[] } }>(response);
   },
 
   async markAsRead(id: string) {

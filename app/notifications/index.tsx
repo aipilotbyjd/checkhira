@@ -167,7 +167,7 @@ export default function NotificationsScreen() {
               <View
                 className="h-1 w-full"
                 style={{
-                  backgroundColor: item.read ? COLORS.gray[200] : COLORS.primary,
+                  backgroundColor: item.read_at ? COLORS.gray[200] : COLORS.primary,
                 }}
               />
 
@@ -178,12 +178,12 @@ export default function NotificationsScreen() {
                     <View
                       className="mr-3 rounded-full p-2"
                       style={{
-                        backgroundColor: item.read ? COLORS.gray[50] : COLORS.blue[50],
+                        backgroundColor: item.read_at ? COLORS.gray[50] : COLORS.blue[50],
                       }}>
                       <Ionicons
-                        name={item.read ? 'checkmark-circle' : 'notifications'}
+                        name={item.read_at ? 'checkmark-circle' : 'notifications'}
                         size={20}
-                        color={item.read ? COLORS.gray[400] : COLORS.primary}
+                        color={item.read_at ? COLORS.gray[400] : COLORS.primary}
                       />
                     </View>
                     <Text
@@ -193,7 +193,7 @@ export default function NotificationsScreen() {
                       {item.title}
                     </Text>
                   </View>
-                  {!item.read && (
+                  {!item.read_at && (
                     <View
                       className="ml-2 rounded-full px-2 py-1"
                       style={{ backgroundColor: COLORS.blue[50] }}>
@@ -209,13 +209,13 @@ export default function NotificationsScreen() {
                   className="mb-3 text-[15px] leading-5"
                   style={{ color: COLORS.gray[600] }}
                   numberOfLines={2}>
-                  {item.message}
+                  {item.description}
                 </Text>
 
                 {/* Footer */}
                 <View className="flex-row items-center justify-between">
                   <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                    {new Date(item.timestamp).toLocaleDateString('en-US', {
+                    {new Date(item.created_at).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
                       hour: '2-digit',
@@ -223,7 +223,7 @@ export default function NotificationsScreen() {
                     })}
                   </Text>
 
-                  {item.read && (
+                  {item.read_at && (
                     <View className="flex-row items-center">
                       <Ionicons name="time-outline" size={14} color={COLORS.gray[400]} />
                       <Text className="ml-1 text-xs" style={{ color: COLORS.gray[400] }}>
