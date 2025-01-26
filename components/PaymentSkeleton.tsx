@@ -6,7 +6,6 @@ import Animated, {
   withTiming,
   useAnimatedStyle,
 } from 'react-native-reanimated';
-import { useEffect } from 'react';
 
 export const PaymentSkeleton = () => {
   const animatedStyle = useAnimatedStyle(() => ({
@@ -35,23 +34,16 @@ export const PaymentSkeleton = () => {
       ]}>
       <View className="flex-row items-center justify-between">
         <View>
-          <View
-            className="mb-2 h-6 w-24 rounded-md"
-            style={{ backgroundColor: COLORS.gray[200] }}
-          />
+          <View className="h-6 w-24 rounded-lg" style={{ backgroundColor: COLORS.gray[200] }} />
           <View className="mt-2 flex-row items-center">
-            <View
-              className="mr-2 h-4 w-4 rounded-full"
-              style={{ backgroundColor: COLORS.gray[200] }}
-            />
-            <View className="h-4 w-32 rounded-md" style={{ backgroundColor: COLORS.gray[200] }} />
+            <View className="h-4 w-4 rounded-full" style={{ backgroundColor: COLORS.gray[200] }} />
+            <View className="ml-2 h-4 w-20 rounded-lg" style={{ backgroundColor: COLORS.gray[200] }} />
           </View>
-          <View
-            className="mt-2 h-3 w-20 rounded-md"
-            style={{ backgroundColor: COLORS.gray[200] }}
-          />
+          <View className="mt-1 h-3 w-32 rounded-lg" style={{ backgroundColor: COLORS.gray[200] }} />
         </View>
-        <View className="h-10 w-10 rounded-full" style={{ backgroundColor: COLORS.gray[200] }} />
+        <View className="rounded-full p-2" style={{ backgroundColor: COLORS.gray[100] }}>
+          <View className="h-6 w-6 rounded-full" style={{ backgroundColor: COLORS.gray[200] }} />
+        </View>
       </View>
     </Animated.View>
   );

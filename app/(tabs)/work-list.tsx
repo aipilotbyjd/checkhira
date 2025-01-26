@@ -88,12 +88,47 @@ export default function WorkList() {
     await loadWork({ page: currentPage + 1 });
   }, [currentPage, hasMorePages, isLoadingMore]);
 
-  if (isLoading && currentPage === 1 && workList.length === 0) {
+  if (isLoading && currentPage === 1) {
     return (
-      <View className="flex-1 px-4 pt-4" style={{ backgroundColor: COLORS.background.primary }}>
-        {[...Array(8)].map((_, index) => (
-          <WorkSkeleton key={index} />
-        ))}
+      <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
+        <View
+          className="border-b px-6 pb-4 pt-6"
+          style={{
+            borderColor: COLORS.gray[200],
+            backgroundColor: COLORS.background.primary,
+          }}>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
+              Work List
+            </Text>
+            <View className="flex-row space-x-3">
+              <Pressable
+                onPress={() => router.push('/work/add')}
+                className="mr-2 rounded-full p-3"
+                style={{ backgroundColor: COLORS.primary }}>
+                <MaterialCommunityIcons name="plus" size={22} color="white" />
+              </Pressable>
+              <Pressable
+                className="rounded-full p-3"
+                style={{ backgroundColor: COLORS.gray[100] }}>
+                <MaterialCommunityIcons name="filter-variant" size={22} color={COLORS.gray[600]} />
+              </Pressable>
+            </View>
+          </View>
+        </View>
+
+        <View className="my-6 px-4">
+          <View className="rounded-xl p-4" style={{ backgroundColor: COLORS.primary + '15' }}>
+            <View className="h-4 w-20 rounded bg-gray-200" />
+            <View className="mt-2 h-8 w-32 rounded bg-gray-200" />
+          </View>
+        </View>
+
+        <View className="px-4">
+          {[...Array(8)].map((_, index) => (
+            <WorkSkeleton key={index} />
+          ))}
+        </View>
       </View>
     );
   }
@@ -172,12 +207,6 @@ export default function WorkList() {
         {workList.map((item: Work) => (
           <WorkListItem key={item.id.toString()} item={item} />
         ))}
-
-        {isLoadingMore && (
-          <View className="py-4">
-            <ActivityIndicator size="small" color={COLORS.primary} />
-          </View>
-        )}
       </ScrollView>
 
       <ActionSheet

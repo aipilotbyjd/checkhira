@@ -32,24 +32,15 @@ export const WorkSkeleton = () => {
         },
         animatedStyle,
       ]}>
-      <View className="mb-3 flex-row items-center justify-between">
-        <View className="flex-row items-center">
-          <View className="h-5 w-24 rounded-md" style={{ backgroundColor: COLORS.gray[200] }} />
-          <View
-            className="ml-2 h-4 w-16 rounded-full"
-            style={{ backgroundColor: COLORS.gray[200] }}
-          />
+      <View className="flex-row items-center justify-between">
+        <View>
+          <View className="h-4 w-24 rounded-lg" style={{ backgroundColor: COLORS.gray[200] }} />
+          <View className="mt-2 h-5 w-32 rounded-lg" style={{ backgroundColor: COLORS.gray[200] }} />
         </View>
-        <View className="h-6 w-20 rounded-md" style={{ backgroundColor: COLORS.gray[200] }} />
-      </View>
-
-      <View className="space-y-2">
-        {[1, 2].map((_, index) => (
-          <View key={index} className="flex-row items-center justify-between">
-            <View className="h-4 w-32 rounded-md" style={{ backgroundColor: COLORS.gray[200] }} />
-            <View className="h-4 w-20 rounded-md" style={{ backgroundColor: COLORS.gray[200] }} />
-          </View>
-        ))}
+        <View>
+          <View className="h-4 w-20 rounded-lg" style={{ backgroundColor: COLORS.gray[200] }} />
+          <View className="mt-2 h-6 w-24 rounded-lg" style={{ backgroundColor: COLORS.gray[200] }} />
+        </View>
       </View>
     </Animated.View>
   );
