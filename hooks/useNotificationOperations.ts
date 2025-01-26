@@ -27,8 +27,6 @@ export const useNotificationOperations = () => {
       setHasMorePages(data.current_page < data.last_page);
       setCurrentPage(data.current_page);
 
-      console.log(data.data);
-
       return {
         notifications: data.data,
         currentPage: data.current_page,

@@ -1,23 +1,26 @@
-import { View, Text, FlatList, Pressable, Animated, ActivityIndicator, RefreshControl } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  Animated,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRef, useState, useEffect } from 'react';
 import { useNotificationOperations } from '../../hooks/useNotificationOperations';
 import type { Notification } from '../../services/notificationService';
+import { NotificationSkeleton } from '../../components/NotificationSkeleton';
 
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const { 
-    markAsRead, 
-    getNotifications, 
-    isLoading, 
-    isLoadingMore,
-    currentPage,
-    hasMorePages 
-  } = useNotificationOperations();
+  const { markAsRead, getNotifications, isLoading, isLoadingMore, currentPage, hasMorePages } =
+    useNotificationOperations();
 
   // Initialize animation maps with default values for all notifications
   const fadeAnims = useRef<Map<string, Animated.Value>>(new Map());
@@ -33,13 +36,13 @@ export default function NotificationsScreen() {
   }, []);
 
   const loadNotifications = async (page: number = 1) => {
-    const { notifications: newNotifications, currentPage, hasMore } = await getNotifications(page);
-    
+    const { notifications: newNotifications } = await getNotifications(page);
+
     if (page === 1) {
       setNotifications(newNotifications);
       initializeAnimations(newNotifications);
     } else {
-      setNotifications(prev => {
+      setNotifications((prev) => {
         const updatedNotifications = [...prev, ...newNotifications];
         initializeAnimations(newNotifications); // Only animate new notifications
         return updatedNotifications;
@@ -222,7 +225,7 @@ export default function NotificationsScreen() {
         data={notifications}
         renderItem={renderNotification}
         keyExtractor={(item) => item.id}
-        className="px-4 pt-4"
+        className="px-2 pt-2"
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -242,14 +245,20 @@ export default function NotificationsScreen() {
           ) : null
         }
         ListEmptyComponent={
-          !isLoading ? (
+          isLoading ? (
+            <View className="flex-1 px-1">
+              {[...Array(8)].map((_, index) => (
+                <NotificationSkeleton key={index} />
+              ))}
+            </View>
+          ) : (
             <View className="flex-1 items-center justify-center pt-20">
               <Ionicons name="notifications-off-outline" size={48} color={COLORS.gray[300]} />
               <Text className="mt-4 text-base" style={{ color: COLORS.gray[500] }}>
                 No notifications yet
               </Text>
             </View>
-          ) : null
+          )
         }
       />
     </View>

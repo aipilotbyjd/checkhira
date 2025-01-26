@@ -7,6 +7,7 @@ import { useState, useRef, useCallback, useMemo } from 'react';
 import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 import { useFocusEffect } from 'expo-router';
 import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { PaymentSkeleton } from '../../components/PaymentSkeleton';
 
 export default function PaymentsList() {
   const router = useRouter();
@@ -96,8 +97,10 @@ export default function PaymentsList() {
 
   if (isLoading && currentPage === 1 && paymentsList.length === 0) {
     return (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View className="flex-1 px-4 pt-4" style={{ backgroundColor: COLORS.background.primary }}>
+        {[...Array(8)].map((_, index) => (
+          <PaymentSkeleton key={index} />
+        ))}
       </View>
     );
   }

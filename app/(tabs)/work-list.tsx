@@ -10,6 +10,7 @@ import { useFocusEffect } from 'expo-router';
 import { Work } from '../../types/work';
 import { dateUtils } from '../../utils/dateUtils';
 import { WorkListItem } from '../../components/WorkListItem';
+import { WorkSkeleton } from '../../components/WorkSkeleton';
 
 export default function WorkList() {
   const router = useRouter();
@@ -89,8 +90,10 @@ export default function WorkList() {
 
   if (isLoading && currentPage === 1 && workList.length === 0) {
     return (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View className="flex-1 px-4 pt-4" style={{ backgroundColor: COLORS.background.primary }}>
+        {[...Array(8)].map((_, index) => (
+          <WorkSkeleton key={index} />
+        ))}
       </View>
     );
   }
