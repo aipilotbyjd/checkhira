@@ -1,4 +1,4 @@
-import { View, Text, FlatList, Pressable, Animated } from 'react-native';
+import { View, Text, FlatList, Pressable, Animated, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
@@ -6,80 +6,8 @@ import { useRef, useState, useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated';
-
-// Updated mock data
-const MOCK_NOTIFICATIONS = [
-  {
-    id: '1',
-    title: 'New Payment Received',
-    message: 'You received a payment of ¥5000',
-    timestamp: '2024-03-20T10:00:00Z',
-    read: false,
-  },
-  {
-    id: '2',
-    title: 'Work Entry Approved',
-    message: 'Your work entry for March 19 has been approved',
-    timestamp: '2024-03-19T15:30:00Z',
-    read: true,
-  },
-  {
-    id: '3',
-    title: 'Work Entry Approved',
-    message: 'Your work entry for March 19 has been approved',
-    timestamp: '2024-03-19T15:30:00Z',
-    read: true,
-  },
-  {
-    id: '4',
-    title: 'Work Entry Approved',
-    message: 'Your work entry for March 19 has been approved',
-    timestamp: '2024-03-19T15:30:00Z',
-    read: true,
-  },
-  {
-    id: '5',
-    title: 'Work Entry Approved',
-    message: 'Your work entry for March 19 has been approved',
-    timestamp: '2024-03-19T15:30:00Z',
-    read: true,
-  },
-  {
-    id: '6',
-    title: 'Work Entry Approved',
-    message: 'Your work entry for March 19 has been approved',
-    timestamp: '2024-03-19T15:30:00Z',
-    read: true,
-  },
-  {
-    id: '7',
-    title: 'Work Entry Approved',
-    message: 'Your work entry for March 19 has been approved',
-    timestamp: '2024-03-19T15:30:00Z',
-    read: true,
-  },
-  {
-    id: '8',
-    title: 'Work Entry Approved',
-    message: 'Your work entry for March 19 has been approved',
-    timestamp: '2024-03-19T15:30:00Z',
-    read: true,
-  },
-  {
-    id: '9',
-    title: 'Work Entry Approved',
-    message: 'Your work entry for March 19 has been approved',
-    timestamp: '2024-03-19T15:30:00Z',
-    read: true,
-  },
-  {
-    id: '10',
-    title: 'Work Entry Approved',
-    message: 'Your work entry for March 19 has been approved',
-    timestamp: '2024-03-19T15:30:00Z',
-    read: true,
-  },
-];
+import { useNotificationOperations } from '../../hooks/useNotificationOperations';
+import type { Notification } from '../../services/notificationService';
 
 // Add these types for better type safety
 type SwipeableMethods = {
@@ -90,78 +18,68 @@ type SwipeableMethods = {
 };
 
 export default function NotificationsScreen() {
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const rowRefs = useRef<Map<string, SwipeableMethods>>(new Map());
   const [itemBeingDeleted, setItemBeingDeleted] = useState<string | null>(null);
+  const { getNotifications, deleteNotification, markAsRead, isLoading } =
+    useNotificationOperations();
 
   // Initialize animation maps with default values for all notifications
-  const fadeAnims = useRef<Map<string, Animated.Value>>(
-    new Map(MOCK_NOTIFICATIONS.map((n) => [n.id, new Animated.Value(0)]))
-  );
-  const slideAnims = useRef<Map<string, Animated.Value>>(
-    new Map(MOCK_NOTIFICATIONS.map((n) => [n.id, new Animated.Value(50)]))
-  );
+  const fadeAnims = useRef<Map<string, Animated.Value>>(new Map());
+  const slideAnims = useRef<Map<string, Animated.Value>>(new Map());
 
-  // Initialize animations for items
   useEffect(() => {
-    // Create animations array to run in sequence
-    const animations = notifications.map((notification, index) => {
-      return Animated.sequence([
-        Animated.delay(index * 50),
-        Animated.parallel([
-          Animated.spring(fadeAnims.current.get(notification.id) || new Animated.Value(0), {
-            toValue: 1,
-            useNativeDriver: true,
-            tension: 50,
-            friction: 7,
-          }),
-          Animated.spring(slideAnims.current.get(notification.id) || new Animated.Value(50), {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 50,
-            friction: 7,
-          }),
-        ]),
-      ]);
-    });
-
-    // Start all animations
-    Animated.parallel(animations).start();
-
-    // Cleanup function
-    return () => {
-      fadeAnims.current.clear();
-      slideAnims.current.clear();
-    };
+    loadNotifications();
   }, []);
 
-  const deleteNotification = (id: string) => {
-    const fadeAnim = fadeAnims.current.get(id);
-    const slideAnim = slideAnims.current.get(id);
+  const loadNotifications = async () => {
+    const data = await getNotifications();
+    if (!data) return;
+    setNotifications(data);
 
-    if (!fadeAnim || !slideAnim) return;
+    // Initialize animations for new notifications
+    if (Array.isArray(data)) {
+      data.forEach((notification) => {
+        if (!fadeAnims.current.has(notification.id)) {
+          fadeAnims.current.set(notification.id, new Animated.Value(0));
+          slideAnims.current.set(notification.id, new Animated.Value(50));
+        }
+      });
 
-    setItemBeingDeleted(id);
+      // Start entrance animations
+      const animations = data.map((notification, index) => {
+        return Animated.sequence([
+          Animated.delay(index * 50),
+          Animated.parallel([
+            Animated.spring(fadeAnims.current.get(notification.id) || new Animated.Value(0), {
+              toValue: 1,
+              useNativeDriver: true,
+              tension: 50,
+              friction: 7,
+            }),
+            Animated.spring(slideAnims.current.get(notification.id) || new Animated.Value(50), {
+              toValue: 0,
+              useNativeDriver: true,
+              tension: 50,
+              friction: 7,
+            }),
+          ]),
+        ]);
+      });
 
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.spring(slideAnim, {
-        toValue: -100,
-        useNativeDriver: true,
-        tension: 40,
-        friction: 8,
-      }),
-    ]).start(() => {
+      Animated.parallel(animations).start();
+    }
+  };
+
+  const handleDeleteNotification = async (id: string) => {
+    const success = await deleteNotification(id);
+    if (success) {
       setNotifications((current) => current.filter((n) => n.id !== id));
       setItemBeingDeleted(null);
       // Clean up animations for deleted item
       fadeAnims.current.delete(id);
       slideAnims.current.delete(id);
-    });
+    }
   };
 
   const renderNotification = ({
@@ -189,7 +107,7 @@ export default function NotificationsScreen() {
             styleAnimation,
           ]}>
           <Pressable
-            onPress={() => deleteNotification(item.id)}
+            onPress={() => handleDeleteNotification(item.id)}
             className="h-full w-full items-center justify-center bg-red-500">
             <View className="items-center">
               <Ionicons name="trash-outline" size={24} color="white" />
@@ -226,7 +144,7 @@ export default function NotificationsScreen() {
             enableTrackpadTwoFingerGesture
             containerStyle={{ borderRadius: 16 }}
             onSwipeableOpen={() => {
-              deleteNotification(item.id);
+              handleDeleteNotification(item.id);
             }}
             onSwipeableWillOpen={() => {
               // Close other open swipeables
@@ -338,21 +256,27 @@ export default function NotificationsScreen() {
         }}
       />
 
-      <FlatList
-        data={notifications}
-        renderItem={renderNotification}
-        keyExtractor={(item) => item.id}
-        className="px-4 pt-4"
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View className="flex-1 items-center justify-center pt-20">
-            <Ionicons name="notifications-off-outline" size={48} color={COLORS.gray[300]} />
-            <Text className="mt-4 text-base" style={{ color: COLORS.gray[500] }}>
-              No notifications yet
-            </Text>
-          </View>
-        }
-      />
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={notifications}
+          renderItem={renderNotification}
+          keyExtractor={(item) => item.id}
+          className="px-4 pt-4"
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View className="flex-1 items-center justify-center pt-20">
+              <Ionicons name="notifications-off-outline" size={48} color={COLORS.gray[300]} />
+              <Text className="mt-4 text-base" style={{ color: COLORS.gray[500] }}>
+                No notifications yet
+              </Text>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }
