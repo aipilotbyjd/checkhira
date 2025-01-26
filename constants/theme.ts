@@ -1,4 +1,6 @@
-import { Platform } from 'react-native';
+import { Platform, Dimensions } from 'react-native';
+
+const { width, height } = Dimensions.get('window');
 
 export const COLORS = {
   primary: '#fc8019',
@@ -133,3 +135,25 @@ export const SHADOWS = {
     elevation: 4,
   },
 } as const;
+
+export const LAYOUT = {
+  window: {
+    width,
+    height,
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+  },
+  borderRadius: {
+    sm: 4,
+    md: 8,
+    lg: 16,
+    xl: 24,
+    full: 9999,
+  },
+  // Add more layout constants as needed
+};

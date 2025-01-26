@@ -19,6 +19,7 @@ import { useWorkOperations } from '../../../hooks/useWorkOperations';
 import { formatDateForAPI, parseCustomDate } from '../../../utils/dateFormatter';
 import { WorkEntry, WorkFormData, WorkResponse } from '../../../types/work';
 import { useToast } from '../../../contexts/ToastContext';
+import { WorkFormSkeleton } from '../../../components/WorkFormSkeleton';
 
 export default function EditWork() {
   const router = useRouter();
@@ -157,11 +158,7 @@ export default function EditWork() {
   };
 
   if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
+    return <WorkFormSkeleton />;
   }
 
   return (

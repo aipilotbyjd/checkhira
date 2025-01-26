@@ -19,6 +19,7 @@ import { formatDateForAPI } from '../../utils/dateFormatter';
 import { DefaultPrice, WorkEntry, WorkFormData } from '../../types/work';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useToast } from '../../contexts/ToastContext';
+import { WorkFormSkeleton } from '../../components/WorkFormSkeleton';
 
 export default function AddWork() {
   const router = useRouter();
@@ -262,11 +263,7 @@ export default function AddWork() {
   };
 
   if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
+    return <WorkFormSkeleton />;
   }
 
   return (

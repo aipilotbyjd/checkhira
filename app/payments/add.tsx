@@ -8,6 +8,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { SuccessModal } from '../../components/SuccessModal';
 import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 import { useAppSettings } from '../../contexts/SettingsContext';
+import { PaymentFormSkeleton } from '../../components/PaymentFormSkeleton';
 
 interface Payment {
   id: number;
@@ -100,6 +101,10 @@ export default function AddPayment() {
       setShowSuccessModal(true);
     }
   };
+
+  if (isLoading) {
+    return <PaymentFormSkeleton />;
+  }
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>

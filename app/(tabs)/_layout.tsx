@@ -4,8 +4,8 @@ import { COLORS, SPACING, SIZES, FONTS, SHADOWS } from '../../constants/theme';
 import { TabBarIcon } from '../../components/TabBarIcon';
 import { useRouter } from 'expo-router';
 import { HeaderButton } from '../../components/HeaderButton';
-import { useScreenDimensions } from '../../hooks/useScreenDimensions';
 import { useNotification } from '../../contexts/NotificationContext';
+import { useDimensions } from '../../hooks/useScreenDimensions';
 
 const TAB_SCREENS = [
   {
@@ -36,22 +36,8 @@ const TAB_SCREENS = [
 
 export default function TabLayout() {
   const router = useRouter();
-  const { width, height, isSmallDevice, isShortDevice } = useScreenDimensions();
+  const { getTabBarHeight, getHeaderHeight } = useDimensions();
   const { unreadCount } = useNotification();
-
-  const getTabBarHeight = () => {
-    if (Platform.OS === 'ios') {
-      return isShortDevice ? 70 : 85;
-    }
-    return isSmallDevice ? 56 : 64;
-  };
-
-  const getHeaderHeight = () => {
-    if (Platform.OS === 'ios') {
-      return isShortDevice ? 70 : 88;
-    }
-    return isSmallDevice ? 56 : 64;
-  };
 
   return (
     <Tabs
@@ -61,7 +47,7 @@ export default function TabLayout() {
           backgroundColor: COLORS.white,
           borderTopWidth: 1,
           borderTopColor: COLORS.gray[100],
-          paddingHorizontal: width * 0.02,
+          paddingHorizontal: SPACING.md,
           ...SHADOWS.small,
         },
         tabBarActiveTintColor: COLORS.primary,
@@ -82,8 +68,8 @@ export default function TabLayout() {
               style={[
                 styles.headerLogo,
                 {
-                  width: width * 0.25,
-                  height: height * 0.04,
+                  width: SPACING.md,
+                  height: SPACING.md * 0.25,
                 },
               ]}
               resizeMode="contain"
@@ -109,12 +95,12 @@ export default function TabLayout() {
             title: screen.label,
             headerShown: screen.headerShown,
             tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={screen.icon} color={color} size={width * 0.06} />
+              <TabBarIcon name={screen.icon} color={color} size={SPACING.md * 0.06} />
             ),
             tabBarLabelStyle: [
               styles.tabLabel,
               {
-                fontSize: width * 0.03,
+                fontSize: SPACING.md * 0.03,
               },
             ],
           }}
