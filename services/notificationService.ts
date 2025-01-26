@@ -11,11 +11,17 @@ export interface Notification {
 }
 
 export const notificationService = {
-  async getNotifications() {
-    const response = await fetch(`${api.baseUrl}/notifications`, {
+  async getNotifications(page: number = 1) {
+    const response = await fetch(`${api.baseUrl}/notifications?page=${page}`, {
       headers: await api.getHeaders(),
     });
-    return handleResponse<{ data: { data: Notification[] } }>(response);
+    return handleResponse<{
+      data: {
+        data: Notification[];
+        current_page: number;
+        last_page: number;
+      };
+    }>(response);
   },
 
   async markAsRead(id: string, is_read: string) {

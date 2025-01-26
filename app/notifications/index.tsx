@@ -1,4 +1,4 @@
-import { View, Text, FlatList, Pressable, Animated, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Pressable, Animated, ActivityIndicator, RefreshControl } from 'react-native';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
@@ -9,7 +9,15 @@ import type { Notification } from '../../services/notificationService';
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
-  const { getNotifications, markAsRead, isLoading } = useNotificationOperations();
+  const [refreshing, setRefreshing] = useState(false);
+  const { 
+    markAsRead, 
+    getNotifications, 
+    isLoading, 
+    isLoadingMore,
+    currentPage,
+    hasMorePages 
+  } = useNotificationOperations();
 
   // Initialize animation maps with default values for all notifications
   const fadeAnims = useRef<Map<string, Animated.Value>>(new Map());
@@ -17,53 +25,74 @@ export default function NotificationsScreen() {
 
   useEffect(() => {
     loadNotifications();
+    return () => {
+      // Clear animation maps on unmount
+      fadeAnims.current.clear();
+      slideAnims.current.clear();
+    };
   }, []);
 
-  const loadNotifications = async () => {
-    const data = await getNotifications();
-    if (!data) return;
-    setNotifications(data);
-
-    // Initialize animations for new notifications
-    if (Array.isArray(data)) {
-      data.forEach((notification) => {
-        if (!fadeAnims.current.has(notification.id)) {
-          fadeAnims.current.set(notification.id, new Animated.Value(0));
-          slideAnims.current.set(notification.id, new Animated.Value(50));
-        }
+  const loadNotifications = async (page: number = 1) => {
+    const { notifications: newNotifications, currentPage, hasMore } = await getNotifications(page);
+    
+    if (page === 1) {
+      setNotifications(newNotifications);
+      initializeAnimations(newNotifications);
+    } else {
+      setNotifications(prev => {
+        const updatedNotifications = [...prev, ...newNotifications];
+        initializeAnimations(newNotifications); // Only animate new notifications
+        return updatedNotifications;
       });
-
-      // Start entrance animations
-      const animations = data.map((notification, index) => {
-        return Animated.sequence([
-          Animated.delay(index * 50),
-          Animated.parallel([
-            Animated.spring(fadeAnims.current.get(notification.id) || new Animated.Value(0), {
-              toValue: 1,
-              useNativeDriver: true,
-              tension: 50,
-              friction: 7,
-            }),
-            Animated.spring(slideAnims.current.get(notification.id) || new Animated.Value(50), {
-              toValue: 0,
-              useNativeDriver: true,
-              tension: 50,
-              friction: 7,
-            }),
-          ]),
-        ]);
-      });
-
-      Animated.parallel(animations).start();
     }
+  };
+
+  const initializeAnimations = (notifications: Notification[]) => {
+    notifications.forEach((notification, index) => {
+      // Create new animation values if they don't exist
+      if (!fadeAnims.current.has(notification.id)) {
+        fadeAnims.current.set(notification.id, new Animated.Value(0));
+      }
+      if (!slideAnims.current.has(notification.id)) {
+        slideAnims.current.set(notification.id, new Animated.Value(50));
+      }
+
+      // Trigger animations with delay based on index
+      const delay = index * 100;
+      Animated.parallel([
+        Animated.timing(fadeAnims.current.get(notification.id)!, {
+          toValue: 1,
+          duration: 300,
+          delay,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnims.current.get(notification.id)!, {
+          toValue: 0,
+          duration: 300,
+          delay,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  };
+
+  const handleLoadMore = async () => {
+    if (!hasMorePages || isLoadingMore) return;
+    await loadNotifications(currentPage + 1);
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadNotifications(1);
+    setRefreshing(false);
   };
 
   const handleToggleRead = async (notification: Notification) => {
     setIsUpdating(notification.id);
-    const success = await markAsRead(notification.id, !notification.is_read);
+    const success = await markAsRead(notification.id, !notification.is_read ? 'true' : 'false');
     if (success) {
       setNotifications((current) =>
-        current.map((n) => (n.id === notification.id ? { ...n, is_read: !n.is_read } : n))
+        current.map((n) => (n.id === notification.id ? { ...n, is_read: !n.is_read as any } : n))
       );
     }
     setIsUpdating(null);
@@ -189,27 +218,40 @@ export default function NotificationsScreen() {
         }}
       />
 
-      {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color={COLORS.primary} />
-        </View>
-      ) : (
-        <FlatList
-          data={notifications}
-          renderItem={renderNotification}
-          keyExtractor={(item) => item.id}
-          className="px-4 pt-4"
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
+      <FlatList
+        data={notifications}
+        renderItem={renderNotification}
+        keyExtractor={(item) => item.id}
+        className="px-4 pt-4"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.primary]}
+            tintColor={COLORS.primary}
+          />
+        }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          isLoadingMore ? (
+            <View className="py-4">
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            </View>
+          ) : null
+        }
+        ListEmptyComponent={
+          !isLoading ? (
             <View className="flex-1 items-center justify-center pt-20">
               <Ionicons name="notifications-off-outline" size={48} color={COLORS.gray[300]} />
               <Text className="mt-4 text-base" style={{ color: COLORS.gray[500] }}>
                 No notifications yet
               </Text>
             </View>
-          }
-        />
-      )}
+          ) : null
+        }
+      />
     </View>
   );
 }
