@@ -5,7 +5,8 @@ import { TabBarIcon } from '../../components/TabBarIcon';
 import { useRouter } from 'expo-router';
 import { HeaderButton } from '../../components/HeaderButton';
 import { useScreenDimensions } from '../../hooks/useScreenDimensions';
-
+import { useState, useEffect } from 'react';
+import { useNotificationOperations } from '../../hooks/useNotificationOperations';
 const TAB_SCREENS = [
   {
     name: 'index',
@@ -36,6 +37,22 @@ const TAB_SCREENS = [
 export default function TabLayout() {
   const router = useRouter();
   const { width, height, isSmallDevice, isShortDevice } = useScreenDimensions();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { getUnreadNotificationsCount, isLoading } = useNotificationOperations();
+  useEffect(() => {
+    fetchUnreadCount();
+  }, []);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await getUnreadNotificationsCount();
+      if (response.data !== undefined) {
+        setUnreadCount(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching unread count:', error);
+    }
+  };
 
   const getTabBarHeight = () => {
     if (Platform.OS === 'ios') {
@@ -92,6 +109,7 @@ export default function TabLayout() {
           <HeaderButton
             iconName="notifications-outline"
             onPress={() => router.push('/notifications')}
+            badgeCount={unreadCount}
           />
         ),
         safeAreaInsets: {

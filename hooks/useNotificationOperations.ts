@@ -24,20 +24,9 @@ export const useNotificationOperations = () => {
     }
   };
 
-  const deleteNotification = async (id: string) => {
+  const markAsRead = async (id: string, is_read: string) => {
     try {
-      await notificationService.deleteNotification(id);
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof ApiError ? err.message : 'Failed to delete notification';
-      showToast(errorMessage, 'error');
-      return false;
-    }
-  };
-
-  const markAsRead = async (id: string) => {
-    try {
-      await notificationService.markAsRead(id);
+      await notificationService.markAsRead(id, is_read);
       return true;
     } catch (err) {
       const errorMessage =
@@ -47,11 +36,36 @@ export const useNotificationOperations = () => {
     }
   };
 
+  const markAllAsRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      return true;
+    } catch (err) {
+      const errorMessage =
+        err instanceof ApiError ? err.message : 'Failed to mark all notifications as read';
+      showToast(errorMessage, 'error');
+      return false;
+    }
+  };
+
+  const getUnreadNotificationsCount = async () => {
+    try {
+      const response = await notificationService.getUnreadNotificationsCount();
+      return response;
+    } catch (err) {
+      const errorMessage =
+        err instanceof ApiError ? err.message : 'Failed to get unread notifications count';
+      showToast(errorMessage, 'error');
+      return 0;
+    }
+  };
+
   return {
     isLoading,
     error,
     getNotifications,
-    deleteNotification,
     markAsRead,
+    markAllAsRead,
+    getUnreadNotificationsCount,
   };
 };
