@@ -262,9 +262,9 @@ export default function AddWork() {
     }
   };
 
-  // if (isLoading) {
+  if (isLoading) {
     return <WorkFormSkeleton />;
-  // }
+  }
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
@@ -441,9 +441,9 @@ export default function AddWork() {
           onPress={handleSave}
           disabled={isSaving}
           className="mb-4 rounded-2xl p-4"
-          style={{ 
+          style={{
             backgroundColor: isSaving ? COLORS.gray[400] : COLORS.primary,
-            opacity: isSaving ? 0.7 : 1 
+            opacity: isSaving ? 0.7 : 1,
           }}>
           <Text className="text-center text-lg font-semibold text-white">
             {isSaving ? 'Saving...' : 'Save Entries'}

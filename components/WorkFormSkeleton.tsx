@@ -46,7 +46,11 @@ export const WorkFormSkeleton = () => {
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
       {/* Date Picker Skeleton */}
-      <View style={{ padding: CONTAINER_PADDING, paddingBottom: VERTICAL_SPACING }}>
+      <View style={{ 
+        paddingHorizontal: CONTAINER_PADDING, 
+        paddingTop: CONTAINER_PADDING,
+        paddingBottom: VERTICAL_SPACING 
+      }}>
         <View
           className="flex-row items-center rounded-2xl"
           style={{
@@ -142,9 +146,16 @@ export const WorkFormSkeleton = () => {
               )}
             </View>
 
-            <View style={{ flexDirection: 'row', gap: SPACING }}>
+            <View style={{ 
+              flexDirection: 'row', 
+              gap: getScaledSize(12),
+              marginBottom: VERTICAL_SPACING 
+            }}>
               {['Diamond', 'Price', 'Total'].map((field, idx) => (
-                <View key={field} style={{ width: ENTRY_WIDTH - getScaledSize(16) }}>
+                <View key={field} style={{ 
+                  width: ENTRY_WIDTH - getScaledSize(16),
+                  marginRight: getScaledSize(8)
+                }}>
                   <SkeletonBlock className="mb-2 h-4 w-16 rounded-lg" />
                   <View
                     className="rounded-xl border"
