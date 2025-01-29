@@ -262,9 +262,9 @@ export default function AddWork() {
     }
   };
 
-  if (isLoading) {
+  // if (isLoading) {
     return <WorkFormSkeleton />;
-  }
+  // }
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>

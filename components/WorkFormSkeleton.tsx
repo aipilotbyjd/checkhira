@@ -11,10 +11,12 @@ import { useDimensions } from '../hooks/useScreenDimensions';
 export const WorkFormSkeleton = () => {
   const { width, getScaledSize } = useDimensions();
   
-  // Calculate responsive widths
-  const CONTAINER_PADDING = getScaledSize(24); // 24 is the base padding
+  // Calculate responsive widths and spacings
+  const CONTAINER_PADDING = getScaledSize(24);
   const SPACING = getScaledSize(8);
   const ENTRY_WIDTH = (width - (CONTAINER_PADDING * 2) - (SPACING * 2)) / 3;
+  const VERTICAL_SPACING = getScaledSize(16);
+  const SECTION_SPACING = getScaledSize(24);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: withRepeat(
@@ -44,12 +46,13 @@ export const WorkFormSkeleton = () => {
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
       {/* Date Picker Skeleton */}
-      <View className="px-6 pt-6">
+      <View style={{ padding: CONTAINER_PADDING, paddingBottom: VERTICAL_SPACING }}>
         <View
-          className="flex-row items-center rounded-2xl p-4"
+          className="flex-row items-center rounded-2xl"
           style={{
             backgroundColor: COLORS.gray[100],
-            height: 56,
+            height: getScaledSize(56),
+            padding: getScaledSize(16),
           }}>
           <SkeletonBlock className="h-6 w-6 rounded-full" />
           <SkeletonBlock className="ml-3 h-5 flex-1 rounded-lg" />
@@ -58,8 +61,8 @@ export const WorkFormSkeleton = () => {
       </View>
 
       {/* Name Field Skeleton */}
-      <View className="px-6">
-        <View className="mb-2 mt-4 flex-row items-center">
+      <View style={{ paddingHorizontal: CONTAINER_PADDING, marginBottom: SECTION_SPACING }}>
+        <View className="mb-2 flex-row items-center">
           <SkeletonBlock className="h-4 w-16 rounded-lg" />
           <SkeletonBlock
             className="ml-1 h-3 w-3 rounded-full"
@@ -67,36 +70,39 @@ export const WorkFormSkeleton = () => {
           />
         </View>
         <View
-          className="rounded-xl border p-4"
+          className="rounded-xl border"
           style={{
             backgroundColor: COLORS.white,
             borderColor: COLORS.gray[200],
-            height: 56,
+            height: getScaledSize(45),
+            padding: getScaledSize(16),
           }}>
           <SkeletonBlock className="h-6 w-3/4 rounded-lg" />
         </View>
       </View>
 
       {/* Entries Section */}
-      <ScrollView className="mt-6 flex-1 px-6">
+      <ScrollView style={{ paddingHorizontal: CONTAINER_PADDING }}>
         <View className="mb-4 flex-row items-center justify-between">
           <SkeletonBlock className="h-7 w-32 rounded-lg" />
-          <View className="flex-row items-center space-x-3">
+          <View className="flex-row items-center" style={{ gap: SPACING }}>
             <View
-              className="rounded-lg p-2.5"
+              className="rounded-lg"
               style={{
                 backgroundColor: COLORS.error + '15',
-                height: 40,
-                width: 40,
+                padding: getScaledSize(10),
+                height: getScaledSize(40),
+                width: getScaledSize(40),
               }}>
               <SkeletonBlock className="h-5 w-5 rounded-lg" />
             </View>
             <View
-              className="rounded-lg p-2.5"
+              className="rounded-lg"
               style={{
                 backgroundColor: COLORS.primary + '15',
-                height: 40,
-                width: 40,
+                padding: getScaledSize(10),
+                height: getScaledSize(40),
+                width: getScaledSize(40),
               }}>
               <SkeletonBlock className="h-5 w-5 rounded-lg" />
             </View>
@@ -106,14 +112,12 @@ export const WorkFormSkeleton = () => {
         {[1, 2].map((index) => (
           <View
             key={index}
-            className="mb-4 rounded-2xl p-4"
+            className="mb-4 rounded-2xl"
             style={{
               backgroundColor: COLORS.background.secondary,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 3,
-              elevation: 2,
+              padding: getScaledSize(16),
+              marginBottom: VERTICAL_SPACING,
+              ...getShadowStyle(),
             }}>
             <View className="mb-4 flex-row items-center justify-between">
               <View className="flex-row items-center">
@@ -126,29 +130,31 @@ export const WorkFormSkeleton = () => {
               </View>
               {index !== 0 && (
                 <View
-                  className="rounded-lg p-2"
+                  className="rounded-lg"
                   style={{
                     backgroundColor: COLORS.error + '15',
-                    height: 36,
-                    width: 36,
+                    padding: getScaledSize(8),
+                    height: getScaledSize(33),
+                    width: getScaledSize(28),
                   }}>
                   <SkeletonBlock className="h-5 w-5 rounded-lg" />
                 </View>
               )}
             </View>
 
-            <View className="flex-row space-x-3">
+            <View style={{ flexDirection: 'row', gap: SPACING }}>
               {['Diamond', 'Price', 'Total'].map((field, idx) => (
-                <View key={field} style={{ width: ENTRY_WIDTH }}>
+                <View key={field} style={{ width: ENTRY_WIDTH - getScaledSize(16) }}>
                   <SkeletonBlock className="mb-2 h-4 w-16 rounded-lg" />
                   <View
-                    className="rounded-xl border p-4"
+                    className="rounded-xl border"
                     style={{
-                      height: 56,
+                      height: getScaledSize(45),
                       backgroundColor: idx === 2 ? COLORS.gray[100] : COLORS.white,
                       borderColor: COLORS.gray[200],
+                      padding: getScaledSize(16),
                     }}>
-                    <SkeletonBlock className="h-6 w-full rounded-lg" />
+                    <SkeletonBlock className="w-full rounded-lg" />
                   </View>
                 </View>
               ))}
@@ -158,12 +164,13 @@ export const WorkFormSkeleton = () => {
       </ScrollView>
 
       {/* Footer */}
-      <View className="px-6 pb-6">
+      <View style={{ padding: CONTAINER_PADDING }}>
         <View
-          className="mb-4 rounded-2xl p-4"
+          className="mb-4 rounded-2xl"
           style={{
             backgroundColor: COLORS.primary + '10',
-            height: 72,
+            padding: getScaledSize(16),
+            marginBottom: VERTICAL_SPACING,
           }}>
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center">
@@ -174,22 +181,20 @@ export const WorkFormSkeleton = () => {
           </View>
         </View>
 
-        <View className="space-y-3">
+        <View style={{ gap: SPACING }}>
           <View
-            className="h-14 rounded-2xl"
+            className="rounded-2xl"
             style={{
+              height: getScaledSize(56),
               backgroundColor: COLORS.primary,
-              shadowColor: COLORS.primary,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.2,
-              shadowRadius: 4,
-              elevation: 4,
+              ...getShadowStyle(COLORS.primary),
             }}>
             <SkeletonBlock className="h-full w-full rounded-2xl opacity-20" />
           </View>
           <View
-            className="h-14 rounded-2xl"
+            className="rounded-2xl"
             style={{
+              height: getScaledSize(56),
               backgroundColor: COLORS.error + '15',
               borderWidth: 1,
               borderColor: COLORS.error + '20',
@@ -201,3 +206,11 @@ export const WorkFormSkeleton = () => {
     </View>
   );
 };
+
+const getShadowStyle = (shadowColor = '#000') => ({
+  shadowColor,
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 3,
+  elevation: 2,
+});
