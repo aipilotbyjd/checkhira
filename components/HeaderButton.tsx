@@ -19,7 +19,7 @@ export const HeaderButton = ({
         <View>
           <Ionicons
             name={iconName}
-            size={25}
+            size={30}
             color="gray"
             style={[
               styles.headerRight,

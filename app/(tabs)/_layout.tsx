@@ -62,26 +62,25 @@ export default function TabLayout() {
         },
         headerTitle: () => null,
         headerLeft: () => (
-          <View style={styles.headerLeft}>
+          <View style={[styles.headerLeft, { height: getHeaderHeight() }]}>
             <Image
               source={require('../../assets/hirabook-logo.png')}
-              style={[
-                styles.headerLogo,
-                {
-                  width: SPACING.md,
-                  height: SPACING.md * 0.25,
-                },
-              ]}
-              resizeMode="contain"
+              style={{
+                width: 140,
+                height: 45,
+                resizeMode: 'contain',
+              }}
             />
           </View>
         ),
         headerRight: () => (
-          <HeaderButton
-            iconName="notifications-outline"
-            onPress={() => router.push('/notifications')}
-            badgeCount={unreadCount}
-          />
+          <View style={[styles.headerRight, { height: getHeaderHeight() }]}>
+            <HeaderButton
+              iconName="notifications-outline"
+              onPress={() => router.push('/notifications')}
+              badgeCount={unreadCount}
+            />
+          </View>
         ),
         safeAreaInsets: {
           top: Platform.OS === 'ios' ? 44 : 0,
@@ -95,12 +94,12 @@ export default function TabLayout() {
             title: screen.label,
             headerShown: screen.headerShown,
             tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={screen.icon} color={color} size={SPACING.md * 0.06} />
+              <TabBarIcon name={screen.icon} color={color} size={SPACING.md * 1.6} />
             ),
             tabBarLabelStyle: [
               styles.tabLabel,
               {
-                fontSize: SPACING.md * 0.03,
+                fontSize: SPACING.md * 0.9,
               },
             ],
           }}
@@ -114,6 +113,12 @@ const styles = StyleSheet.create({
   headerLeft: {
     paddingLeft: SPACING.md,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerRight: {
+    paddingRight: SPACING.md,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerLogo: {
     minWidth: 100,
@@ -126,6 +131,7 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontFamily: FONTS.medium,
+    fontSize: SIZES.tabLabel,
     marginBottom: Platform.OS === 'ios' ? 0 : SPACING.xs,
   },
 });
