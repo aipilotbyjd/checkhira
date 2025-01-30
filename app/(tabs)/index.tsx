@@ -228,7 +228,7 @@ export default function Home() {
             recentActivities.map((activity: Activity, index: number) => (
               <Pressable
                 key={`${activity.id}-${activity.time.getTime()}`}
-                onPress={() => router.push(`/${activity.type}s/${activity.id}` as any)}
+                onPress={() => router.push(`/${activity.type}s/${activity.id}/edit` as any)}
                 className="mb-4 flex-row items-center rounded-xl p-4"
                 style={{ backgroundColor: COLORS.background.secondary }}>
                 <View
