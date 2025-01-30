@@ -1,12 +1,40 @@
-import { View, Text, ScrollView, Pressable, Image } from 'react-native';
+import { View, Text, ScrollView, Pressable, Image, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
+import { useState, useEffect } from 'react';
+import { notificationService } from '../../services/notificationService';
 
 export default function Home() {
   const router = useRouter();
+  const [recentActivities, setRecentActivities] = useState<Array<any>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        const response = await notificationService.getRecentActivities();
+        const activities = response.data.map((activity) => ({
+          id: activity.id,
+          type: activity.type,
+          description: activity.description || `Payment from ${activity.title}`,
+          amount: `₹${activity.amount}`,
+          time: new Date(activity.created_at),
+          icon: activity.type === 'work' ? 'clock-check-outline' : 'cash-check',
+          color: activity.type === 'work' ? COLORS.success : COLORS.primary,
+        }));
+        setRecentActivities(activities);
+      } catch (error) {
+        console.error('Error fetching activities:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchActivities();
+  }, []);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
@@ -31,35 +59,6 @@ export default function Home() {
       averageHours: 7.5,
     },
   };
-
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'work',
-      description: 'Completed polishing task',
-      amount: '₹500',
-      time: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      icon: 'clock-check-outline',
-      color: COLORS.success,
-    },
-    {
-      id: 2,
-      type: 'payment',
-      description: 'Payment received from ABC Corp',
-      amount: '₹1,200',
-      time: new Date(Date.now() - 5 * 60 * 60 * 1000),
-      icon: 'cash-check',
-      color: COLORS.primary,
-    },
-    {
-      id: 3,
-      type: 'work',
-      description: 'Added new work entry',
-      time: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      icon: 'notebook-outline',
-      color: COLORS.primary,
-    },
-  ];
 
   return (
     <ProtectedRoute>
@@ -204,40 +203,50 @@ export default function Home() {
             <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
               Recent Activities
             </Text>
-            <Pressable onPress={() => router.push('/account')}>
+            <Pressable onPress={() => router.push('/activities')}>
               <Text style={{ color: COLORS.primary }}>See All</Text>
             </Pressable>
           </View>
 
-          {recentActivities.map((activity) => (
-            <Pressable
-              key={activity.id}
-              onPress={() => router.push(`/account`)}
-              className="mb-4 flex-row items-center rounded-xl p-4"
-              style={{ backgroundColor: COLORS.background.secondary }}>
-              <View className="rounded-full p-2" style={{ backgroundColor: activity.color + '15' }}>
-                <MaterialCommunityIcons name={activity.icon as any} size={26} color={activity.color} />
-              </View>
-              <View className="ml-4 flex-1">
-                <Text className="text-base font-medium" style={{ color: COLORS.secondary }}>
-                  {activity.description}
-                </Text>
-                <View className="mt-1 flex-row items-center">
-                  {activity.amount && (
-                    <Text className="mr-2 text-sm" style={{ color: activity.color }}>
-                      {activity.amount}
-                    </Text>
-                  )}
-                  <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-                    {activity.time instanceof Date
-                      ? format(activity.time, 'h:mm a')
-                      : activity.time}
-                  </Text>
+          {loading ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : (
+            recentActivities.map((activity) => (
+              <Pressable
+                key={activity.id}
+                onPress={() => router.push(`/${activity.type}s/${activity.id}`)}
+                className="mb-4 flex-row items-center rounded-xl p-4"
+                style={{ backgroundColor: COLORS.background.secondary }}>
+                <View
+                  className="rounded-full p-2"
+                  style={{ backgroundColor: activity.color + '15' }}>
+                  <MaterialCommunityIcons
+                    name={activity.icon as any}
+                    size={26}
+                    color={activity.color}
+                  />
                 </View>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.gray[400]} />
-            </Pressable>
-          ))}
+                <View className="ml-4 flex-1">
+                  <Text className="text-base font-medium" style={{ color: COLORS.secondary }}>
+                    {activity.description}
+                  </Text>
+                  <View className="mt-1 flex-row items-center">
+                    {activity.amount && (
+                      <Text className="mr-2 text-sm" style={{ color: activity.color }}>
+                        {activity.amount}
+                      </Text>
+                    )}
+                    <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
+                      {activity.time instanceof Date
+                        ? format(activity.time, 'h:mm a')
+                        : activity.time}
+                    </Text>
+                  </View>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.gray[400]} />
+              </Pressable>
+            ))
+          )}
         </View>
       </ScrollView>
     </ProtectedRoute>

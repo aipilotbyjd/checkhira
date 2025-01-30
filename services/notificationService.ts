@@ -47,4 +47,19 @@ export const notificationService = {
     });
     return handleResponse<{ data: { data: any } }>(response);
   },
+
+  async getRecentActivities() {
+    const response = await fetch(`${api.baseUrl}/activities/recent`, {
+      headers: await api.getHeaders(),
+    });
+    return handleResponse<{
+      data: Array<{
+        id: string;
+        type: 'work' | 'payment';
+        description: string;
+        amount: string;
+        created_at: string;
+      }>;
+    }>(response);
+  },
 };
