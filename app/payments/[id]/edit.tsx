@@ -14,6 +14,7 @@ import { PaymentFormSkeleton } from '~/components/PaymentFormSkeleton';
 interface Payment {
   id: number;
   amount: string;
+  from?: string;
   category?: string;
   description?: string;
   source_id: number;
@@ -32,6 +33,7 @@ export default function EditPayment() {
   const [payment, setPayment] = useState<Payment>({
     id: Number(id),
     amount: '',
+    from: '',
     category: '',
     description: '',
     source_id: 0,
@@ -70,8 +72,8 @@ export default function EditPayment() {
   }, [id]);
 
   const handleUpdate = async () => {
-    if (!payment.description || !payment.amount) {
-      Alert.alert('Invalid Entry', 'Please fill in all fields');
+    if (!payment.from || !payment.description || !payment.amount) {
+      Alert.alert('Invalid Entry', 'Please fill in all required fields');
       return;
     }
 
@@ -84,6 +86,7 @@ export default function EditPayment() {
     const paymentData = {
       date: selectedDate,
       amount: numericAmount,
+      from: payment.from?.trim(),
       category: payment.category || undefined,
       description: payment.description.trim(),
       source_id: payment.source_id,
@@ -197,6 +200,24 @@ export default function EditPayment() {
                 onChangeText={(text) => setPayment({ ...payment, category: text })}
               />
             </View> */}
+
+            <View>
+              <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
+                From <Text style={{ color: COLORS.error }}>*</Text>
+              </Text>
+              <TextInput
+                className="rounded-xl border p-3"
+                style={{
+                  backgroundColor: COLORS.white,
+                  borderColor: COLORS.gray[200],
+                  color: COLORS.secondary,
+                }}
+                placeholder="e.g., John Doe, Company Inc"
+                placeholderTextColor={COLORS.gray[300]}
+                value={payment.from}
+                onChangeText={(text) => setPayment({ ...payment, from: text })}
+              />
+            </View>
 
             <View>
               <Text className="mb-3 text-sm" style={{ color: COLORS.gray[400] }}>

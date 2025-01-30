@@ -263,6 +263,11 @@ export default function PaymentsList() {
                 <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
                   {format(item.date, 'MMMM dd, yyyy')}
                 </Text>
+                {item.from && (
+                  <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
+                    From: {item.from}
+                  </Text>
+                )}
               </View>
               <View className="rounded-full p-2" style={{ backgroundColor: COLORS.gray[100] }}>
                 <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray[500]} />
