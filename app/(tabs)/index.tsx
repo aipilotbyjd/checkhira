@@ -7,22 +7,36 @@ import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { useState, useEffect } from 'react';
 import { notificationService } from '../../services/notificationService';
 
+// Add this type definition above the Home component
+interface Activity {
+  id: number;
+  type: 'work' | 'payment';
+  description: string;
+  amount: string;
+  time: Date;
+  icon: string;
+  color: string;
+}
+
 export default function Home() {
   const router = useRouter();
-  const [recentActivities, setRecentActivities] = useState<Array<any>>([]);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchActivities = async () => {
       try {
         const response = await notificationService.getRecentActivities();
-        const activities = response.data.map((activity) => ({
+        const activities = response.data.map((activity: any) => ({
           id: activity.id,
           type: activity.type,
-          description: activity.description || `Payment from ${activity.title}`,
+          description:
+            activity.type === 'work'
+              ? `You worked on ${activity.title}`
+              : `You received payment of ${activity.amount} from ${activity.from}`,
           amount: `₹${activity.amount}`,
           time: new Date(activity.created_at),
-          icon: activity.type === 'work' ? 'clock-check-outline' : 'cash-check',
+          icon: activity.type === 'work' ? 'clock-check-outline' : 'cash-multiple',
           color: activity.type === 'work' ? COLORS.success : COLORS.primary,
         }));
         setRecentActivities(activities);
@@ -203,7 +217,7 @@ export default function Home() {
             <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
               Recent Activities
             </Text>
-            <Pressable onPress={() => router.push('/activities')}>
+            <Pressable onPress={() => router.push('/account')}>
               <Text style={{ color: COLORS.primary }}>See All</Text>
             </Pressable>
           </View>
@@ -211,9 +225,9 @@ export default function Home() {
           {loading ? (
             <ActivityIndicator size="small" color={COLORS.primary} />
           ) : (
-            recentActivities.map((activity) => (
+            recentActivities.map((activity: Activity, index: number) => (
               <Pressable
-                key={activity.id}
+                key={`${activity.id}-${activity.time.getTime()}`}
                 onPress={() => router.push(`/${activity.type}s/${activity.id}`)}
                 className="mb-4 flex-row items-center rounded-xl p-4"
                 style={{ backgroundColor: COLORS.background.secondary }}>

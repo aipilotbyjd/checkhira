@@ -9,6 +9,7 @@ import { SuccessModal } from '../../components/SuccessModal';
 import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 import { useAppSettings } from '../../contexts/SettingsContext';
 import { PaymentFormSkeleton } from '../../components/PaymentFormSkeleton';
+import { useToast } from '../../contexts/ToastContext';
 
 interface Payment {
   id: number;
@@ -44,6 +45,7 @@ export default function AddPayment() {
 
   const { createPayment, getPaymentSources, isLoading } = usePaymentOperations();
   const { settings } = useAppSettings();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const loadData = async () => {
@@ -80,13 +82,13 @@ export default function AddPayment() {
 
   const handleSave = async () => {
     if (!payment.from || !payment.description || !payment.amount) {
-      Alert.alert('Invalid Entry', 'Please fill in all required fields');
+      showToast('Please fill in all required fields', 'error');
       return;
     }
 
     const numericAmount = payment.amount;
     if (isNaN(numericAmount) || numericAmount <= 0) {
-      Alert.alert('Invalid Amount', 'Please enter a valid positive number');
+      showToast('Please enter a valid positive number', 'error');
       return;
     }
 
@@ -99,9 +101,14 @@ export default function AddPayment() {
       source_id: payment.source_id,
     };
 
-    const result = await createPayment(paymentData);
-    if (result) {
-      setShowSuccessModal(true);
+    try {
+      const result = await createPayment(paymentData);
+      if (result) {
+        showToast('Payment added successfully');
+        router.replace('/(tabs)/payments');
+      }
+    } catch (error) {
+      showToast('Failed to save payment', 'error');
     }
   };
 
@@ -292,15 +299,6 @@ export default function AddPayment() {
           <Text className="text-center text-lg font-semibold text-white">Save Payment</Text>
         </Pressable>
       </View>
-
-      <SuccessModal
-        visible={showSuccessModal}
-        onClose={() => {
-          setShowSuccessModal(false);
-          router.replace('/(tabs)/payments');
-        }}
-        message="Payment added successfully"
-      />
     </View>
   );
 }
