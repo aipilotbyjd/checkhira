@@ -9,6 +9,7 @@ import { DeleteConfirmationModal } from '../../../components/DeleteConfirmationM
 import { SuccessModal } from '../../../components/SuccessModal';
 import { usePaymentOperations } from '../../../hooks/usePaymentOperations';
 import { useToast } from '../../../contexts/ToastContext';
+import { PaymentFormSkeleton } from '~/components/PaymentFormSkeleton';
 
 interface Payment {
   id: number;
@@ -126,6 +127,10 @@ export default function EditPayment() {
       ))}
     </View>
   );
+
+  if (isLoading) {
+    return <PaymentFormSkeleton />;
+  }
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
