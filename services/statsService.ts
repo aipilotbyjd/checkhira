@@ -2,6 +2,7 @@ import { api, handleResponse } from './api';
 
 interface TimePeriodStats {
   works: number;
+  work_amount: number;
   payments: number;
   total_amount: number;
 }

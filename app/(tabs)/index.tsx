@@ -24,10 +24,11 @@ export default function Home() {
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
-    today: { works: 0, payments: 0, total_amount: 0 },
-    weekly: { works: 0, payments: 0, total_amount: 0 },
-    monthly: { works: 0, payments: 0, total_amount: 0 },
+    today: { works: 0, work_amount: 0, payments: 0, total_amount: 0 },
+    weekly: { works: 0, work_amount: 0, payments: 0, total_amount: 0 },
+    monthly: { works: 0, work_amount: 0, payments: 0, total_amount: 0 },
     total_works: 0,
+    total_work_amount: 0,
     total_payments: 0,
     total_amount: 0,
   });
@@ -107,19 +108,101 @@ export default function Home() {
           </Pressable>
         </View>
 
-        {/* Summary Cards */}
+        {/* Work Dashboard */}
         <View className="mt-6 px-6">
-          <View className="mb-4 flex-row items-center justify-between">
-            <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
-              Dashboard Overview
-            </Text>
-            <Pressable onPress={() => router.push('/account')}>
-              <Text style={{ color: COLORS.primary }}>View Details</Text>
-            </Pressable>
-          </View>
+          <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
+            Work Dashboard
+          </Text>
+          <View className="mt-4 flex-row flex-wrap justify-between">
+            {/* Today's Work Stats */}
+            <View
+              className="mb-4 w-[48%] rounded-xl p-4"
+              style={{ backgroundColor: COLORS.background.secondary }}>
+              <View className="flex-row items-center justify-between">
+                <MaterialCommunityIcons name="calendar-today" size={24} color={COLORS.primary} />
+                <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
+                  Today
+                </Text>
+              </View>
+              <View className="mt-3">
+                <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
+                  ₹{Number(stats.today?.work_amount || '0.00').toFixed(2)}
+                </Text>
+                <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                  Works: {stats.today?.works || 0}
+                </Text>
+              </View>
+            </View>
 
-          <View className="flex-row flex-wrap justify-between">
-            {/* Today's Stats */}
+            {/* Weekly Work Stats */}
+            <View
+              className="mb-4 w-[48%] rounded-xl p-4"
+              style={{ backgroundColor: COLORS.background.secondary }}>
+              <View className="flex-row items-center justify-between">
+                <MaterialCommunityIcons name="calendar-week" size={24} color={COLORS.success} />
+                <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
+                  This Week
+                </Text>
+              </View>
+              <View className="mt-3">
+                <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
+                  ₹{Number(stats.weekly?.work_amount || '0.00').toFixed(2)}
+                </Text>
+                <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                  Works: {stats.weekly?.works || 0}
+                </Text>
+              </View>
+            </View>
+
+            {/* Monthly Work Stats */}
+            <View
+              className="mb-4 w-[48%] rounded-xl p-4"
+              style={{ backgroundColor: COLORS.background.secondary }}>
+              <View className="flex-row items-center justify-between">
+                <MaterialCommunityIcons name="calendar-month" size={24} color="#FF6B6B" />
+                <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
+                  This Month
+                </Text>
+              </View>
+              <View className="mt-3">
+                <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
+                  ₹{Number(stats.monthly?.work_amount || '0.00').toFixed(2)}
+                </Text>
+                <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                  Works: {stats.monthly?.works || 0}
+                </Text>
+              </View>
+            </View>
+
+            {/* Total Work Stats */}
+            <View
+              className="mb-4 w-[48%] rounded-xl p-4"
+              style={{ backgroundColor: COLORS.background.secondary }}>
+              <View className="flex-row items-center justify-between">
+                <MaterialCommunityIcons name="chart-box" size={24} color="#4ECDC4" />
+                <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
+                  Total
+                </Text>
+              </View>
+              <View className="mt-3">
+                <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
+                  ₹{Number(stats.total_work_amount || '0.00').toFixed(2)}
+                </Text>
+                <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                  Works: {stats.total_works || 0}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Payment Dashboard */}
+        <View className="mt-6 px-6">
+          <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
+            Payment Dashboard
+          </Text>
+          <View className="mt-4 flex-row flex-wrap justify-between">
+            {/* Today's Payment Stats */}
             <View
               className="mb-4 w-[48%] rounded-xl p-4"
               style={{ backgroundColor: COLORS.background.secondary }}>
@@ -133,18 +216,13 @@ export default function Home() {
                 <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
                   ₹{Number(stats.today?.total_amount || '0.00').toFixed(2)}
                 </Text>
-                <View className="mt-2 flex-row justify-between">
-                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                    Works: {stats.today?.works || 0}
-                  </Text>
-                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                    Payments: {stats.today?.payments || 0}
-                  </Text>
-                </View>
+                <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                  Payments: {stats.today?.payments || 0}
+                </Text>
               </View>
             </View>
 
-            {/* Weekly Stats */}
+            {/* Weekly Payment Stats */}
             <View
               className="mb-4 w-[48%] rounded-xl p-4"
               style={{ backgroundColor: COLORS.background.secondary }}>
@@ -158,18 +236,13 @@ export default function Home() {
                 <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
                   ₹{Number(stats.weekly?.total_amount || '0.00').toFixed(2)}
                 </Text>
-                <View className="mt-2 flex-row justify-between">
-                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                    Works: {stats.weekly?.works || 0}
-                  </Text>
-                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                    Payments: {stats.weekly?.payments || 0}
-                  </Text>
-                </View>
+                <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                  Payments: {stats.weekly?.payments || 0}
+                </Text>
               </View>
             </View>
 
-            {/* Monthly Stats */}
+            {/* Monthly Payment Stats */}
             <View
               className="mb-4 w-[48%] rounded-xl p-4"
               style={{ backgroundColor: COLORS.background.secondary }}>
@@ -183,18 +256,13 @@ export default function Home() {
                 <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
                   ₹{Number(stats.monthly?.total_amount || '0.00').toFixed(2)}
                 </Text>
-                <View className="mt-2 flex-row justify-between">
-                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                    Works: {stats.monthly?.works || 0}
-                  </Text>
-                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                    Payments: {stats.monthly?.payments || 0}
-                  </Text>
-                </View>
+                <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                  Payments: {stats.monthly?.payments || 0}
+                </Text>
               </View>
             </View>
 
-            {/* Total Stats */}
+            {/* Total Payment Stats */}
             <View
               className="mb-4 w-[48%] rounded-xl p-4"
               style={{ backgroundColor: COLORS.background.secondary }}>
@@ -208,14 +276,9 @@ export default function Home() {
                 <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
                   ₹{Number(stats.total_amount || '0.00').toFixed(2)}
                 </Text>
-                <View className="mt-2 flex-row justify-between">
-                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                    Works: {stats.total_works || 0}
-                  </Text>
-                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                    Payments: {stats.total_payments || 0}
-                  </Text>
-                </View>
+                <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                  Payments: {stats.total_payments || 0}
+                </Text>
               </View>
             </View>
           </View>
