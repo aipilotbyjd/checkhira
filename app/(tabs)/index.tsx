@@ -6,6 +6,7 @@ import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { useState, useEffect } from 'react';
 import { notificationService } from '../../services/notificationService';
+import { statsService } from '../../services/statsService';
 
 // Add this type definition above the Home component
 interface Activity {
@@ -22,6 +23,14 @@ export default function Home() {
   const router = useRouter();
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    today: { works: 0, payments: 0, total_amount: 0 },
+    weekly: { works: 0, payments: 0, total_amount: 0 },
+    monthly: { works: 0, payments: 0, total_amount: 0 },
+    total_works: 0,
+    total_payments: 0,
+    total_amount: 0,
+  });
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -49,31 +58,24 @@ export default function Home() {
     fetchActivities();
   }, []);
 
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await statsService.getStats();
+        setStats(data as any);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
-  };
-
-  // Enhanced mock data
-  const stats = {
-    today: {
-      hours: 8,
-      earnings: 500,
-      pendingAmount: 1200,
-    },
-    weekly: {
-      hours: 42,
-      earnings: 3200,
-      completedTasks: 15,
-    },
-    monthly: {
-      earnings: 12500,
-      averageHours: 7.5,
-      payments: 15000,
-      works: 160,
-    },
   };
 
   const handleQuickActionPress = (action: 'work' | 'payment', id: number) => {
@@ -82,10 +84,6 @@ export default function Home() {
     } else if (action === 'payment') {
       router.push(`/payments/${id}/edit` as any);
     }
-  };
-
-  const markAllAsRead = () => {
-    // Implementation of markAllAsRead function
   };
 
   return (
@@ -113,43 +111,114 @@ export default function Home() {
         <View className="mt-6 px-6">
           <View className="mb-4 flex-row items-center justify-between">
             <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
-              This Week ({format(startOfWeek(new Date()), 'd MMM')} -{' '}
-              {format(endOfWeek(new Date()), 'd MMM')})
+              Dashboard Overview
             </Text>
             <Pressable onPress={() => router.push('/account')}>
-              <Text style={{ color: COLORS.primary }}>See All</Text>
+              <Text style={{ color: COLORS.primary }}>View Details</Text>
             </Pressable>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="space-x-4">
+          <View className="flex-row flex-wrap justify-between">
+            {/* Today's Stats */}
             <View
-              className="w-48 rounded-2xl p-5"
+              className="mb-4 w-[48%] rounded-xl p-4"
               style={{ backgroundColor: COLORS.background.secondary }}>
-              <MaterialCommunityIcons name="cash-multiple" size={28} color={COLORS.primary} />
-              <Text className="mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
-                Monthly Payments
-              </Text>
-              <Text className="mt-2 text-xl font-semibold" style={{ color: COLORS.secondary }}>
-                ₹{stats.monthly.payments}
-              </Text>
+              <View className="flex-row items-center justify-between">
+                <MaterialCommunityIcons name="calendar-today" size={24} color={COLORS.primary} />
+                <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
+                  Today
+                </Text>
+              </View>
+              <View className="mt-3">
+                <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
+                  ₹{Number(stats.today?.total_amount || '0.00').toFixed(2)}
+                </Text>
+                <View className="mt-2 flex-row justify-between">
+                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                    Works: {stats.today?.works || 0}
+                  </Text>
+                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                    Payments: {stats.today?.payments || 0}
+                  </Text>
+                </View>
+              </View>
             </View>
 
+            {/* Weekly Stats */}
             <View
-              className="w-48 rounded-2xl p-5"
+              className="mb-4 w-[48%] rounded-xl p-4"
               style={{ backgroundColor: COLORS.background.secondary }}>
-              <MaterialCommunityIcons
-                name="chart-timeline-variant"
-                size={28}
-                color={COLORS.primary}
-              />
-              <Text className="mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
-                Monthly Works
-              </Text>
-              <Text className="mt-2 text-xl font-semibold" style={{ color: COLORS.secondary }}>
-                {stats.monthly.works} tasks
-              </Text>
+              <View className="flex-row items-center justify-between">
+                <MaterialCommunityIcons name="calendar-week" size={24} color={COLORS.success} />
+                <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
+                  This Week
+                </Text>
+              </View>
+              <View className="mt-3">
+                <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
+                  ₹{Number(stats.weekly?.total_amount || '0.00').toFixed(2)}
+                </Text>
+                <View className="mt-2 flex-row justify-between">
+                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                    Works: {stats.weekly?.works || 0}
+                  </Text>
+                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                    Payments: {stats.weekly?.payments || 0}
+                  </Text>
+                </View>
+              </View>
             </View>
-          </ScrollView>
+
+            {/* Monthly Stats */}
+            <View
+              className="mb-4 w-[48%] rounded-xl p-4"
+              style={{ backgroundColor: COLORS.background.secondary }}>
+              <View className="flex-row items-center justify-between">
+                <MaterialCommunityIcons name="calendar-month" size={24} color="#FF6B6B" />
+                <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
+                  This Month
+                </Text>
+              </View>
+              <View className="mt-3">
+                <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
+                  ₹{Number(stats.monthly?.total_amount || '0.00').toFixed(2)}
+                </Text>
+                <View className="mt-2 flex-row justify-between">
+                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                    Works: {stats.monthly?.works || 0}
+                  </Text>
+                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                    Payments: {stats.monthly?.payments || 0}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Total Stats */}
+            <View
+              className="mb-4 w-[48%] rounded-xl p-4"
+              style={{ backgroundColor: COLORS.background.secondary }}>
+              <View className="flex-row items-center justify-between">
+                <MaterialCommunityIcons name="chart-box" size={24} color="#4ECDC4" />
+                <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
+                  Total
+                </Text>
+              </View>
+              <View className="mt-3">
+                <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
+                  ₹{Number(stats.total_amount || '0.00').toFixed(2)}
+                </Text>
+                <View className="mt-2 flex-row justify-between">
+                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                    Works: {stats.total_works || 0}
+                  </Text>
+                  <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
+                    Payments: {stats.total_payments || 0}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
         </View>
 
         {/* Quick Actions - Enhanced version */}
