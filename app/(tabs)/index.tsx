@@ -62,7 +62,7 @@ export default function Home() {
     const fetchStats = async () => {
       try {
         const data = await statsService.getStats();
-        setStats(data as any);
+        setStats(data.data as any);
       } catch (error) {
         console.error('Error fetching stats:', error);
       }
