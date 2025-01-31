@@ -74,6 +74,18 @@ export default function Home() {
     },
   };
 
+  const handleQuickActionPress = (action: 'work' | 'payment', id: number) => {
+    if (action === 'work') {
+      router.push(`/work/${id}/edit` as any);
+    } else if (action === 'payment') {
+      router.push(`/payments/${id}/edit` as any);
+    }
+  };
+
+  const markAllAsRead = () => {
+    // Implementation of markAllAsRead function
+  };
+
   return (
     <ProtectedRoute>
       <ScrollView className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
@@ -186,26 +198,22 @@ export default function Home() {
             </Pressable>
 
             <Pressable
-              onPress={() => router.push('/account')}
+              onPress={() => router.push('/(tabs)/work-list')}
               className="flex-row items-center rounded-xl p-4"
               style={{ backgroundColor: COLORS.primary + '15' }}>
-              <MaterialCommunityIcons
-                name="file-document-outline"
-                size={24}
-                color={COLORS.primary}
-              />
+              <MaterialCommunityIcons name="clipboard-list" size={24} color={COLORS.primary} />
               <Text className="ml-3 flex-1 font-medium" style={{ color: COLORS.primary }}>
-                View Reports
+                View Work List
               </Text>
             </Pressable>
 
             <Pressable
-              onPress={() => router.push('/account')}
+              onPress={() => router.push('/(tabs)/payments')}
               className="flex-row items-center rounded-xl p-4"
               style={{ backgroundColor: COLORS.primary + '15' }}>
-              <MaterialCommunityIcons name="calendar-month" size={24} color={COLORS.primary} />
+              <MaterialCommunityIcons name="cash-register" size={24} color={COLORS.primary} />
               <Text className="ml-3 flex-1 font-medium" style={{ color: COLORS.primary }}>
-                Schedule
+                View Payments List
               </Text>
             </Pressable>
           </View>
@@ -228,7 +236,7 @@ export default function Home() {
             recentActivities.map((activity: Activity, index: number) => (
               <Pressable
                 key={`${activity.id}-${activity.time.getTime()}`}
-                onPress={() => router.push(`/${activity.type}s/${activity.id}/edit` as any)}
+                onPress={() => handleQuickActionPress(activity.type, activity.id)}
                 className="mb-4 flex-row items-center rounded-xl p-4"
                 style={{ backgroundColor: COLORS.background.secondary }}>
                 <View
