@@ -71,6 +71,8 @@ export default function Home() {
     monthly: {
       earnings: 12500,
       averageHours: 7.5,
+      payments: 15000,
+      works: 160,
     },
   };
 
@@ -123,30 +125,12 @@ export default function Home() {
             <View
               className="w-48 rounded-2xl p-5"
               style={{ backgroundColor: COLORS.background.secondary }}>
-              <MaterialCommunityIcons name="clock-check-outline" size={28} color={COLORS.primary} />
-              <Text className="mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
-                Weekly Hours
-              </Text>
-              <Text className="mt-2 text-xl font-semibold" style={{ color: COLORS.secondary }}>
-                {stats.weekly.hours}h
-              </Text>
-              <Text className="mt-1 text-sm" style={{ color: COLORS.success }}>
-                +{stats.today.hours}h today
-              </Text>
-            </View>
-
-            <View
-              className="w-48 rounded-2xl p-5"
-              style={{ backgroundColor: COLORS.background.secondary }}>
               <MaterialCommunityIcons name="cash-multiple" size={28} color={COLORS.primary} />
               <Text className="mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
-                Weekly Earnings
+                Monthly Payments
               </Text>
               <Text className="mt-2 text-xl font-semibold" style={{ color: COLORS.secondary }}>
-                ₹{stats.weekly.earnings}
-              </Text>
-              <Text className="mt-1 text-sm" style={{ color: COLORS.success }}>
-                ₹{stats.today.earnings} today
+                ₹{stats.monthly.payments}
               </Text>
             </View>
 
@@ -159,13 +143,10 @@ export default function Home() {
                 color={COLORS.primary}
               />
               <Text className="mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
-                Monthly Avg
+                Monthly Works
               </Text>
               <Text className="mt-2 text-xl font-semibold" style={{ color: COLORS.secondary }}>
-                {stats.monthly.averageHours}h/day
-              </Text>
-              <Text className="mt-1 text-sm" style={{ color: COLORS.primary }}>
-                ₹{stats.monthly.earnings} earned
+                {stats.monthly.works} tasks
               </Text>
             </View>
           </ScrollView>
