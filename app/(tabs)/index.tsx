@@ -7,6 +7,7 @@ import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { useState, useEffect } from 'react';
 import { notificationService } from '../../services/notificationService';
 import { statsService } from '../../services/statsService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Add this type definition above the Home component
 interface Activity {
@@ -32,6 +33,7 @@ export default function Home() {
     total_payments: 0,
     total_amount: 0,
   });
+  const [user, setUser] = useState<{ name: string } | null>(null);
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -72,6 +74,20 @@ export default function Home() {
     fetchStats();
   }, []);
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        // get user from local storage
+        const user = await AsyncStorage.getItem('user');
+        setUser(user ? JSON.parse(user) : null);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
@@ -97,7 +113,7 @@ export default function Home() {
               {getGreeting()}
             </Text>
             <Text className="mt-1 text-2xl font-bold" style={{ color: COLORS.secondary }}>
-              Ramesh
+              {user?.name || 'User'}
             </Text>
           </View>
           <Pressable onPress={() => router.push('/account')}>
