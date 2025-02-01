@@ -354,9 +354,6 @@ export default function Home() {
             <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
               Recent Activities
             </Text>
-            <Pressable onPress={() => router.push('/account')}>
-              <Text style={{ color: COLORS.primary }}>See All</Text>
-            </Pressable>
           </View>
 
           {loading ? (
