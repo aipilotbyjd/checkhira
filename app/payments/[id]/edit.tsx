@@ -73,13 +73,13 @@ export default function EditPayment() {
 
   const handleUpdate = async () => {
     if (!payment.from || !payment.description || !payment.amount) {
-      Alert.alert('Invalid Entry', 'Please fill in all required fields');
+      showToast('Please fill in all required fields', 'error');
       return;
     }
 
     const numericAmount = parseFloat(payment.amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
-      Alert.alert('Invalid Amount', 'Please enter a valid positive number');
+      showToast('Please enter a valid positive number', 'error');
       return;
     }
 
