@@ -2,15 +2,22 @@ import { useState, useEffect } from 'react';
 import { notificationService } from '../services/notificationService';
 import { ApiError } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 export const useNotificationOperations = () => {
+  const {
+    unreadCount,
+    refreshUnreadCount,
+    markAsRead: contextMarkAsRead,
+    markAllAsRead: contextMarkAllAsRead,
+  } = useNotification();
+
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMorePages, setHasMorePages] = useState(true);
   const { showToast } = useToast();
-  const [unreadCount, setUnreadCount] = useState(0);
 
   const getNotifications = async (page: number = 1) => {
     try {
@@ -30,7 +37,7 @@ export const useNotificationOperations = () => {
       return {
         notifications: data.data,
         currentPage: data.current_page,
-        hasMore: data.current_page < data.last_page
+        hasMore: data.current_page < data.last_page,
       };
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch notifications';
@@ -43,25 +50,10 @@ export const useNotificationOperations = () => {
     }
   };
 
-  const refreshUnreadCount = async () => {
-    try {
-      const response = await notificationService.getUnreadNotificationsCount();
-      if (response?.data?.data !== undefined) {
-        setUnreadCount(response.data.data);
-      }
-      return response?.data?.data;
-    } catch (err) {
-      const errorMessage = err instanceof ApiError ? err.message : 'Failed to get unread count';
-      showToast(errorMessage, 'error');
-      return 0;
-    }
-  };
-
   const markAsRead = async (id: string, is_read: string) => {
     try {
-      await notificationService.markAsRead(id, is_read);
-      await refreshUnreadCount();
-      return true;
+      const success = await contextMarkAsRead(id, is_read);
+      return success;
     } catch (err) {
       const errorMessage =
         err instanceof ApiError ? err.message : 'Failed to mark notification as read';
@@ -72,9 +64,8 @@ export const useNotificationOperations = () => {
 
   const markAllAsRead = async () => {
     try {
-      await notificationService.markAllAsRead();
-      await refreshUnreadCount();
-      return true;
+      const success = await contextMarkAllAsRead();
+      return success;
     } catch (err) {
       const errorMessage =
         err instanceof ApiError ? err.message : 'Failed to mark all notifications as read';

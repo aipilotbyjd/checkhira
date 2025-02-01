@@ -55,7 +55,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   return (
     <NotificationContext.Provider
-      value={{ unreadCount, refreshUnreadCount, markAsRead, markAllAsRead }}>
+      value={{
+        unreadCount,
+        refreshUnreadCount,
+        markAsRead,
+        markAllAsRead
+      }}
+    >
       {children}
     </NotificationContext.Provider>
   );
