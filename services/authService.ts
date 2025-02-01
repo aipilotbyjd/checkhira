@@ -6,6 +6,7 @@ interface RegisterPayload {
   email: string;
   password: string;
   c_password: string;
+  phone?: string;
 }
 
 interface LoginPayload {
@@ -30,12 +31,12 @@ export const authService = {
       body: JSON.stringify(data),
     });
     const result = await handleResponse(response);
-    
+
     // Ensure the response includes the token
     if (result.status && result.data && !result.data.token) {
       throw new Error('Token not found in response');
     }
-    
+
     return result;
   },
 
@@ -70,6 +71,16 @@ export const authService = {
     const response = await fetch(`${api.baseUrl}/logout`, {
       method: 'POST',
       headers: await api.getHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  // Google Login
+  async googleLogin(accessToken: string) {
+    const response = await fetch(`${api.baseUrl}/google-login`, {
+      method: 'POST',
+      headers: await api.getHeaders(),
+      body: JSON.stringify({ access_token: accessToken }),
     });
     return handleResponse(response);
   },

@@ -1,93 +1,64 @@
-import { useState } from 'react';
 import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { COLORS } from '../../constants/theme';
 import { AuthHeader } from '../../components/AuthHeader';
-import { AuthInput } from '../../components/AuthInput';
 import { SocialLoginButton } from '../../components/SocialLoginButton';
+import AuthPhoneInput from '../../components/AuthPhoneInput';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '../../contexts/AuthContext';
+import { useEffect } from 'react';
 import { authService } from '../../services/authService';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
   const router = useRouter();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async () => {
-    const newErrors: Record<string, string> = {};
+  // Initialize Google Auth
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    expoClientId: '<YOUR_EXPO_CLIENT_ID>',
+    iosClientId: '<YOUR_IOS_CLIENT_ID>',
+    androidClientId: '<YOUR_ANDROID_CLIENT_ID>',
+    webClientId: '<YOUR_WEB_CLIENT_ID>',
+  });
 
-    if (!email) newErrors.email = 'Email is required';
-    if (!password) newErrors.password = 'Password is required';
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      // Fetch user data from your backend using the Google token
+      handleGoogleLogin(authentication.accessToken);
+    }
+  }, [response]);
 
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length === 0) {
-      setIsLoading(true);
-      try {
-        const response = await authService.login({ email, password });
-        if (response.status) {
-          await login(response.data);
-          router.replace('/(tabs)');
-        } else {
-          Alert.alert('Error', response.message || 'Login failed');
-        }
-      } catch (error) {
-        Alert.alert('Error', 'Failed to login. Please try again.');
-      } finally {
-        setIsLoading(false);
+  const handleGoogleLogin = async (accessToken: string) => {
+    try {
+      const res = await authService.googleLogin(accessToken);
+      if (res.status) {
+        await login(res.data);
+        router.push('/(tabs)');
+      } else {
+        Alert.alert('Error', res.message || 'Failed to login with Google');
       }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to login with Google. Please try again.');
     }
   };
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
       <ScrollView className="flex-1">
-        <AuthHeader title="Welcome Back!" subtitle="Sign in to continue" showBack={false} />
+        <AuthHeader
+          title="Welcome Back!"
+          subtitle="Sign in with your phone number to continue"
+          showBack={false}
+        />
 
         <View className="px-6">
-          <AuthInput
-            label="Email"
-            icon="email-outline"
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            error={errors.email}
-            required
+          <AuthPhoneInput
+            onPhoneSubmit={(phone) => router.push(`/auth/verify-otp?phone=${phone}`)}
           />
-
-          <AuthInput
-            label="Password"
-            icon="lock-outline"
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            error={errors.password}
-            required
-          />
-
-          <Link href="/auth/forgot-password" asChild>
-            <Pressable>
-              <Text className="mb-6 text-right text-sm" style={{ color: COLORS.primary }}>
-                Forgot Password?
-              </Text>
-            </Pressable>
-          </Link>
-
-          <Pressable
-            onPress={handleLogin}
-            className="mb-6 rounded-xl p-4"
-            style={{ backgroundColor: COLORS.primary }}
-            disabled={isLoading}>
-            <Text className="text-center text-lg font-semibold text-white">
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </Text>
-          </Pressable>
 
           <View className="mb-6 flex-row items-center">
             <View className="flex-1 border-t" style={{ borderColor: COLORS.gray[200] }} />
@@ -97,17 +68,20 @@ export default function Login() {
             <View className="flex-1 border-t" style={{ borderColor: COLORS.gray[200] }} />
           </View>
 
-          <Link href="/auth/phone-login" asChild>
-            <SocialLoginButton icon="phone" label="Continue with Phone" />
-          </Link>
-
+          {/* Google Login Button */}
           <SocialLoginButton
             icon="google"
             label="Continue with Google"
             onPress={() => {
-              // TODO: Implement Google login
-              console.log('Google login');
+              promptAsync();
             }}
+          />
+
+          {/* Email Login Button */}
+          <SocialLoginButton
+            icon="email"
+            label="Continue with Email"
+            onPress={() => router.push('/auth/email-login')}
           />
 
           <View className="mb-6 flex-row justify-center">

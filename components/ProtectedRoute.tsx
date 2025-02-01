@@ -1,38 +1,35 @@
-import { useEffect } from 'react';
-import { useRouter, usePathname } from 'expo-router';
-import { useAuth } from '../contexts/AuthContext';
+import React from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { COLORS } from '../constants/theme';
+import { useAuth } from '../contexts/AuthContext';
+import { useRouter } from 'expo-router';
 
-const PUBLIC_ROUTES = [
-  '/auth/login',
-  '/auth/register',
-  '/auth/phone-login',
-  '/auth/forgot-password',
-];
+interface Props {
+  children: React.ReactNode;
+}
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+export const ProtectedRoute: React.FC<Props> = ({ children }) => {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
 
-  useEffect(() => {
-    if (!isLoading && !user && !PUBLIC_ROUTES.includes(pathname)) {
+  React.useEffect(() => {
+    if (!isLoading && !user) {
       router.replace('/auth/login');
     }
-  }, [user, isLoading, pathname]);
+  }, [user, isLoading]);
 
-  if (isLoading) {
+  if (isLoading || !user) {
     return (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#fff',
+        }}>
+        <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
   }
 
-  if (!user && !PUBLIC_ROUTES.includes(pathname)) {
-    return null;
-  }
-
   return <>{children}</>;
-}
+};

@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService';
 import { profileService } from '../services/profileService';
@@ -24,87 +31,63 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadUser();
-  }, []);
+  const login = async (userData: User) => {
+    setUser(userData);
+    await AsyncStorage.setItem('user', JSON.stringify(userData));
+  };
+
+  const logout = async () => {
+    setUser(null);
+    await AsyncStorage.removeItem('user');
+    await authService.logout();
+  };
+
+  const refreshUser = async () => {
+    // Implement if your backend supports refreshing user data
+    // For example, fetch the latest user profile
+    if (user?.token) {
+      try {
+        const response = await profileService.getProfile();
+        if (response.status) {
+          setUser(response.data);
+          await AsyncStorage.setItem('user', JSON.stringify(response.data));
+        }
+      } catch (error) {
+        console.error('Failed to refresh user:', error);
+      }
+    }
+  };
 
   const loadUser = async () => {
     try {
-      const userJson = await AsyncStorage.getItem('user');
-      if (userJson) {
-        setUser(JSON.parse(userJson));
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        setUser(JSON.parse(userData));
       }
     } catch (error) {
-      console.error('Error loading user:', error);
+      console.error('Failed to load user:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = useCallback(async (userData: User) => {
-    try {
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-    } catch (error) {
-      console.error('Error saving user:', error);
-      throw error;
-    }
+  useEffect(() => {
+    loadUser();
   }, []);
 
-  const refreshUser = useCallback(async () => {
-    try {
-      const response = await profileService.getProfile();
-      if ((response as any).status && (response as any).data) {
-        const currentUser = await AsyncStorage.getItem('user');
-        if (currentUser) {
-          const parsedUser = JSON.parse(currentUser);
-          const updatedUser = {
-            ...parsedUser,
-            ...(response as any).data,
-          };
-          await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-          setUser(updatedUser);
-        }
-      }
-    } catch (error) {
-      console.error('Error refreshing user:', error);
-      throw error;
-    }
-  }, []);
-
-  const logout = useCallback(async () => {
-    try {
-      await authService.logout();
-      await AsyncStorage.removeItem('user');
-      setUser(null);
-    } catch (error) {
-      console.error('Error during logout:', error);
-      throw error;
-    }
-  }, []);
-
-  const value = useMemo(
-    () => ({
-      user,
-      login,
-      logout,
-      refreshUser,
-      isLoading,
-    }),
-    [user, login, logout, refreshUser, isLoading]
+  return (
+    <AuthContext.Provider value={{ user, login, logout, refreshUser, isLoading }}>
+      {children}
+    </AuthContext.Provider>
   );
+};
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
-}
+};
