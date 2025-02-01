@@ -14,6 +14,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { useNotificationOperations } from '../../hooks/useNotificationOperations';
 import type { Notification } from '../../services/notificationService';
 import { NotificationSkeleton } from '../../components/NotificationSkeleton';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -26,14 +27,16 @@ export default function NotificationsScreen() {
   const fadeAnims = useRef<Map<string, Animated.Value>>(new Map());
   const slideAnims = useRef<Map<string, Animated.Value>>(new Map());
 
-  useEffect(() => {
-    loadNotifications();
-    return () => {
-      // Clear animation maps on unmount
-      fadeAnims.current.clear();
-      slideAnims.current.clear();
-    };
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadNotifications();
+      return () => {
+        // Clear animation maps on unmount
+        fadeAnims.current.clear();
+        slideAnims.current.clear();
+      };
+    }, [])
+  );
 
   const loadNotifications = async (page: number = 1) => {
     const { notifications: newNotifications } = await getNotifications(page);
