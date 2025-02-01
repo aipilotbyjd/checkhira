@@ -16,6 +16,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { notificationService } from '../../services/notificationService';
 import { statsService } from '../../services/statsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNotification } from '../../contexts/NotificationContext';
+
 
 // Add this type definition above the Home component
 interface Activity {
@@ -43,6 +45,7 @@ export default function Home() {
   });
   const [user, setUser] = useState<{ name: string } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const { unreadCount, refreshUnreadCount, markAsRead, markAllAsRead } = useNotification();
 
   const fetchActivities = async () => {
     try {

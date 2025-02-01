@@ -5,6 +5,7 @@ import { ApiError } from '../services/api';
 
 type NotificationContextType = {
   unreadCount: number;
+  setUnreadCount: (count: number) => void;
   refreshUnreadCount: () => Promise<void>;
   markAsRead: (id: string, is_read: string) => Promise<boolean>;
   markAllAsRead: () => Promise<boolean>;
@@ -57,18 +58,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     <NotificationContext.Provider
       value={{
         unreadCount,
+        setUnreadCount,
         refreshUnreadCount,
         markAsRead,
-        markAllAsRead
-      }}
-    >
+        markAllAsRead,
+      }}>
       {children}
     </NotificationContext.Provider>
   );
 }
 
 export const useNotification = () => {
-  console.log('useNotification');
   const context = useContext(NotificationContext);
   if (context === undefined) {
     throw new Error('useNotification must be used within a NotificationProvider');
