@@ -13,9 +13,9 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <SettingsProvider>
-        <NotificationProvider>
+    <NotificationProvider>
+      <AuthProvider>
+        <SettingsProvider>
           <ToastProvider>
             <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -37,8 +37,8 @@ export default function RootLayout() {
               <Stack.Screen name="account/default-prices" options={{ title: 'Default Prices' }} />
             </Stack>
           </ToastProvider>
-        </NotificationProvider>
-      </SettingsProvider>
-    </AuthProvider>
+        </SettingsProvider>
+      </AuthProvider>
+    </NotificationProvider>
   );
 }
