@@ -1,10 +1,18 @@
-import { View, Text, ScrollView, Pressable, Image, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Image,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { notificationService } from '../../services/notificationService';
 import { statsService } from '../../services/statsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -34,43 +42,49 @@ export default function Home() {
     total_amount: 0,
   });
   const [user, setUser] = useState<{ name: string } | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchActivities = async () => {
+    try {
+      console.log('fetching activities again');
+      const response = await notificationService.getRecentActivities();
+      console.log(response.data);
+      const activities = response.data.map((activity: any) => ({
+        id: activity.id,
+        type: activity.type,
+        description:
+          activity.type === 'work'
+            ? `You worked on ${activity.title}`
+            : `You received payment of ${activity.amount} from ${activity.from}`,
+        amount: `₹${activity.amount}`,
+        time: new Date(activity.created_at),
+        icon: activity.type === 'work' ? 'clock-check-outline' : 'cash-multiple',
+        color: activity.type === 'work' ? COLORS.success : COLORS.primary,
+      }));
+      setRecentActivities(activities);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        const response = await notificationService.getRecentActivities();
-        const activities = response.data.map((activity: any) => ({
-          id: activity.id,
-          type: activity.type,
-          description:
-            activity.type === 'work'
-              ? `You worked on ${activity.title}`
-              : `You received payment of ${activity.amount} from ${activity.from}`,
-          amount: `₹${activity.amount}`,
-          time: new Date(activity.created_at),
-          icon: activity.type === 'work' ? 'clock-check-outline' : 'cash-multiple',
-          color: activity.type === 'work' ? COLORS.success : COLORS.primary,
-        }));
-        setRecentActivities(activities);
-      } catch (error) {
-        console.error('Error fetching activities:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    console.log('fetching activities');
     fetchActivities();
   }, []);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await statsService.getStats();
-        setStats(data.data as any);
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-      }
-    };
+  const fetchStats = async () => {
+    try {
+      const data = await statsService.getStats();
+      console.log(data.data);
+      setStats(data.data as any);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
 
+  useEffect(() => {
     fetchStats();
   }, []);
 
@@ -103,9 +117,26 @@ export default function Home() {
     }
   };
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchStats();
+    await fetchActivities();
+    setRefreshing(false);
+  }, []);
+
   return (
     <ProtectedRoute>
-      <ScrollView className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
+      <ScrollView
+        className="flex-1"
+        style={{ backgroundColor: COLORS.background.primary }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.primary]}
+            tintColor={COLORS.primary}
+          />
+        }>
         {/* Header Section */}
         <View className="flex-row items-center justify-between px-6 pb-4 pt-8">
           <View>

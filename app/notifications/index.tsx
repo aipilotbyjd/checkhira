@@ -10,7 +10,7 @@ import {
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useNotificationOperations } from '../../hooks/useNotificationOperations';
 import type { Notification } from '../../services/notificationService';
 import { NotificationSkeleton } from '../../components/NotificationSkeleton';
@@ -84,11 +84,11 @@ export default function NotificationsScreen() {
     await loadNotifications(currentPage + 1);
   };
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadNotifications(1);
     setRefreshing(false);
-  };
+  }, []);
 
   const handleToggleRead = async (notification: Notification) => {
     setIsUpdating(notification.id);

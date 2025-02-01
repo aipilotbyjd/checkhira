@@ -13,6 +13,7 @@ export const HeaderButton = ({
   iconName = 'notifications-outline',
   badgeCount = 0,
 }: HeaderButtonProps) => {
+  console.log('badgeCount', badgeCount);
   return (
     <Pressable onPress={onPress}>
       {({ pressed }) => (
