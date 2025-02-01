@@ -18,10 +18,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const refreshUnreadCount = useCallback(async () => {
     try {
-      console.log('refreshing unread count');
       const response = await notificationService.getUnreadNotificationsCount();
       if (response?.data?.data !== undefined) {
-        console.log('unread count', response.data.data);
         setUnreadCount(response.data.data);
       }
     } catch (err) {
@@ -64,6 +62,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 }
 
 export const useNotification = () => {
+  console.log('useNotification');
   const context = useContext(NotificationContext);
   if (context === undefined) {
     throw new Error('useNotification must be used within a NotificationProvider');
