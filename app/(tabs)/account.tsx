@@ -4,12 +4,17 @@ import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useAuth } from '../../contexts/AuthContext';
 import { SuccessModal } from '../../components/SuccessModal';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useToast } from '../../contexts/ToastContext';
+import { notificationService } from '../../services/notificationService';
+import { useNotification } from '../../contexts/NotificationContext';
 
 export default function Account() {
   const router = useRouter();
   const { user, logout, refreshUser } = useAuth();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const { showToast } = useToast();
+  const { setUnreadCount } = useNotification();
 
   const menuItems = [
     {
@@ -44,9 +49,25 @@ export default function Account() {
       await logout();
       router.replace('/auth/login');
     } catch (error) {
-      Alert.alert('Error', 'Failed to logout. Please try again.');
+      showToast('Failed to logout. Please try again.', 'error');
     }
   };
+
+  const getUnreadNotificationsCount = async () => {
+    try {
+      const response = await notificationService.getUnreadNotificationsCount();
+      setUnreadCount(response.data as any);
+    } catch (error) {
+      showToast('Failed to get unread notifications count. Please try again.', 'error');
+    }
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      await getUnreadNotificationsCount();
+    };
+    init();
+  }, []);
 
   if (!user) {
     return (

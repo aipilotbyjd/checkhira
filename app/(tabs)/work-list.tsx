@@ -4,13 +4,16 @@ import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { isValid } from 'date-fns';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useWorkOperations } from '../../hooks/useWorkOperations';
 import { useFocusEffect } from 'expo-router';
 import { Work } from '../../types/work';
 import { dateUtils } from '../../utils/dateUtils';
 import { WorkListItem } from '../../components/WorkListItem';
 import { WorkSkeleton } from '../../components/WorkSkeleton';
+import { useNotification } from '../../contexts/NotificationContext';
+import { notificationService } from '../../services/notificationService';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function WorkList() {
   const router = useRouter();
@@ -23,6 +26,8 @@ export default function WorkList() {
   const [hasMorePages, setHasMorePages] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const { setUnreadCount } = useNotification();
+  const { showToast } = useToast();
 
   const loadWorkRef = useRef(false);
 
@@ -88,6 +93,23 @@ export default function WorkList() {
     await loadWork({ page: currentPage + 1 });
   }, [currentPage, hasMorePages, isLoadingMore]);
 
+  const getUnreadNotificationsCount = async () => {
+    try {
+      const response = await notificationService.getUnreadNotificationsCount();
+      setUnreadCount(response.data as any);
+    } catch (error) {
+      showToast('Failed to get unread notifications count. Please try again.', 'error');
+    }
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      console.log('notif count');
+      await getUnreadNotificationsCount();
+    };
+    init();
+  }, []);
+
   if (isLoading && currentPage === 1) {
     return (
       <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
@@ -108,9 +130,7 @@ export default function WorkList() {
                 style={{ backgroundColor: COLORS.primary }}>
                 <MaterialCommunityIcons name="plus" size={22} color="white" />
               </Pressable>
-              <Pressable
-                className="rounded-full p-3"
-                style={{ backgroundColor: COLORS.gray[100] }}>
+              <Pressable className="rounded-full p-3" style={{ backgroundColor: COLORS.gray[100] }}>
                 <MaterialCommunityIcons name="filter-variant" size={22} color={COLORS.gray[600]} />
               </Pressable>
             </View>

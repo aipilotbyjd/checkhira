@@ -3,11 +3,14 @@ import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 import { useFocusEffect } from 'expo-router';
 import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { PaymentSkeleton } from '../../components/PaymentSkeleton';
+import { useNotification } from '../../contexts/NotificationContext';
+import { useToast } from '../../contexts/ToastContext';
+import { notificationService } from '../../services/notificationService';
 
 export default function PaymentsList() {
   const router = useRouter();
@@ -21,6 +24,8 @@ export default function PaymentsList() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isLoadingSub, setIsLoadingSub] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const { setUnreadCount } = useNotification();
+  const { showToast } = useToast();
 
   const loadPaymentsRef = useRef(false);
 
@@ -81,6 +86,7 @@ export default function PaymentsList() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     setCurrentPage(1);
+    await getUnreadNotificationsCount();
     await loadPayments({ page: 1 });
   }, [currentFilter]);
 
@@ -94,6 +100,23 @@ export default function PaymentsList() {
   const displayTotal = useMemo(() => {
     return Number(total);
   }, [total]);
+
+  const getUnreadNotificationsCount = async () => {
+    try {
+      const response = await notificationService.getUnreadNotificationsCount();
+      setUnreadCount(response.data as any);
+    } catch (error) {
+      showToast('Failed to get unread notifications count. Please try again.', 'error');
+    }
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      console.log('get unread notifications count');
+      await getUnreadNotificationsCount();
+    };
+    init();
+  }, []);
 
   if (isLoading && currentPage === 1) {
     return (

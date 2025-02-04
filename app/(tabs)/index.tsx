@@ -18,7 +18,6 @@ import { statsService } from '../../services/statsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNotification } from '../../contexts/NotificationContext';
 
-
 // Add this type definition above the Home component
 interface Activity {
   id: number;
@@ -45,13 +44,13 @@ export default function Home() {
   });
   const [user, setUser] = useState<{ name: string } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const { unreadCount, refreshUnreadCount, markAsRead, markAllAsRead } = useNotification();
+  const { setUnreadCount, refreshUnreadCount } = useNotification();
 
   const fetchActivities = async () => {
     try {
       console.log('fetching activities again');
       const response = await notificationService.getRecentActivities();
-      console.log(response.data);
+      // console.log(response.data);
       const activities = response.data.map((activity: any) => ({
         id: activity.id,
         type: activity.type,
@@ -80,15 +79,28 @@ export default function Home() {
   const fetchStats = async () => {
     try {
       const data = await statsService.getStats();
-      console.log(data.data);
+      // console.log(data.data);
       setStats(data.data as any);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
   };
 
+  const getNotifications = async () => {
+    try {
+      const response = await notificationService.getUnreadNotificationsCount();
+      setUnreadCount(response.data as any);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
   useEffect(() => {
-    fetchStats();
+    const init = async () => {
+      await fetchStats();
+      await getNotifications();
+    };
+    init();
   }, []);
 
   useEffect(() => {
@@ -124,6 +136,7 @@ export default function Home() {
     setRefreshing(true);
     await fetchStats();
     await fetchActivities();
+    await refreshUnreadCount();
     setRefreshing(false);
   }, []);
 

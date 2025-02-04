@@ -11,9 +11,8 @@ type HeaderButtonProps = {
 export const HeaderButton = ({
   onPress,
   iconName = 'notifications-outline',
-  badgeCount = 0,
+  badgeCount,
 }: HeaderButtonProps) => {
-  console.log('badgeCount', badgeCount);
   return (
     <Pressable onPress={onPress}>
       {({ pressed }) => (
@@ -29,11 +28,11 @@ export const HeaderButton = ({
               },
             ]}
           />
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>
-              {badgeCount === null ? '0' : badgeCount > 99 ? '99+' : badgeCount}
-            </Text>
-          </View>
+          {badgeCount !== null && badgeCount !== undefined && badgeCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{badgeCount > 99 ? '99+' : badgeCount}</Text>
+            </View>
+          )}
         </View>
       )}
     </Pressable>
