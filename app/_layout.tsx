@@ -5,6 +5,9 @@ import { AuthProvider } from '../contexts/AuthContext';
 import { ToastProvider } from '../contexts/ToastContext';
 import { SettingsProvider } from '../contexts/SettingsContext';
 import { NotificationProvider } from '../contexts/NotificationContext';
+import { LogLevel, OneSignal } from 'react-native-onesignal';
+import { useEffect } from 'react';
+import Constants from 'expo-constants';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -12,6 +15,12 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
+  useEffect(() => {
+    OneSignal.Debug.setLogLevel(LogLevel.Verbose);
+    OneSignal.initialize(Constants.expoConfig?.extra?.oneSignalAppId);
+    OneSignal.Notifications.requestPermission(true);
+  }, []);
+
   return (
     <NotificationProvider>
       <AuthProvider>
