@@ -7,6 +7,7 @@ import { AuthInput } from '../../components/AuthInput';
 import { SocialLoginButton } from '../../components/SocialLoginButton';
 import { authService } from '../../services/authService';
 import { useAuth } from '../../contexts/AuthContext';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 
 export default function Register() {
   const router = useRouter();
@@ -57,6 +58,35 @@ export default function Register() {
         Alert.alert('Error', 'Failed to register. Please try again.');
       } finally {
         setIsLoading(false);
+      }
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+
+      if (userInfo.idToken) {
+        const response = await authService.googleLogin(userInfo.idToken);
+
+        if (response.status) {
+          await login(response.data);
+          router.push('/(tabs)');
+        } else {
+          Alert.alert('Error', response.message || 'Failed to login with Google');
+        }
+      }
+    } catch (error: any) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log('Sign in cancelled');
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        console.log('Sign in in progress');
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert('Error', 'Play services not available');
+      } else {
+        Alert.alert('Error', 'Failed to login with Google. Please try again.');
+        console.error('Google Sign-In Error:', error);
       }
     }
   };
@@ -227,10 +257,7 @@ export default function Register() {
           <SocialLoginButton
             icon="google"
             label="Continue with Google"
-            onPress={() => {
-              // TODO: Implement Google login
-              console.log('Google login');
-            }}
+            onPress={handleGoogleSignIn}
           />
 
           <View className="mb-6 flex-row justify-center">

@@ -44,7 +44,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       // Check if user was signed in with Google
-      const isSignedIn = await GoogleSignin.isSignedIn();
+      await GoogleSignin.hasPlayServices();
+      const isSignedIn = await GoogleSignin.getCurrentUser();
       if (isSignedIn) {
         await GoogleSignin.signOut();
       }

@@ -8,11 +8,8 @@ import { NotificationProvider } from '../contexts/NotificationContext';
 import { LogLevel, OneSignal } from 'react-native-onesignal';
 import { useEffect } from 'react';
 import Constants from 'expo-constants';
-import {
-  GoogleSignin,
-  GoogleSigninButton,
-  statusCodes,
-} from '@react-native-google-signin/google-signin';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { Platform } from 'react-native';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -54,8 +51,11 @@ export default function RootLayout() {
 
     // Configure Google Sign-In
     GoogleSignin.configure({
-      webClientId: '195151324772-243slords2p7l7pelhb4q6qm3p9lgb7o.apps.googleusercontent.com', // Get this from Google Cloud Console
-      iosClientId: '195151324772-6kju0f0n35n6af7jnair8obecj90hbqg.apps.googleusercontent.com', // Get this from Google Cloud Console
+      webClientId: '195151324772-243slords2p7l7pelhb4q6qm3p9lgb7o.apps.googleusercontent.com',
+      iosClientId:
+        Platform.OS === 'ios'
+          ? '195151324772-6kju0f0n35n6af7jnair8obecj90hbqg.apps.googleusercontent.com'
+          : undefined,
       offlineAccess: true,
     });
 
