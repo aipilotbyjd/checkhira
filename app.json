@@ -96,10 +96,14 @@
       "oneSignalAppId": "9b67efd6-0e42-4f80-88c7-74b79b0efac7"
     },
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "sdkVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/bdc9fac3-4aa5-4a0d-b73a-65a15e901bf4"
+      "url": "https://u.expo.dev/bdc9fac3-4aa5-4a0d-b73a-65a15e901bf4",
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
+      "checkAutomatically": "ON_LOAD",
+      "useClassicUpdates": true
     }
   }
 }

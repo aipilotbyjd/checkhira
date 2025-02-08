@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { environment } from '~/config/environment';
 import * as Updates from 'expo-updates';
+import { Alert } from 'react-native';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -54,27 +55,59 @@ export default function RootLayout() {
     initializeOneSignal();
   }, []);
 
-  // useEffect(() => {
-  //   const checkAppUpdates = async () => {
-  //     try {
-  //       const update = await Updates.checkForUpdateAsync();
-  //       if (update.isAvailable) {
-  //         await Updates.fetchUpdateAsync();
-  //         // NOTIFY USER HERE
-  //         Updates.reloadAsync();
-  //       }
-  //     } catch (e) {
-  //       // HANDLE ERROR HERE
-  //       console.error('Error checking updates:', e);
-  //     }
-  //   };
+  const checkAppUpdates = async () => {
+    try {
+      const update = await Updates.checkForUpdateAsync();
+      if (update.isAvailable) {
+        Alert.alert(
+          'Update Available',
+          'A new version of Checkhira is available with latest features and improvements.',
+          [
+            {
+              text: 'Later',
+              style: 'cancel',
+            },
+            {
+              text: 'Update Now',
+              onPress: async () => {
+                try {
+                  await Updates.fetchUpdateAsync();
+                  Alert.alert(
+                    'Update Downloaded',
+                    'The app will now restart to apply the update.',
+                    [
+                      {
+                        text: 'OK',
+                        onPress: async () => {
+                          await Updates.reloadAsync();
+                        },
+                      },
+                    ]
+                  );
+                } catch (error) {
+                  console.error('Error updating app:', error);
+                  Alert.alert(
+                    'Update Failed',
+                    'Please check your internet connection and try again later.'
+                  );
+                }
+              },
+            },
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Error checking updates:', error);
+    }
+  };
 
-  //   console.log('Updates.isEmbeddedLaunch', Updates.isEmbeddedLaunch);
+  useEffect(() => {
+    console.log('Updates.isEmbeddedLaunch', Updates.isEmbeddedLaunch);
 
-  //   if (environment.production && Updates.isEmbeddedLaunch) {
-  //     checkAppUpdates();
-  //   }
-  // }, []);
+    if (environment.production && Updates.isEmbeddedLaunch) {
+      checkAppUpdates();
+    }
+  }, []);
 
   return (
     <NotificationProvider>
