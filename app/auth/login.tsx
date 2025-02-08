@@ -4,45 +4,47 @@ import { COLORS } from '../../constants/theme';
 import { AuthHeader } from '../../components/AuthHeader';
 import { SocialLoginButton } from '../../components/SocialLoginButton';
 import AuthPhoneInput from '../../components/AuthPhoneInput';
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEffect } from 'react';
 import { authService } from '../../services/authService';
-
-WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
   const router = useRouter();
   const { login } = useAuth();
 
-  // Initialize Google Auth
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    expoClientId: '<YOUR_EXPO_CLIENT_ID>',
-    iosClientId: '<YOUR_IOS_CLIENT_ID>',
-    androidClientId: '<YOUR_ANDROID_CLIENT_ID>',
-    webClientId: '<YOUR_WEB_CLIENT_ID>',
-  });
-
-  useEffect(() => {
-    if (response?.type === 'success') {
-      const { authentication } = response;
-      // Fetch user data from your backend using the Google token
-      handleGoogleLogin(authentication.accessToken);
-    }
-  }, [response]);
-
-  const handleGoogleLogin = async (accessToken: string) => {
+  const handleGoogleSignIn = async () => {
     try {
-      const res = await authService.googleLogin(accessToken);
-      if (res.status) {
-        await login(res.data);
-        router.push('/(tabs)');
-      } else {
-        Alert.alert('Error', res.message || 'Failed to login with Google');
+      // Check if user is already signed in
+      await GoogleSignin.hasPlayServices();
+
+      // Sign in
+      const userInfo = await GoogleSignin.signIn();
+
+      if (userInfo.idToken) {
+        // Send the token to your backend
+        const response = await authService.googleLogin(userInfo.idToken);
+
+        if (response.status) {
+          await login(response.data);
+          router.push('/(tabs)');
+        } else {
+          Alert.alert('Error', response.message || 'Failed to login with Google');
+        }
       }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to login with Google. Please try again.');
+    } catch (error: any) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        // User cancelled the sign-in flow
+        console.log('Sign in cancelled');
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        // Operation in progress already
+        console.log('Sign in in progress');
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert('Error', 'Play services not available');
+      } else {
+        Alert.alert('Error', 'Failed to login with Google. Please try again.');
+        console.error('Google Sign-In Error:', error);
+      }
     }
   };
 
@@ -72,9 +74,7 @@ export default function Login() {
           <SocialLoginButton
             icon="google"
             label="Continue with Google"
-            onPress={() => {
-              promptAsync();
-            }}
+            onPress={handleGoogleSignIn}
           />
 
           {/* Email Login Button */}

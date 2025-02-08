@@ -9,6 +9,7 @@ import React, {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService';
 import { profileService } from '../services/profileService';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 interface User {
   id: number;
@@ -41,9 +42,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    setUser(null);
-    await AsyncStorage.removeItem('user');
-    await authService.logout();
+    try {
+      // Check if user was signed in with Google
+      const isSignedIn = await GoogleSignin.isSignedIn();
+      if (isSignedIn) {
+        await GoogleSignin.signOut();
+      }
+      
+      // Regular logout
+      setUser(null);
+      await AsyncStorage.removeItem('user');
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const refreshUser = async () => {
