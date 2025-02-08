@@ -19,33 +19,27 @@ export const unstable_settings = {
 export default function RootLayout() {
   useEffect(() => {
     const initializeOneSignal = async () => {
-      // Check if we're in development or production
       const isDevMode = __DEV__;
-      console.log('Environment:', isDevMode ? 'Development' : 'Production');
+      const oneSignalAppId = Constants.expoConfig?.extra?.oneSignalAppId || '9b67efd6-0e42-4f80-88c7-74b79b0efac7';
+      console.log('oneSignalAppId', oneSignalAppId);
 
-      // Only initialize in production builds
-      if (!isDevMode) {
-        const oneSignalAppId =
-          Constants.expoConfig?.extra?.oneSignalAppId || '9b67efd6-0e42-4f80-88c7-74b79b0efac7';
-
-        console.log('Initializing OneSignal with App ID:', oneSignalAppId);
-
-        if (oneSignalAppId) {
-          try {
+      if (!isDevMode && oneSignalAppId) {
+        try {
+          // Set log level only in development
+          if (isDevMode) {
             OneSignal.Debug.setLogLevel(LogLevel.Verbose);
-            OneSignal.initialize(oneSignalAppId);
-
-            // Request notification permissions
-            const permission = await OneSignal.Notifications.requestPermission(true);
-            console.log('OneSignal permission status:', permission);
-          } catch (error) {
-            console.error('Failed to initialize OneSignal:', error);
           }
-        } else {
-          console.warn('OneSignal App ID not found in app.json extra params');
+
+          await OneSignal.initialize(oneSignalAppId);
+          const permission = await OneSignal.Notifications.requestPermission(true);
+
+          // Log permission status only in development
+          if (isDevMode) {
+            console.log('OneSignal permission status:', permission);
+          }
+        } catch (error) {
+          console.error('Failed to initialize OneSignal:', error);
         }
-      } else {
-        console.log('OneSignal initialization skipped in development mode');
       }
     };
 
