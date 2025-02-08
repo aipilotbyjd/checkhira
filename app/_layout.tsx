@@ -11,6 +11,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { environment } from '~/config/environment';
 import * as Updates from 'expo-updates';
 import { Alert } from 'react-native';
+import { ratingService } from '../services/ratingService';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -107,6 +108,15 @@ export default function RootLayout() {
     if (environment.production && Updates.isEmbeddedLaunch) {
       checkAppUpdates();
     }
+  }, []);
+
+  useEffect(() => {
+    const initializeAppRating = async () => {
+      await ratingService.incrementAppUsage();
+      await ratingService.promptForRating();
+    };
+
+    initializeAppRating();
   }, []);
 
   return (
