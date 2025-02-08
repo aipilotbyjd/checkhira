@@ -20,12 +20,14 @@ import { formatDateForAPI, parseCustomDate } from '../../../utils/dateFormatter'
 import { WorkEntry, WorkFormData, WorkResponse } from '../../../types/work';
 import { useToast } from '../../../contexts/ToastContext';
 import { WorkFormSkeleton } from '../../../components/WorkFormSkeleton';
+import { useAppRating } from '../../../hooks/useAppRating';
 
 export default function EditWork() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { updateWork, deleteWork, getWork, isLoading } = useWorkOperations();
   const { showToast } = useToast();
+  const { trackPositiveAction } = useAppRating();
 
   const [formData, setFormData] = useState<WorkFormData>({
     date: new Date(),
@@ -132,6 +134,7 @@ export default function EditWork() {
       const result = await updateWork(Number(id), workData);
       if (result) {
         showToast('Work entry updated successfully!');
+        await trackPositiveAction();
         router.replace('/(tabs)/work-list');
       }
     } catch (error) {
@@ -146,6 +149,7 @@ export default function EditWork() {
       const result = await deleteWork(Number(id));
       if (result) {
         showToast('Work entry deleted successfully!');
+        await trackPositiveAction();
         router.replace('/(tabs)/work-list');
       }
     } catch (error) {
