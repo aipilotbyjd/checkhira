@@ -18,7 +18,9 @@
           "launchMode": "most-recent"
         }
       ],
-      ["expo-build-properties"],
+      [
+        "expo-build-properties"
+      ],
       [
         "expo-sqlite",
         {
@@ -29,7 +31,9 @@
             "useSQLCipher": false
           },
           "ios": {
-            "customBuildFlags": ["-DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_ENABLE_SNAPSHOT=1"]
+            "customBuildFlags": [
+              "-DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_ENABLE_SNAPSHOT=1"
+            ]
           }
         }
       ],
@@ -65,7 +69,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.jaydeepdhrangiya.checkhira"
@@ -75,7 +81,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.jaydeepdhrangiya.checkhira"
+      "package": "com.jaydeepdhrangiya.checkhira",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "extra": {
       "router": {
@@ -85,6 +94,12 @@
         "projectId": "bdc9fac3-4aa5-4a0d-b73a-65a15e901bf4"
       },
       "oneSignalAppId": "9b67efd6-0e42-4f80-88c7-74b79b0efac7"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/bdc9fac3-4aa5-4a0d-b73a-65a15e901bf4"
     }
   }
 }

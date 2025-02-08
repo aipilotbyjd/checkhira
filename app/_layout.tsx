@@ -7,9 +7,9 @@ import { SettingsProvider } from '../contexts/SettingsContext';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { LogLevel, OneSignal } from 'react-native-onesignal';
 import { useEffect } from 'react';
-import Constants from 'expo-constants';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { Platform } from 'react-native';
+import { environment } from '~/config/environment';
+import * as Updates from 'expo-updates';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -19,8 +19,9 @@ export const unstable_settings = {
 export default function RootLayout() {
   useEffect(() => {
     const initializeOneSignal = async () => {
-      const isDevMode = __DEV__;
-      const oneSignalAppId = Constants.expoConfig?.extra?.oneSignalAppId || '9b67efd6-0e42-4f80-88c7-74b79b0efac7';
+      const isDevMode = !environment.production;
+      console.log('isDevMode', isDevMode);
+      const oneSignalAppId = environment.oneSignalAppId;
       console.log('oneSignalAppId', oneSignalAppId);
 
       if (!isDevMode && oneSignalAppId) {
@@ -45,16 +46,35 @@ export default function RootLayout() {
 
     // Configure Google Sign-In
     GoogleSignin.configure({
-      webClientId: '195151324772-243slords2p7l7pelhb4q6qm3p9lgb7o.apps.googleusercontent.com',
-      iosClientId:
-        Platform.OS === 'ios'
-          ? '195151324772-6kju0f0n35n6af7jnair8obecj90hbqg.apps.googleusercontent.com'
-          : undefined,
+      webClientId: environment.webClientId,
+      iosClientId: environment.iosClientId,
       offlineAccess: true,
     });
 
     initializeOneSignal();
   }, []);
+
+  // useEffect(() => {
+  //   const checkAppUpdates = async () => {
+  //     try {
+  //       const update = await Updates.checkForUpdateAsync();
+  //       if (update.isAvailable) {
+  //         await Updates.fetchUpdateAsync();
+  //         // NOTIFY USER HERE
+  //         Updates.reloadAsync();
+  //       }
+  //     } catch (e) {
+  //       // HANDLE ERROR HERE
+  //       console.error('Error checking updates:', e);
+  //     }
+  //   };
+
+  //   console.log('Updates.isEmbeddedLaunch', Updates.isEmbeddedLaunch);
+
+  //   if (environment.production && Updates.isEmbeddedLaunch) {
+  //     checkAppUpdates();
+  //   }
+  // }, []);
 
   return (
     <NotificationProvider>

@@ -1,7 +1,8 @@
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { environment } from '~/config/environment';
 
-const API_URL = Constants.expoConfig?.extra?.apiUrl || 'https://hirabook.icu/api/v1';
+const API_URL = environment.apiUrl;
 
 interface User {
   token: string;
@@ -17,7 +18,7 @@ export const api = {
     const userStr = await AsyncStorage.getItem('user');
     const user: User | null = userStr ? JSON.parse(userStr) : null;
     const token = user?.token;
-    
+
     return {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
