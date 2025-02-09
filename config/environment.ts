@@ -12,4 +12,8 @@ export const environment = {
     Platform.OS === 'ios'
       ? '195151324772-6kju0f0n35n6af7jnair8obecj90hbqg.apps.googleusercontent.com'
       : undefined,
+  androidClientId:
+    Platform.OS === 'android'
+      ? '195151324772-vq5690c41tshorna4roh3j0d0ne4vpq2.apps.googleusercontent.com'
+      : undefined,
 };
