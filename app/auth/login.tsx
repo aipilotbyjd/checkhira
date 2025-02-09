@@ -8,6 +8,7 @@ import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-si
 import { useAuth } from '../../contexts/AuthContext';
 import { useEffect } from 'react';
 import { authService } from '../../services/authService';
+import { environment } from '../../config/environment';
 
 export default function Login() {
   const router = useRouter();
@@ -15,15 +16,33 @@ export default function Login() {
 
   const handleGoogleSignIn = async () => {
     try {
-      // Check if user is already signed in
-      await GoogleSignin.hasPlayServices();
+      // Configure before sign in (can move to _layout.tsx if not already there)
+      GoogleSignin.configure({
+        webClientId: environment.webClientId,
+        iosClientId: environment.iosClientId,
+        offlineAccess: true,
+      });
+
+      console.log('Google Sign-In Configured with:', {
+        webClientId: environment.webClientId,
+        iosClientId: environment.iosClientId,
+        androidClientId: environment.androidClientId
+      });
+
+      // Check play services
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+      // Sign out first to ensure clean state
+      await GoogleSignin.signOut();
 
       // Sign in
       const userInfo = await GoogleSignin.signIn();
+      console.log('Google Sign-In Success:', userInfo); // Debug log
 
       if (userInfo.idToken) {
-        // Send the token to your backend
+        // Send token to backend
         const response = await authService.googleLogin(userInfo.idToken);
+        console.log('Backend Response:', response); // Debug log
 
         if (response.status) {
           await login(response.data);
@@ -33,17 +52,16 @@ export default function Login() {
         }
       }
     } catch (error: any) {
+      console.error('Detailed Google Sign-In Error:', error); // Detailed error logging
+      
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        // User cancelled the sign-in flow
-        console.log('Sign in cancelled');
+        console.log('User cancelled the sign-in flow');
       } else if (error.code === statusCodes.IN_PROGRESS) {
-        // Operation in progress already
-        console.log('Sign in in progress');
+        Alert.alert('Error', 'Sign in is already in progress');
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert('Error', 'Play services not available');
+        Alert.alert('Error', 'Play services not available or outdated');
       } else {
         Alert.alert('Error', 'Failed to login with Google. Please try again.');
-        console.error('Google Sign-In Error:', error);
       }
     }
   };
