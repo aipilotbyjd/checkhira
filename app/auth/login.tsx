@@ -23,6 +23,8 @@ export default function Login() {
         offlineAccess: true,
       });
 
+      console.log(environment);
+
       console.log('Google Sign-In Configured with:', {
         webClientId: environment.webClientId,
         iosClientId: environment.iosClientId,
