@@ -50,7 +50,9 @@ export default function RootLayout() {
     GoogleSignin.configure({
       webClientId: environment.webClientId,
       iosClientId: environment.iosClientId,
+      scopes: ['profile', 'email'],
       offlineAccess: true,
+      forceCodeForRefreshToken: true,
     });
 
     initializeOneSignal();

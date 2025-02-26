@@ -21,6 +21,8 @@ export default function Login() {
         webClientId: environment.webClientId,
         iosClientId: environment.iosClientId,
         offlineAccess: true,
+        scopes: ['profile', 'email'],
+        forceCodeForRefreshToken: true,
       });
 
       console.log(environment);
@@ -28,7 +30,7 @@ export default function Login() {
       console.log('Google Sign-In Configured with:', {
         webClientId: environment.webClientId,
         iosClientId: environment.iosClientId,
-        androidClientId: environment.androidClientId
+        androidClientId: environment.androidClientId,
       });
 
       // Check play services
@@ -39,11 +41,12 @@ export default function Login() {
 
       // Sign in
       const userInfo = await GoogleSignin.signIn();
+      const { idToken, user } = userInfo;
       console.log('Google Sign-In Success:', userInfo); // Debug log
 
-      if (userInfo.idToken) {
+      if (idToken) {
         // Send token to backend
-        const response = await authService.googleLogin(userInfo.idToken);
+        const response = await authService.googleLogin(idToken);
         console.log('Backend Response:', response); // Debug log
 
         if (response.status) {
@@ -55,7 +58,7 @@ export default function Login() {
       }
     } catch (error: any) {
       console.error('Detailed Google Sign-In Error:', error); // Detailed error logging
-      
+
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         console.log('User cancelled the sign-in flow');
       } else if (error.code === statusCodes.IN_PROGRESS) {
