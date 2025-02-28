@@ -4,11 +4,12 @@ interface Environment {
   apiUrl: string;
   nodeEnv: string;
   oneSignalAppId: string;
+  production: boolean;
 }
 
 export const environment: Environment = {
-  apiUrl: 'https://hirabook.icu/api/v1',
-  nodeEnv: 'development',
-  oneSignalAppId:
-    Constants.expoConfig?.extra?.oneSignalAppId || '9b67efd6-0e42-4f80-88c7-74b79b0efac7',
+  apiUrl: Constants.expoConfig?.extra?.apiUrl || 'https://hirabook.icu/api/v1',
+  nodeEnv: process.env.NODE_ENV || 'development',
+  oneSignalAppId: Constants.expoConfig?.extra?.oneSignalAppId,
+  production: process.env.NODE_ENV === 'production',
 };

@@ -4,13 +4,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { ActivityIndicator, View } from 'react-native';
 import { COLORS } from '../constants/theme';
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
+export function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace('/auth/login');
+    if (!isLoading && isAuthenticated) {
+      router.replace('/(tabs)');
     }
   }, [isLoading, isAuthenticated, router]);
 
@@ -22,5 +22,5 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return isAuthenticated ? children : null;
+  return !isAuthenticated ? children : null;
 }

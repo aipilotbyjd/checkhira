@@ -29,11 +29,22 @@ export default function RegisterPassword() {
       Alert.alert('Error', 'Please enter your password.');
       return;
     }
+
     try {
-      await register(name, email, password);
-      router.push('/auth/update-profile');
-    } catch (error) {
-      Alert.alert('Registration Failed', 'Unable to register.');
+      const registerData = {
+        name,
+        email: decodeURIComponent(email),
+        phone: decodeURIComponent(phone),
+        password,
+      };
+      
+      await register(registerData);
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      Alert.alert(
+        'Registration Failed',
+        error.message || 'Unable to register. Please try again.'
+      );
     }
   };
 
