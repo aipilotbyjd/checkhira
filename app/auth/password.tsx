@@ -8,20 +8,22 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS } from '../../constants/theme';
 
-export default function EmailLogin() {
+export default function Password() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const { email } = useLocalSearchParams<{ email: string }>();
+  const [password, setPassword] = useState('');
 
-  const handleContinue = () => {
-    if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email.');
+  const handleLogin = () => {
+    if (!password.trim()) {
+      Alert.alert('Error', 'Please enter your password.');
       return;
     }
-    // Navigate to the password screen and pass the email as a query parameter
-    router.push(`/auth/email-password?email=${encodeURIComponent(email)}`);
+    // Implement your login API call here using email and password
+    // On success, navigate to your main/tab screen
+    router.push('/(tabs)');
   };
 
   return (
@@ -33,20 +35,24 @@ export default function EmailLogin() {
           Welcome Back!
         </Text>
         <Text className="mt-2 text-center text-lg" style={{ color: COLORS.gray[600] }}>
-          Login with Email
+          Enter your password
         </Text>
+        {email && (
+          <Text className="mt-1 text-center text-base" style={{ color: COLORS.gray[600] }}>
+            {email}
+          </Text>
+        )}
       </View>
       <View className="mb-4">
         <Text className="mb-2 text-base" style={{ color: COLORS.gray[600] }}>
-          Email Address
+          Password
         </Text>
         <TextInput
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          placeholder="Enter your email"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          placeholder="Enter your password"
           placeholderTextColor={COLORS.gray[400]}
-          autoCapitalize="none"
           className="rounded-xl border p-4"
           style={{
             backgroundColor: COLORS.white,
@@ -56,19 +62,14 @@ export default function EmailLogin() {
         />
       </View>
       <Pressable
-        onPress={handleContinue}
+        onPress={handleLogin}
         className="mb-4 rounded-xl p-4"
         style={{ backgroundColor: COLORS.primary }}>
-        <Text className="text-center text-lg font-semibold text-white">Continue</Text>
+        <Text className="text-center text-lg font-semibold text-white">Login</Text>
       </Pressable>
-      <Pressable onPress={() => router.push('/auth/phone-login')}>
+      <Pressable onPress={() => router.push('/auth/email-login')}>
         <Text className="text-center text-base" style={{ color: COLORS.primary }}>
-          Or login with Phone
-        </Text>
-      </Pressable>
-      <Pressable onPress={() => router.push('/auth/register')} className="mt-8">
-        <Text className="text-center text-base" style={{ color: COLORS.gray[600] }}>
-          Don't have an account? Register
+          Back to Email Entry
         </Text>
       </Pressable>
     </KeyboardAvoidingView>
