@@ -7,6 +7,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS } from '../../constants/theme';
@@ -14,8 +15,9 @@ import { useAuth } from '../../contexts/AuthContext';
 
 export default function Password() {
   const router = useRouter();
-  const { email } = useLocalSearchParams<{ email: string }>();
+  const { email, phone } = useLocalSearchParams<{ email: string; phone: string }>();
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
   const handleLogin = async () => {
@@ -23,11 +25,19 @@ export default function Password() {
       Alert.alert('Error', 'Please enter your password.');
       return;
     }
+    
+    setIsLoading(true);
     try {
-      await login(email, password);
-      router.push('/(tabs)'); // navigate to your main app screens
-    } catch (error) {
-      Alert.alert('Login Failed', 'Invalid credentials');
+      const identifier = email || phone;
+      await login(identifier, password);
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      Alert.alert(
+        'Login Failed',
+        error.message || 'Invalid credentials. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -42,7 +52,11 @@ export default function Password() {
         <Text className="mt-2 text-center text-lg" style={{ color: COLORS.gray[600] }}>
           Enter your password to login
         </Text>
+        <Text className="mt-2 text-center text-base" style={{ color: COLORS.gray[400] }}>
+          {email || phone}
+        </Text>
       </View>
+
       <View className="mb-4">
         <Text className="mb-2 text-base" style={{ color: COLORS.gray[600] }}>
           Password
@@ -59,13 +73,24 @@ export default function Password() {
             borderColor: COLORS.gray[200],
             color: COLORS.secondary,
           }}
+          returnKeyType="go"
+          onSubmitEditing={handleLogin}
         />
       </View>
+
       <Pressable
         onPress={handleLogin}
+        disabled={isLoading}
         className="mb-4 rounded-xl p-4"
-        style={{ backgroundColor: COLORS.primary }}>
-        <Text className="text-center text-lg font-semibold text-white">Login</Text>
+        style={{ 
+          backgroundColor: COLORS.primary,
+          opacity: isLoading ? 0.7 : 1 
+        }}>
+        {isLoading ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Text className="text-center text-lg font-semibold text-white">Login</Text>
+        )}
       </Pressable>
     </KeyboardAvoidingView>
   );

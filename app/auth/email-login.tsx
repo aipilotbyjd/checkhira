@@ -7,13 +7,16 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '../../constants/theme';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function EmailLogin() {
   const router = useRouter();
   const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleContinue = () => {
     if (!email.trim()) {
@@ -56,9 +59,17 @@ export default function EmailLogin() {
       </View>
       <Pressable
         onPress={handleContinue}
+        disabled={isLoading}
         className="mb-4 rounded-xl p-4"
-        style={{ backgroundColor: COLORS.primary }}>
-        <Text className="text-center text-lg font-semibold text-white">Continue</Text>
+        style={{ 
+          backgroundColor: COLORS.primary,
+          opacity: isLoading ? 0.7 : 1 
+        }}>
+        {isLoading ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Text className="text-center text-lg font-semibold text-white">Continue</Text>
+        )}
       </Pressable>
       <Pressable onPress={() => router.push('/auth/phone-login')}>
         <Text className="text-center text-base" style={{ color: COLORS.primary }}>
