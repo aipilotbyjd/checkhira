@@ -2,7 +2,6 @@ import { View, Text, TouchableOpacity, Image, Pressable, Alert } from 'react-nat
 import { Link, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
-import { useAuth } from '../../contexts/AuthContext';
 import { SuccessModal } from '../../components/SuccessModal';
 import { useEffect, useState } from 'react';
 import { useToast } from '../../contexts/ToastContext';
@@ -11,7 +10,6 @@ import { useNotification } from '../../contexts/NotificationContext';
 
 export default function Account() {
   const router = useRouter();
-  const { user, logout, refreshUser } = useAuth();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const { showToast } = useToast();
   const { setUnreadCount } = useNotification();
@@ -44,15 +42,6 @@ export default function Account() {
     },
   ];
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      router.replace('/auth/login');
-    } catch (error) {
-      showToast('Failed to logout. Please try again.', 'error');
-    }
-  };
-
   const getUnreadNotificationsCount = async () => {
     try {
       const response = await notificationService.getUnreadNotificationsCount();
@@ -69,37 +58,35 @@ export default function Account() {
     init();
   }, []);
 
-  if (!user) {
-    return (
-      <View className="flex-1 px-6" style={{ backgroundColor: COLORS.background.primary }}>
-        <View className="items-center py-12">
-          <MaterialCommunityIcons name="account-circle" size={80} color={COLORS.gray[400]} />
-          <Text className="mt-4 text-xl font-semibold" style={{ color: COLORS.secondary }}>
-            Welcome to the App
-          </Text>
-          <Text className="mt-2 text-center text-base" style={{ color: COLORS.gray[400] }}>
-            Please login or create an account to access all features
-          </Text>
-        </View>
-
-        <View className="space-y-4">
-          <Link href="/auth/login" asChild>
-            <Pressable className="rounded-xl p-4" style={{ backgroundColor: COLORS.primary }}>
-              <Text className="text-center text-lg font-semibold text-white">Login</Text>
-            </Pressable>
-          </Link>
-
-          <Link href="/auth/register" asChild>
-            <Pressable className="rounded-xl border p-4" style={{ borderColor: COLORS.primary }}>
-              <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
-                Create Account
-              </Text>
-            </Pressable>
-          </Link>
-        </View>
+  return (
+    <View className="flex-1 px-6" style={{ backgroundColor: COLORS.background.primary }}>
+      <View className="items-center py-12">
+        <MaterialCommunityIcons name="account-circle" size={80} color={COLORS.gray[400]} />
+        <Text className="mt-4 text-xl font-semibold" style={{ color: COLORS.secondary }}>
+          Welcome to the App
+        </Text>
+        <Text className="mt-2 text-center text-base" style={{ color: COLORS.gray[400] }}>
+          Please login or create an account to access all features
+        </Text>
       </View>
-    );
-  }
+
+      <View className="space-y-4">
+        <Link href="/auth/login" asChild>
+          <Pressable className="rounded-xl p-4" style={{ backgroundColor: COLORS.primary }}>
+            <Text className="text-center text-lg font-semibold text-white">Login</Text>
+          </Pressable>
+        </Link>
+
+        <Link href="/auth/register" asChild>
+          <Pressable className="rounded-xl border p-4" style={{ borderColor: COLORS.primary }}>
+            <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
+              Create Account
+            </Text>
+          </Pressable>
+        </Link>
+      </View>
+    </View>
+  );
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>

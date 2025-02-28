@@ -48,14 +48,6 @@
         {
           "mode": "production"
         }
-      ],
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "iosUrlScheme": "com.googleusercontent.apps.195151324772-6kju0f0n35n6af7jnair8obecj90hbqg",
-          "androidClientId": "195151324772-vq5690c41tshorna4roh3j0d0ne4vpq2.apps.googleusercontent.com",
-          "webClientId": "195151324772-vq5690c41tshorna4roh3j0d0ne4vpq2.apps.googleusercontent.com"
-        }
       ]
     ],
     "experiments": {

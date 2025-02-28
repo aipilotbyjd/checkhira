@@ -16,13 +16,11 @@ import * as ImagePicker from 'expo-image-picker';
 import { UserProfile } from '../../services/profileService';
 import { useProfileOperations } from '../../hooks/useProfileOperations';
 import { useToast } from '../../contexts/ToastContext';
-import { useAuth } from '../../contexts/AuthContext';
 import { profileService } from '../../services/profileService';
 
 export default function EditProfile() {
   const router = useRouter();
   const { showToast } = useToast();
-  const { user, refreshUser } = useAuth();
   const { updateProfile, isLoading } = useProfileOperations();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<UserProfile>({
