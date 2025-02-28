@@ -15,7 +15,7 @@ export const authService = {
       method: 'POST',
       body: JSON.stringify({ identifier, password }),
     });
-    
+
     if (response.data.token) {
       await api.setToken(response.data.token);
     }
@@ -32,7 +32,7 @@ export const authService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    
+
     if (response.data.token) {
       await api.setToken(response.data.token);
     }
@@ -56,5 +56,17 @@ export const authService = {
     } catch {
       return false;
     }
-  }
+  },
+
+  async verifyToken(token: string): Promise<boolean> {
+    try {
+      const response = await api.request('/verify-token', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      });
+      return response.status === 200;
+    } catch (error) {
+      return false;
+    }
+  },
 };

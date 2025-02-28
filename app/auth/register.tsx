@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '../../constants/theme';
@@ -6,6 +6,43 @@ import { PublicRoute } from '../../components/PublicRoute';
 
 export default function Register() {
   const router = useRouter();
+  const [formData, setFormData] = useState({
+    email: '',
+    phone: '',
+    password: ''
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.password.trim()) {
+      newErrors.password = 'Password is required';
+    }
+
+    if (!formData.email.trim() && !formData.phone.trim()) {
+      newErrors.email = 'Either email or phone number is required';
+      newErrors.phone = 'Either email or phone number is required';
+    }
+
+    if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (formData.phone.trim() && !/^([0-9\s\-\+\(\)]*)$/.test(formData.phone)) {
+      newErrors.phone = 'Please enter a valid phone number';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const displayName = useMemo(() => {
+    if (user?.first_name || user?.last_name) {
+      return [user.first_name, user.last_name].filter(Boolean).join(' ');
+    }
+    return user?.email || user?.phone || 'User';
+  }, [user]);
 
   return (
     <PublicRoute>

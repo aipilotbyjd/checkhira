@@ -38,17 +38,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loadStoredUser = async () => {
     try {
-      const storedUser = await AsyncStorage.getItem('user');
-      const isAuthed = await authService.checkAuth();
+      const [storedUser, token] = await Promise.all([
+        AsyncStorage.getItem('user'),
+        AsyncStorage.getItem('token'),
+      ]);
 
-      if (storedUser && isAuthed) {
-        setUser(JSON.parse(storedUser));
-        setIsAuthenticated(true);
-      } else {
-        await handleLogout();
+      if (token) {
+        // Verify token validity with API
+        const isValid = await authService.verifyToken(token);
+        if (isValid && storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          setIsAuthenticated(true);
+          return;
+        }
       }
+      await handleLogout();
     } catch (error) {
-      console.error('Error loading stored user:', error);
+      console.error('Auth loading error:', error);
       await handleLogout();
     } finally {
       setIsLoading(false);
@@ -59,6 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     setIsAuthenticated(false);
     await AsyncStorage.removeItem('user');
+    await AsyncStorage.removeItem('token');
     await api.removeToken();
   };
 
@@ -68,6 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { user, token } = response.data;
 
       await AsyncStorage.setItem('user', JSON.stringify(user));
+      await AsyncStorage.setItem('token', token);
       setUser(user);
       setIsAuthenticated(true);
       return response;
@@ -77,17 +86,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const register = async (data: {
-    name: string;
-    email: string;
-    phone: string;
+  type RegisterData = {
+    name?: string;
+    email?: string;
+    phone?: string;
     password: string;
-  }) => {
+  };
+
+  const validateRegistration = (data: RegisterData) => {
+    if (!data.password) {
+      throw new Error('Password is required');
+    }
+
+    if (!data.email && !data.phone) {
+      throw new Error('Either email or phone number is required');
+    }
+
+    return true;
+  };
+
+  const register = async (data: RegisterData) => {
     try {
+      validateRegistration(data);
       const response = await authService.register(data);
       const { user, token } = response.data;
 
       await AsyncStorage.setItem('user', JSON.stringify(user));
+      await AsyncStorage.setItem('token', token);
       setUser(user);
       setIsAuthenticated(true);
       return response;

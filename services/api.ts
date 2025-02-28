@@ -44,14 +44,21 @@ export const api = {
   },
 
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const headers = await this.getHeaders();
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers: {
-        ...headers,
-        ...options.headers,
-      },
-    });
-    return handleResponse<T>(response);
+    try {
+      const headers = await this.getHeaders();
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...options,
+        headers: { ...headers, ...options.headers },
+      });
+
+      if (response.status === 401) {
+        await this.removeToken();
+        throw new Error('Session expired - please login again');
+      }
+
+      return handleResponse<T>(response);
+    } catch (error) {
+      throw error;
+    }
   },
 };
