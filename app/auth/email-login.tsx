@@ -20,8 +20,7 @@ export default function EmailLogin() {
       Alert.alert('Error', 'Please enter your email.');
       return;
     }
-    // Navigate to the password screen and pass the email as a query parameter
-    router.push(`/auth/email-password?email=${encodeURIComponent(email)}`);
+    router.push(`/auth/password?email=${encodeURIComponent(email)}`);
   };
 
   return (
@@ -64,11 +63,6 @@ export default function EmailLogin() {
       <Pressable onPress={() => router.push('/auth/phone-login')}>
         <Text className="text-center text-base" style={{ color: COLORS.primary }}>
           Or login with Phone
-        </Text>
-      </Pressable>
-      <Pressable onPress={() => router.push('/auth/register')} className="mt-8">
-        <Text className="text-center text-base" style={{ color: COLORS.gray[600] }}>
-          Don't have an account? Register
         </Text>
       </Pressable>
     </KeyboardAvoidingView>

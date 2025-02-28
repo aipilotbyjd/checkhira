@@ -10,20 +10,25 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS } from '../../constants/theme';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Password() {
   const router = useRouter();
   const { email } = useLocalSearchParams<{ email: string }>();
   const [password, setPassword] = useState('');
+  const { login } = useAuth();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!password.trim()) {
       Alert.alert('Error', 'Please enter your password.');
       return;
     }
-    // Implement your login API call here using email and password
-    // On success, navigate to your main/tab screen
-    router.push('/(tabs)');
+    try {
+      await login(email, password);
+      router.push('/(tabs)'); // navigate to your main app screens
+    } catch (error) {
+      Alert.alert('Login Failed', 'Invalid credentials');
+    }
   };
 
   return (

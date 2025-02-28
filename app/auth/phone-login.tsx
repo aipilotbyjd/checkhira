@@ -10,18 +10,31 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '../../constants/theme';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function PhoneLogin() {
   const router = useRouter();
   const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const { login } = useAuth();
 
-  const handleContinue = () => {
+  const handleLogin = async () => {
     if (!phone.trim()) {
       Alert.alert('Error', 'Please enter a valid phone number');
       return;
     }
-    // Navigate to OTP verification or main app screen
-    router.push(`/auth/verify-otp?phone=${phone}`);
+    if (!password.trim()) {
+      Alert.alert('Error', 'Please enter your password');
+      return;
+    }
+    try {
+      // In a real app you would use phone login with its own API.
+      // Here we use the same login function (using phone as the identifier).
+      await login(phone, password);
+      router.push('/(tabs)');
+    } catch (error) {
+      Alert.alert('Login Failed', 'Unable to login with phone.');
+    }
   };
 
   return (
@@ -54,20 +67,33 @@ export default function PhoneLogin() {
           }}
         />
       </View>
+      <View className="mb-4">
+        <Text className="mb-2 text-base" style={{ color: COLORS.gray[600] }}>
+          Password
+        </Text>
+        <TextInput
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          placeholder="Enter your password"
+          placeholderTextColor={COLORS.gray[400]}
+          className="rounded-xl border p-4"
+          style={{
+            backgroundColor: COLORS.white,
+            borderColor: COLORS.gray[200],
+            color: COLORS.secondary,
+          }}
+        />
+      </View>
       <Pressable
-        onPress={handleContinue}
+        onPress={handleLogin}
         className="mb-4 rounded-xl p-4"
         style={{ backgroundColor: COLORS.primary }}>
-        <Text className="text-center text-lg font-semibold text-white">Continue</Text>
+        <Text className="text-center text-lg font-semibold text-white">Login</Text>
       </Pressable>
       <Pressable onPress={() => router.push('/auth/email-login')}>
         <Text className="text-center text-base" style={{ color: COLORS.primary }}>
           Or login with Email
-        </Text>
-      </Pressable>
-      <Pressable onPress={() => router.push('/auth/register')} className="mt-8">
-        <Text className="text-center text-base" style={{ color: COLORS.gray[600] }}>
-          Don't have an account? Register
         </Text>
       </Pressable>
     </KeyboardAvoidingView>

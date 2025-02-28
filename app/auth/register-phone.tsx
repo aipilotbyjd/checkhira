@@ -21,7 +21,6 @@ export default function RegisterPhone() {
       Alert.alert('Error', 'Please enter your phone number.');
       return;
     }
-    // Optional: add phone number validation here
     router.push(
       `/auth/register-password?email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}`
     );

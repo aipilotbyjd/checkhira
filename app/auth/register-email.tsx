@@ -20,7 +20,6 @@ export default function RegisterEmail() {
       Alert.alert('Error', 'Please enter your email.');
       return;
     }
-    // Optional: validate email format here
     router.push(`/auth/register-phone?email=${encodeURIComponent(email)}`);
   };
 
