@@ -40,13 +40,8 @@ export default function Password() {
           Welcome Back!
         </Text>
         <Text className="mt-2 text-center text-lg" style={{ color: COLORS.gray[600] }}>
-          Enter your password
+          Enter your password to login
         </Text>
-        {email && (
-          <Text className="mt-1 text-center text-base" style={{ color: COLORS.gray[600] }}>
-            {email}
-          </Text>
-        )}
       </View>
       <View className="mb-4">
         <Text className="mb-2 text-base" style={{ color: COLORS.gray[600] }}>
@@ -71,11 +66,6 @@ export default function Password() {
         className="mb-4 rounded-xl p-4"
         style={{ backgroundColor: COLORS.primary }}>
         <Text className="text-center text-lg font-semibold text-white">Login</Text>
-      </Pressable>
-      <Pressable onPress={() => router.push('/auth/email-login')}>
-        <Text className="text-center text-base" style={{ color: COLORS.primary }}>
-          Back to Email Entry
-        </Text>
       </Pressable>
     </KeyboardAvoidingView>
   );
