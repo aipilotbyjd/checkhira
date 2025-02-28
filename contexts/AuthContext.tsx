@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService';
+import { api } from '../services/api';
 
 type User = {
   id: number;
@@ -13,8 +14,14 @@ type User = {
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
   login: (identifier: string, password: string) => Promise<void>;
-  register: (data: { name: string; email: string; phone: string; password: string }) => Promise<void>;
+  register: (data: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -23,6 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     loadStoredUser();
@@ -31,40 +39,60 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const loadStoredUser = async () => {
     try {
       const storedUser = await AsyncStorage.getItem('user');
-      const storedToken = await AsyncStorage.getItem('token');
-      
-      if (storedUser && storedToken) {
+      const isAuthed = await authService.checkAuth();
+
+      if (storedUser && isAuthed) {
         setUser(JSON.parse(storedUser));
+        setIsAuthenticated(true);
+      } else {
+        await handleLogout();
       }
     } catch (error) {
       console.error('Error loading stored user:', error);
+      await handleLogout();
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleLogout = async () => {
+    setUser(null);
+    setIsAuthenticated(false);
+    await AsyncStorage.removeItem('user');
+    await api.removeToken();
+  };
+
   const login = async (identifier: string, password: string) => {
     try {
       const response = await authService.login(identifier, password);
-      const { token, user } = response.data;
-      
-      await AsyncStorage.setItem('token', token);
+      const { user, token } = response.data;
+
       await AsyncStorage.setItem('user', JSON.stringify(user));
       setUser(user);
+      setIsAuthenticated(true);
+      return response;
     } catch (error) {
+      await handleLogout();
       throw error;
     }
   };
 
-  const register = async (data: { name: string; email: string; phone: string; password: string }) => {
+  const register = async (data: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+  }) => {
     try {
       const response = await authService.register(data);
-      const { token, user } = response.data;
-      
-      await AsyncStorage.setItem('token', token);
+      const { user, token } = response.data;
+
       await AsyncStorage.setItem('user', JSON.stringify(user));
       setUser(user);
+      setIsAuthenticated(true);
+      return response;
     } catch (error) {
+      await handleLogout();
       throw error;
     }
   };
@@ -72,17 +100,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     try {
       await authService.logout();
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('user');
-      setUser(null);
-    } catch (error) {
-      console.error('Error during logout:', error);
-      throw error;
+    } finally {
+      await handleLogout();
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isAuthenticated,
+        login,
+        register,
+        logout,
+      }}>
       {children}
     </AuthContext.Provider>
   );

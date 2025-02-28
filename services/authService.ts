@@ -1,30 +1,25 @@
-import { api, handleResponse } from './api';
+import { api } from './api';
 
 interface AuthResponse {
   status: boolean;
   data: {
     token: string;
-    user: {
-      id: number;
-      name: string;
-      email: string;
-      phone?: string;
-      profile_image?: string;
-    };
+    user: User;
   };
   message: string;
 }
 
 export const authService = {
   async login(identifier: string, password: string): Promise<AuthResponse> {
-    const response = await fetch(`${api.baseUrl}/login`, {
+    const response = await api.request<AuthResponse>('/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ identifier, password }),
     });
-    return handleResponse<AuthResponse>(response);
+    
+    if (response.data.token) {
+      await api.setToken(response.data.token);
+    }
+    return response;
   },
 
   async register(data: {
@@ -33,21 +28,33 @@ export const authService = {
     phone: string;
     password: string;
   }): Promise<AuthResponse> {
-    const response = await fetch(`${api.baseUrl}/register`, {
+    const response = await api.request<AuthResponse>('/register', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(data),
     });
-    return handleResponse<AuthResponse>(response);
+    
+    if (response.data.token) {
+      await api.setToken(response.data.token);
+    }
+    return response;
   },
 
   async logout(): Promise<void> {
-    const response = await fetch(`${api.baseUrl}/logout`, {
-      method: 'POST',
-      headers: await api.getHeaders(),
-    });
-    return handleResponse(response);
+    try {
+      await api.request('/logout', {
+        method: 'POST',
+      });
+    } finally {
+      await api.removeToken();
+    }
   },
+
+  async checkAuth(): Promise<boolean> {
+    try {
+      const token = await api.getToken();
+      return !!token;
+    } catch {
+      return false;
+    }
+  }
 };
