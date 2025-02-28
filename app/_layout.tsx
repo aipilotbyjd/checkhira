@@ -10,7 +10,7 @@ import { environment } from '~/config/environment';
 import * as Updates from 'expo-updates';
 import { Alert } from 'react-native';
 import { ratingService } from '../services/ratingService';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider } from '../contexts/AuthContext';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -111,19 +111,17 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <SettingsProvider>
-          <ToastProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <SettingsProvider>
             <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="auth/login" options={{ headerShown: false }} />
               <Stack.Screen name="auth/email-login" options={{ headerShown: false }} />
               <Stack.Screen name="auth/password" options={{ headerShown: false }} />
               <Stack.Screen name="auth/register" options={{ headerShown: false }} />
-              <Stack.Screen name="auth/verify-otp" options={{ headerShown: false }} />
               <Stack.Screen name="auth/phone-login" options={{ headerShown: false }} />
-              <Stack.Screen name="auth/forgot-password" options={{ headerShown: false }} />
               <Stack.Screen name="payments/add" options={{ title: 'Add Payment' }} />
               <Stack.Screen name="payments/[id]/edit" options={{ title: 'Edit Payment' }} />
               <Stack.Screen name="work/add" options={{ title: 'Add Work Entry' }} />
@@ -135,9 +133,9 @@ export default function RootLayout() {
               <Stack.Screen name="account/about" options={{ title: 'About App' }} />
               <Stack.Screen name="account/default-prices" options={{ title: 'Default Prices' }} />
             </Stack>
-          </ToastProvider>
-        </SettingsProvider>
-      </NotificationProvider>
-    </AuthProvider>
+          </SettingsProvider>
+        </NotificationProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
