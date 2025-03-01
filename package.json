@@ -45,7 +45,6 @@
     "react-native": "0.76.7",
     "react-native-actions-sheet": "^0.9.7",
     "react-native-appwrite": "^0.5.0",
-    "react-native-dotenv": "^3.4.11",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-month-selector": "^1.4.0",
     "react-native-onesignal": "^5.2.8",
