@@ -105,11 +105,11 @@ export default function Home() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // get user from local storage
-        const user = await AsyncStorage.getItem('user');
-        setUser(user ? JSON.parse(user) : null);
+        const userString = await AsyncStorage.getItem('user');
+        setUser(userString && userString !== "undefined" ? JSON.parse(userString) : null);
       } catch (error) {
         console.error('Error fetching user data:', error);
+        setUser(null);
       }
     };
 
