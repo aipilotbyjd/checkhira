@@ -41,7 +41,7 @@ export default function Home() {
     total_payments: 0,
     total_amount: 0,
   });
-  const [user, setUser] = useState<{ name: string } | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const { setUnreadCount, refreshUnreadCount } = useNotification();
 
@@ -106,7 +106,7 @@ export default function Home() {
     const fetchUser = async () => {
       try {
         const userString = await AsyncStorage.getItem('user');
-        setUser(userString && userString !== "undefined" ? JSON.parse(userString) : null);
+        setUser((userString && userString !== 'undefined') ? JSON.parse(userString) : null);
       } catch (error) {
         console.error('Error fetching user data:', error);
         setUser(null);
@@ -158,11 +158,18 @@ export default function Home() {
             {getGreeting()}
           </Text>
           <Text className="mt-1 text-2xl font-bold" style={{ color: COLORS.secondary }}>
-            {user?.name || 'User'}
+            {user?.first_name + ' ' + user?.last_name || 'User'}
           </Text>
         </View>
         <Pressable onPress={() => router.push('/account')}>
-          <Image source={{ uri: '' }} className="h-12 w-12 rounded-full" />
+          <Image
+            source={{
+              uri: user?.first_name + ' ' + user?.last_name
+                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.first_name + ' ' + user?.last_name)}&background=0D8ABC&color=fff`
+                : 'https://ui-avatars.com/api/?name=U&background=0D8ABC&color=fff',
+            }}
+            className="h-12 w-12 rounded-full"
+          />
         </Pressable>
       </View>
 
