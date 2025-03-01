@@ -86,7 +86,8 @@
       "eas": {
         "projectId": "bdc9fac3-4aa5-4a0d-b73a-65a15e901bf4"
       },
-      "oneSignalAppId": "9b67efd6-0e42-4f80-88c7-74b79b0efac7"
+      "oneSignalAppId": "9b67efd6-0e42-4f80-88c7-74b79b0efac7",
+      "apiUrl": "https://hirabook.icu/api/v1"
     },
     "runtimeVersion": {
       "policy": "sdkVersion"
