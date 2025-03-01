@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService';
 import { api } from '../services/api';
 import { User } from '../types/user';
+import * as SecureStore from 'expo-secure-store';
 
 type AuthContextType = {
   user: User | null;
@@ -133,3 +134,15 @@ export const useAuth = () => {
   }
   return context;
 };
+
+async function saveToken(key: string, value: string) {
+  await SecureStore.setItemAsync(key, value);
+}
+
+async function getToken(key: string) {
+  return await SecureStore.getItemAsync(key);
+}
+
+async function removeToken(key: string) {
+  await SecureStore.deleteItemAsync(key);
+}

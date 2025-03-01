@@ -63,9 +63,12 @@ export const authService = {
     try {
       const response = await api.request('/verify-token', {
         method: 'POST',
-        body: JSON.stringify({ token }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
       });
-      return response.status === 200;
+      return response.status === true;
     } catch (error) {
       return false;
     }
