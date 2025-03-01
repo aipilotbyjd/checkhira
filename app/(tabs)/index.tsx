@@ -162,10 +162,7 @@ export default function Home() {
           </Text>
         </View>
         <Pressable onPress={() => router.push('/account')}>
-          <Image
-            source={{ uri: 'https://via.placeholder.com/40' }}
-            className="h-12 w-12 rounded-full"
-          />
+          <Image source={{ uri: '' }} className="h-12 w-12 rounded-full" />
         </Pressable>
       </View>
 

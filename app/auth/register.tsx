@@ -37,13 +37,6 @@ export default function Register() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const displayName = useMemo(() => {
-    if (user?.first_name || user?.last_name) {
-      return [user.first_name, user.last_name].filter(Boolean).join(' ');
-    }
-    return user?.email || user?.phone || 'User';
-  }, [user]);
-
   return (
     <PublicRoute>
       <View className="flex-1 justify-center bg-white px-6">

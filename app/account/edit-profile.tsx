@@ -17,6 +17,7 @@ import { UserProfile } from '../../services/profileService';
 import { useProfileOperations } from '../../hooks/useProfileOperations';
 import { useToast } from '../../contexts/ToastContext';
 import { profileService } from '../../services/profileService';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function EditProfile() {
   const router = useRouter();
@@ -31,18 +32,22 @@ export default function EditProfile() {
     address: '',
     profile_image: '',
   });
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (user) {
-      setFormData({
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        address: user.address || '',
-        profile_image: user.profile_image || '',
-      });
-    }
+    const loadUser = async () => {
+      if (user) {
+        setFormData({
+          first_name: user.first_name || '',
+          last_name: user.last_name || '',
+          email: user.email || '',
+          phone: user.phone || '',
+          address: user.address || '',
+          profile_image: user.profile_image || '',
+        });
+      }
+    };
+    loadUser();
   }, [user]);
 
   const validateForm = () => {

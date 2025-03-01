@@ -2,26 +2,14 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService';
 import { api } from '../services/api';
-
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  phone?: string;
-  profile_image?: string;
-};
+import { User } from '../types/user';
 
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (identifier: string, password: string) => Promise<void>;
-  register: (data: {
-    name: string;
-    email: string;
-    phone: string;
-    password: string;
-  }) => Promise<void>;
+  register: (data: User) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -86,14 +74,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  type RegisterData = {
-    name?: string;
-    email?: string;
-    phone?: string;
-    password: string;
-  };
-
-  const validateRegistration = (data: RegisterData) => {
+  const validateRegistration = (data: User) => {
     if (!data.password) {
       throw new Error('Password is required');
     }
@@ -105,7 +86,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return true;
   };
 
-  const register = async (data: RegisterData) => {
+  const register = async (data: User) => {
     try {
       validateRegistration(data);
       const response = await authService.register(data);

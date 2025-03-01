@@ -1,4 +1,5 @@
 import { api } from './api';
+import { User } from '../types/user';
 
 interface AuthResponse {
   status: boolean;

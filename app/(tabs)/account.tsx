@@ -21,6 +21,7 @@ export default function Account() {
     first_name: '',
     last_name: '',
     email: '',
+    phone: '',
     profile_image: '',
   });
 
