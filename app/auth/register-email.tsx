@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   Pressable,
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '../../constants/theme';
 import { PublicRoute } from '../../components/PublicRoute';
 import { AuthHeader } from '../../components/AuthHeader';
+import { AuthInput } from '../../components/AuthInput';
 
 export default function RegisterEmail() {
   const router = useRouter();
@@ -37,67 +38,61 @@ export default function RegisterEmail() {
           showBack={false}
         />
 
-        <View className="px-6">
-          <View className="mb-4">
-            <Text
-              className="mb-2 text-base"
-              style={{ color: COLORS.gray[600] }}
-            >
-              Email Address
-            </Text>
-            <TextInput
+        <ScrollView className="px-6" keyboardShouldPersistTaps="handled">
+          <View className="mb-6">
+            <AuthInput
+              label="Email Address"
+              icon="email"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
               placeholder="Enter your email"
               placeholderTextColor={COLORS.gray[400]}
               autoCapitalize="none"
-              className="rounded-xl border p-4"
-              style={{
-                backgroundColor: COLORS.white,
-                borderColor: COLORS.gray[200],
-                color: COLORS.secondary,
-              }}
+              required
             />
           </View>
 
           <Pressable
             onPress={handleContinue}
-            className="rounded-xl p-4 mb-4"
+            className="rounded-2xl p-4 mb-4"
             style={{ backgroundColor: COLORS.primary }}
+            android_ripple={{ color: COLORS.primary }}
           >
             <Text className="text-center text-lg font-semibold text-white">
-              Next
+              Continue
             </Text>
           </Pressable>
 
-          <View className="flex-row justify-center space-x-2 mb-6">
-            <Text className="text-base" style={{ color: COLORS.gray[600] }}>
-              Already have an account?
-            </Text>
-            <Pressable onPress={() => router.push('/auth/phone-login')}>
-              <Text className="text-base font-semibold" style={{ color: COLORS.primary }}>
-                Login
-              </Text>
-            </Pressable>
-          </View>
-
-          <View className="flex-row items-center space-x-3 mb-6">
+          <View className="flex-row items-center my-6">
             <View className="flex-1 h-px bg-gray-200" />
-            <Text className="text-base" style={{ color: COLORS.gray[400] }}>OR</Text>
+            <Text className="px-4 text-sm" style={{ color: COLORS.gray[400] }}>
+              OR
+            </Text>
             <View className="flex-1 h-px bg-gray-200" />
           </View>
 
           <Pressable
             onPress={() => router.push('/auth/register')}
-            className="rounded-xl border p-4"
+            className="rounded-xl border p-4 mb-6"
             style={{ borderColor: COLORS.primary }}
           >
             <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
               Register with Phone
             </Text>
           </Pressable>
-        </View>
+
+          <View className="flex-row justify-center mt-8">
+            <Text className="text-sm" style={{ color: COLORS.gray[600] }}>
+              Already have an account?{' '}
+            </Text>
+            <Pressable onPress={() => router.push('/auth/phone-login')}>
+              <Text className="text-sm font-semibold" style={{ color: COLORS.primary }}>
+                Login
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </PublicRoute>
   );

@@ -13,7 +13,6 @@ import { COLORS } from '../../constants/theme';
 import { PublicRoute } from '../../components/PublicRoute';
 import { AuthHeader } from '../../components/AuthHeader';
 import { AuthInput } from '../../components/AuthInput';
-import { SocialLoginButton } from '../../components/SocialLoginButton';
 
 export default function PhoneLogin() {
   const router = useRouter();
