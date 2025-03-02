@@ -47,8 +47,8 @@ export default function RegisterPassword() {
       const registerData = {
         first_name: first_name.trim(),
         last_name: last_name.trim(),
-        email: email ? decodeURIComponent(email) : null,
-        phone: phone ? decodeURIComponent(phone) : null,
+        ...(email && { email: decodeURIComponent(email) }),
+        ...(phone && { phone: decodeURIComponent(phone) }),
         password,
         profile_image: '',
       };
