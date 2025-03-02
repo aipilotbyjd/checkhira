@@ -24,10 +24,12 @@ export const authService = {
   },
 
   async register(data: {
-    name: string;
+    first_name: string;
+    last_name: string;
     email: string;
     phone: string;
     password: string;
+    profile_image: string;
   }): Promise<AuthResponse> {
     const response = await api.request<AuthResponse>('/register', {
       method: 'POST',
