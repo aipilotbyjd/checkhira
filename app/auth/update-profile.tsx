@@ -38,7 +38,7 @@ export default function UpdateProfile() {
       aspect: [1, 1],
       quality: 0.7,
     });
-    if (!result.cancelled && result.assets?.length) {
+    if (!result.canceled && result.assets?.length) {
       const uri = result.assets[0].uri;
       setFormData((prev) => ({ ...prev, profileImage: uri, tempImageUri: uri }));
     }

@@ -131,7 +131,7 @@ function RootLayoutNav() {
       <Stack.Screen name="auth/email-login" options={{ headerShown: false }} />
       <Stack.Screen name="auth/password" options={{ headerShown: false }} />
       <Stack.Screen name="auth/register-email" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/register-phone" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/register" options={{ headerShown: false }} />
       <Stack.Screen name="auth/register-password" options={{ headerShown: false }} />
       <Stack.Screen name="payments/add" options={{ title: 'Add Payment' }} />
       <Stack.Screen name="payments/[id]/edit" options={{ title: 'Edit Payment' }} />
