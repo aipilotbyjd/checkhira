@@ -7,11 +7,14 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS } from '../../constants/theme';
 import { AuthHeader } from '../../components/AuthHeader';
 import { PublicRoute } from '../../components/PublicRoute';
+import { AuthInput } from '../../components/AuthInput';
+import { SocialLoginButton } from '../../components/SocialLoginButton';
 
 export default function RegisterPhone() {
   const router = useRouter();
@@ -45,70 +48,65 @@ export default function RegisterPhone() {
     <PublicRoute>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1 bg-white px-6"
+        className="flex-1 bg-white"
       >
         <AuthHeader
           title="Create Account"
-          subtitle="Enter your phone number"
+          subtitle="We'll need your phone number to continue"
           showBack={false}
         />
 
-        <View className="mb-4">
-          <Text className="mb-2 text-base" style={{ color: COLORS.gray[600] }}>
-            Phone Number
-          </Text>
-          <TextInput
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            placeholder="Enter your phone number"
-            placeholderTextColor={COLORS.gray[400]}
-            className="rounded-xl border p-4"
-            style={{
-              backgroundColor: COLORS.white,
-              borderColor: COLORS.gray[200],
-              color: COLORS.secondary,
-            }}
-            maxLength={15}
-          />
-        </View>
+        <ScrollView className="px-6" keyboardShouldPersistTaps="handled">
+          <View className="mb-6">
+            <AuthInput
+              label="Phone Number"
+              icon="phone"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              placeholder="+1 234 567 890"
+              placeholderTextColor={COLORS.gray[400]}
+              maxLength={15}
+              required
+            />
+          </View>
 
-        <Pressable
-          onPress={handleContinue}
-          className="rounded-xl p-4 mb-4"
-          style={{ backgroundColor: COLORS.primary }}
-        >
-          <Text className="text-center text-lg font-semibold text-white">
-            Continue
-          </Text>
-        </Pressable>
-
-        <View className="flex-row justify-center space-x-2 mb-6">
-          <Text className="text-base" style={{ color: COLORS.gray[600] }}>
-            Already have an account?
-          </Text>
-          <Pressable onPress={() => router.push('/auth/phone-login')}>
-            <Text className="text-base font-semibold" style={{ color: COLORS.primary }}>
-              Login
+          <Pressable
+            onPress={handleContinue}
+            className="rounded-2xl p-4 mb-4"
+            style={{ backgroundColor: COLORS.primary }}
+            android_ripple={{ color: COLORS.primary }}
+          >
+            <Text className="text-center text-lg font-semibold text-white">
+              Continue
             </Text>
           </Pressable>
-        </View>
 
-        <View className="flex-row items-center space-x-3 mb-6">
-          <View className="flex-1 h-px bg-gray-200" />
-          <Text className="text-base" style={{ color: COLORS.gray[400] }}>OR</Text>
-          <View className="flex-1 h-px bg-gray-200" />
-        </View>
+          <View className="flex-row items-center my-6">
+            <View className="flex-1 h-px bg-gray-200" />
+            <Text className="px-4 text-sm" style={{ color: COLORS.gray[400] }}>
+              OR
+            </Text>
+            <View className="flex-1 h-px bg-gray-200" />
+          </View>
 
-        <Pressable
-          onPress={() => router.push('/auth/register-email')}
-          className="rounded-xl border p-4"
-          style={{ borderColor: COLORS.primary }}
-        >
-          <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
-            Use Email Instead
-          </Text>
-        </Pressable>
+          <SocialLoginButton
+            icon="email"
+            label="Continue with Email"
+            onPress={() => router.push('/auth/register-email')}
+          />
+
+          <View className="flex-row justify-center mt-8">
+            <Text className="text-sm" style={{ color: COLORS.gray[600] }}>
+              Already have an account?{' '}
+            </Text>
+            <Pressable onPress={() => router.push('/auth/phone-login')}>
+              <Text className="text-sm font-semibold" style={{ color: COLORS.primary }}>
+                Login
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </PublicRoute>
   );

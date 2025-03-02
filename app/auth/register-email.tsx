@@ -75,7 +75,7 @@ export default function RegisterEmail() {
             <Text className="text-base" style={{ color: COLORS.gray[600] }}>
               Already have an account?
             </Text>
-            <Pressable onPress={() => router.push('/auth/email-login')}>
+            <Pressable onPress={() => router.push('/auth/phone-login')}>
               <Text className="text-base font-semibold" style={{ color: COLORS.primary }}>
                 Login
               </Text>
