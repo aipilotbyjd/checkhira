@@ -2,16 +2,19 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   Pressable,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS } from '../../constants/theme';
 import { useAuth } from '../../contexts/AuthContext';
+import { PublicRoute } from '../../components/PublicRoute';
+import { AuthHeader } from '../../components/AuthHeader';
+import { AuthInput } from '../../components/AuthInput';
 
 export default function Password() {
   const router = useRouter();
@@ -25,7 +28,7 @@ export default function Password() {
       Alert.alert('Error', 'Please enter your password.');
       return;
     }
-    
+
     setIsLoading(true);
     try {
       const identifier = email || phone;
@@ -42,56 +45,51 @@ export default function Password() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      className="flex-1 justify-center bg-white px-6">
-      <View className="mb-8">
-        <Text className="text-center text-4xl font-bold" style={{ color: COLORS.secondary }}>
-          Welcome Back!
-        </Text>
-        <Text className="mt-2 text-center text-lg" style={{ color: COLORS.gray[600] }}>
-          Enter your password to login
-        </Text>
-        <Text className="mt-2 text-center text-base" style={{ color: COLORS.gray[400] }}>
-          {email || phone}
-        </Text>
-      </View>
-
-      <View className="mb-4">
-        <Text className="mb-2 text-base" style={{ color: COLORS.gray[600] }}>
-          Password
-        </Text>
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholder="Enter your password"
-          placeholderTextColor={COLORS.gray[400]}
-          className="rounded-xl border p-4"
-          style={{
-            backgroundColor: COLORS.white,
-            borderColor: COLORS.gray[200],
-            color: COLORS.secondary,
-          }}
-          returnKeyType="go"
-          onSubmitEditing={handleLogin}
+    <PublicRoute>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1 bg-white"
+      >
+        <AuthHeader
+          title="Welcome Back"
+          subtitle="Enter your password to continue"
+          showBack={true}
         />
-      </View>
 
-      <Pressable
-        onPress={handleLogin}
-        disabled={isLoading}
-        className="mb-4 rounded-xl p-4"
-        style={{ 
-          backgroundColor: COLORS.primary,
-          opacity: isLoading ? 0.7 : 1 
-        }}>
-        {isLoading ? (
-          <ActivityIndicator color="white" />
-        ) : (
-          <Text className="text-center text-lg font-semibold text-white">Login</Text>
-        )}
-      </Pressable>
-    </KeyboardAvoidingView>
+        <ScrollView className="px-6" keyboardShouldPersistTaps="handled">
+          <View className="mb-6">
+            <AuthInput
+              label="Password"
+              icon="lock"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              placeholder="Enter your password"
+              placeholderTextColor={COLORS.gray[400]}
+              returnKeyType="go"
+              onSubmitEditing={handleLogin}
+              required
+            />
+          </View>
+
+          <Pressable
+            onPress={handleLogin}
+            disabled={isLoading}
+            className="rounded-2xl p-4 mb-6"
+            style={{
+              backgroundColor: COLORS.primary,
+              opacity: isLoading ? 0.7 : 1
+            }}
+            android_ripple={{ color: COLORS.primary }}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-center text-lg font-semibold text-white">Login</Text>
+            )}
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </PublicRoute>
   );
 }
