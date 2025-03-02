@@ -14,7 +14,6 @@ import { COLORS } from '../../constants/theme';
 import { AuthHeader } from '../../components/AuthHeader';
 import { PublicRoute } from '../../components/PublicRoute';
 import { AuthInput } from '../../components/AuthInput';
-import { SocialLoginButton } from '../../components/SocialLoginButton';
 
 export default function RegisterPhone() {
   const router = useRouter();
@@ -28,12 +27,12 @@ export default function RegisterPhone() {
 
   const handleContinue = () => {
     const cleanedPhone = phone.trim();
-    
+
     if (!cleanedPhone) {
       Alert.alert('Error', 'Please enter your phone number.');
       return;
     }
-    
+
     if (!validatePhone(cleanedPhone)) {
       Alert.alert('Error', 'Please enter a valid phone number.');
       return;
@@ -90,11 +89,15 @@ export default function RegisterPhone() {
             <View className="flex-1 h-px bg-gray-200" />
           </View>
 
-          <SocialLoginButton
-            icon="email"
-            label="Continue with Email"
+          <Pressable
             onPress={() => router.push('/auth/register-email')}
-          />
+            className="rounded-xl border p-4 mb-6"
+            style={{ borderColor: COLORS.primary }}
+          >
+            <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
+              Continue with Email
+            </Text>
+          </Pressable>
 
           <View className="flex-row justify-center mt-8">
             <Text className="text-sm" style={{ color: COLORS.gray[600] }}>
