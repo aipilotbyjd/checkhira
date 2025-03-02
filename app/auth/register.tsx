@@ -17,7 +17,6 @@ import { AuthInput } from '../../components/AuthInput';
 
 export default function RegisterPhone() {
   const router = useRouter();
-  const { email } = useLocalSearchParams<{ email: string }>();
   const [phone, setPhone] = useState('');
 
   const validatePhone = (number: string) => {
@@ -39,7 +38,7 @@ export default function RegisterPhone() {
     }
 
     router.push(
-      `/auth/register-password?email=${encodeURIComponent(email!)}&phone=${encodeURIComponent(cleanedPhone)}`
+      `/auth/register-password?phone=${encodeURIComponent(cleanedPhone)}`
     );
   };
 
@@ -90,7 +89,7 @@ export default function RegisterPhone() {
           </View>
 
           <Pressable
-            onPress={() => router.push('/auth/register-email')}
+            onPress={() => router.push('/auth/email-login')}
             className="rounded-xl border p-4 mb-6"
             style={{ borderColor: COLORS.primary }}
           >
