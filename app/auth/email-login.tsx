@@ -61,9 +61,9 @@ export default function EmailLogin() {
         onPress={handleContinue}
         disabled={isLoading}
         className="mb-4 rounded-xl p-4"
-        style={{ 
+        style={{
           backgroundColor: COLORS.primary,
-          opacity: isLoading ? 0.7 : 1 
+          opacity: isLoading ? 0.7 : 1
         }}>
         {isLoading ? (
           <ActivityIndicator color="white" />
@@ -71,8 +71,21 @@ export default function EmailLogin() {
           <Text className="text-center text-lg font-semibold text-white">Continue</Text>
         )}
       </Pressable>
-      <Pressable onPress={() => router.push('/auth/phone-login')}>
-        <Text className="text-center text-base" style={{ color: COLORS.primary }}>
+      <View className="flex-row justify-center space-x-2 mt-4">
+        <Text className="text-base" style={{ color: COLORS.gray[600] }}>
+          Don't have an account?
+        </Text>
+        <Pressable onPress={() => router.push('/auth/register')}>
+          <Text className="text-base font-semibold" style={{ color: COLORS.primary }}>
+            Register
+          </Text>
+        </Pressable>
+      </View>
+      <Pressable
+        onPress={() => router.push('/auth/phone-login')}
+        className="mt-4 rounded-xl border p-4"
+        style={{ borderColor: COLORS.primary }}>
+        <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
           Or login with Phone
         </Text>
       </Pressable>

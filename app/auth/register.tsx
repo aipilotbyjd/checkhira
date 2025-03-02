@@ -3,6 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '../../constants/theme';
 import { PublicRoute } from '../../components/PublicRoute';
+import { AuthHeader } from '../../components/AuthHeader';
 
 export default function Register() {
   const router = useRouter();
@@ -39,25 +40,38 @@ export default function Register() {
 
   return (
     <PublicRoute>
-      <View className="flex-1 justify-center bg-white px-6">
-        <Text className="text-center text-4xl font-bold" style={{ color: COLORS.secondary }}>
-          Create Account
-        </Text>
-        <Text className="mt-2 text-center text-lg" style={{ color: COLORS.gray[600] }}>
-          Choose your registration method
-        </Text>
+      <AuthHeader
+        title="Create Account"
+        subtitle="Choose your registration method"
+        showBack={false}
+      />
+      <View className="px-6">
         <Pressable
           onPress={() => router.push('/auth/register-email')}
-          className="mt-6 rounded-xl p-4"
+          className="rounded-xl p-4 mb-4"
           style={{ backgroundColor: COLORS.primary }}>
           <Text className="text-center text-lg font-semibold text-white">Register with Email</Text>
         </Pressable>
+
         <Pressable
           onPress={() => router.push('/auth/register-phone')}
-          className="mt-4 rounded-xl p-4"
-          style={{ backgroundColor: COLORS.primary }}>
-          <Text className="text-center text-lg font-semibold text-white">Register with Phone</Text>
+          className="rounded-xl border p-4"
+          style={{ borderColor: COLORS.primary }}>
+          <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
+            Register with Phone
+          </Text>
         </Pressable>
+
+        <View className="flex-row justify-center space-x-2 mt-6">
+          <Text className="text-base" style={{ color: COLORS.gray[600] }}>
+            Already have an account?
+          </Text>
+          <Pressable onPress={() => router.push('/auth/phone-login')}>
+            <Text className="text-base font-semibold" style={{ color: COLORS.primary }}>
+              Login
+            </Text>
+          </Pressable>
+        </View>
       </View>
     </PublicRoute>
   );

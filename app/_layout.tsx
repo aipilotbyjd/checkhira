@@ -127,10 +127,9 @@ function RootLayoutNav() {
   return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/phone-login" options={{ headerShown: false }} />
       <Stack.Screen name="auth/register" options={{ headerShown: false }} />
       <Stack.Screen name="auth/email-login" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/phone-login" options={{ headerShown: false }} />
       <Stack.Screen name="auth/password" options={{ headerShown: false }} />
       <Stack.Screen name="auth/register-email" options={{ headerShown: false }} />
       <Stack.Screen name="auth/register-phone" options={{ headerShown: false }} />

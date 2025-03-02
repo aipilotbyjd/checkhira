@@ -109,7 +109,7 @@ export default function Account() {
           </View>
 
           <View className="space-y-4">
-            <Link href="/auth/login" asChild>
+            <Link href="/auth/phone-login" asChild>
               <Pressable className="rounded-xl p-4" style={{ backgroundColor: COLORS.primary }}>
                 <Text className="text-center text-lg font-semibold text-white">Login</Text>
               </Pressable>
@@ -117,9 +117,7 @@ export default function Account() {
 
             <Link href="/auth/register" asChild>
               <Pressable className="rounded-xl border p-4" style={{ borderColor: COLORS.primary }}>
-                <Text
-                  className="text-center text-lg font-semibold"
-                  style={{ color: COLORS.primary }}>
+                <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
                   Create Account
                 </Text>
               </Pressable>

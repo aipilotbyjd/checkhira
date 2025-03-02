@@ -68,11 +68,38 @@ export default function RegisterPhone() {
       </View>
       <Pressable
         onPress={handleContinue}
-        className="rounded-xl p-4"
+        className="rounded-xl p-4 mb-4"
         style={{ backgroundColor: COLORS.primary }}
       >
         <Text className="text-center text-lg font-semibold text-white">
           Next
+        </Text>
+      </Pressable>
+
+      <View className="flex-row justify-center space-x-2 mb-6">
+        <Text className="text-base" style={{ color: COLORS.gray[600] }}>
+          Already have an account?
+        </Text>
+        <Pressable onPress={() => router.push('/auth/phone-login')}>
+          <Text className="text-base font-semibold" style={{ color: COLORS.primary }}>
+            Login
+          </Text>
+        </Pressable>
+      </View>
+
+      <View className="flex-row items-center space-x-3 mb-6">
+        <View className="flex-1 h-px bg-gray-200" />
+        <Text className="text-base" style={{ color: COLORS.gray[400] }}>OR</Text>
+        <View className="flex-1 h-px bg-gray-200" />
+      </View>
+
+      <Pressable
+        onPress={() => router.push('/auth/register-email')}
+        className="rounded-xl border p-4"
+        style={{ borderColor: COLORS.primary }}
+      >
+        <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
+          Register with Email
         </Text>
       </Pressable>
     </KeyboardAvoidingView>
