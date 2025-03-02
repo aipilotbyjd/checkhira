@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Auth Page Overrides */
+.auth-scroll {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+.auth-button {
+    border-radius: 1rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
