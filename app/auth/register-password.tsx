@@ -45,10 +45,10 @@ export default function RegisterPassword() {
     setIsLoading(true);
     try {
       const registerData = {
-        first_name: first_name,
-        last_name: last_name,
-        email: email ? decodeURIComponent(email) : '',
-        phone: phone ? decodeURIComponent(phone) : '',
+        first_name: first_name.trim(),
+        last_name: last_name.trim(),
+        email: email ? decodeURIComponent(email) : null,
+        phone: phone ? decodeURIComponent(phone) : null,
         password,
         profile_image: '',
       };
