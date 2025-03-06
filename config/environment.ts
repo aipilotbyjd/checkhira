@@ -8,7 +8,7 @@ interface Environment {
 }
 
 export const environment: Environment = {
-  apiUrl: Constants.expoConfig?.extra?.apiUrl || 'https://hirabook.icu/api/v1',
+  apiUrl: Constants.expoConfig?.extra?.apiUrl || 'https://api.hirabook.icu/api/v1',
   nodeEnv: process.env.NODE_ENV || 'development',
   oneSignalAppId: Constants.expoConfig?.extra?.oneSignalAppId,
   production: process.env.NODE_ENV === 'production',
