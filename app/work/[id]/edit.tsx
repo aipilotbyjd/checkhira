@@ -21,6 +21,7 @@ import { WorkEntry, WorkFormData, WorkResponse } from '../../../types/work';
 import { useToast } from '../../../contexts/ToastContext';
 import { WorkFormSkeleton } from '../../../components/WorkFormSkeleton';
 import { useAppRating } from '../../../hooks/useAppRating';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export default function EditWork() {
   const router = useRouter();
@@ -28,11 +29,13 @@ export default function EditWork() {
   const { updateWork, deleteWork, getWork, isLoading } = useWorkOperations();
   const { showToast } = useToast();
   const { trackPositiveAction } = useAppRating();
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState<WorkFormData>({
     date: new Date(),
     name: '',
     entries: [],
+    user_id: user?.id,
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -128,6 +131,7 @@ export default function EditWork() {
       name: formData.name.trim(),
       entries: formData.entries,
       total: calculateTotal(),
+      user_id: user?.id,
     };
 
     try {
@@ -388,9 +392,8 @@ export default function EditWork() {
         }}
         message={
           entryToDelete
-            ? `Are you sure you want to remove Entry ${
-                formData.entries.findIndex((e) => e.id === entryToDelete.id) + 1
-              } (Type ${entryToDelete.type})?`
+            ? `Are you sure you want to remove Entry ${formData.entries.findIndex((e) => e.id === entryToDelete.id) + 1
+            } (Type ${entryToDelete.type})?`
             : 'Are you sure you want to delete these entries?'
         }
       />
