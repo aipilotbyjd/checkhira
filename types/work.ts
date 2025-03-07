@@ -9,6 +9,7 @@ export interface WorkFormData {
   date: Date;
   name: string;
   entries: WorkEntry[];
+  user_id?: number;
 }
 
 export interface WorkResponse {

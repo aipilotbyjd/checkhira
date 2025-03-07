@@ -20,16 +20,19 @@ import { DefaultPrice, WorkEntry, WorkFormData } from '../../types/work';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useToast } from '../../contexts/ToastContext';
 import { WorkFormSkeleton } from '../../components/WorkFormSkeleton';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function AddWork() {
   const router = useRouter();
   const { createWork, isLoading } = useWorkOperations();
   const { showToast } = useToast();
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState<WorkFormData>({
     date: new Date(),
     name: '',
     entries: [],
+    user_id: user?.id,
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -248,6 +251,7 @@ export default function AddWork() {
         name: formData.name.trim(),
         entries: formData.entries,
         total: calculateTotal(),
+        user_id: user?.id,
       };
 
       const result = await createWork(workData);
@@ -466,9 +470,8 @@ export default function AddWork() {
           setShowDeleteModal(false);
           setEntryToDelete(null);
         }}
-        message={`Are you sure you want to remove Entry ${
-          formData.entries.findIndex((e) => e.id === entryToDelete?.id) + 1
-        } (Type ${entryToDelete?.type})?`}
+        message={`Are you sure you want to remove Entry ${formData.entries.findIndex((e) => e.id === entryToDelete?.id) + 1
+          } (Type ${entryToDelete?.type})?`}
       />
     </View>
   );
