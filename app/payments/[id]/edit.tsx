@@ -10,6 +10,7 @@ import { SuccessModal } from '../../../components/SuccessModal';
 import { usePaymentOperations } from '../../../hooks/usePaymentOperations';
 import { useToast } from '../../../contexts/ToastContext';
 import { PaymentFormSkeleton } from '~/components/PaymentFormSkeleton';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface Payment {
   id: number;
@@ -18,6 +19,7 @@ interface Payment {
   category?: string;
   description?: string;
   source_id: number;
+  user_id?: number;
 }
 
 interface PaymentSource {
@@ -29,6 +31,7 @@ interface PaymentSource {
 export default function EditPayment() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [payment, setPayment] = useState<Payment>({
     id: Number(id),
@@ -37,6 +40,7 @@ export default function EditPayment() {
     category: '',
     description: '',
     source_id: 0,
+    user_id: user?.id,
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -90,6 +94,7 @@ export default function EditPayment() {
       category: payment.category || undefined,
       description: payment.description.trim(),
       source_id: payment.source_id,
+      user_id: user?.id,
     };
 
     try {
@@ -231,9 +236,8 @@ export default function EditPayment() {
                     <Pressable
                       key={source.id}
                       onPress={() => setPayment({ ...payment, source_id: source.id })}
-                      className={`flex-row items-center rounded-full px-4 py-2 ${
-                        payment.source_id === source.id ? 'bg-primary' : 'bg-white'
-                      }`}
+                      className={`flex-row items-center rounded-full px-4 py-2 ${payment.source_id === source.id ? 'bg-primary' : 'bg-white'
+                        }`}
                       style={{
                         borderWidth: 1,
                         borderColor:

@@ -10,7 +10,7 @@ import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 import { useAppSettings } from '../../contexts/SettingsContext';
 import { PaymentFormSkeleton } from '../../components/PaymentFormSkeleton';
 import { useToast } from '../../contexts/ToastContext';
-
+import { useAuth } from '../../contexts/AuthContext';
 interface Payment {
   id: number;
   amount: number;
@@ -18,6 +18,7 @@ interface Payment {
   category?: string;
   description?: string;
   source_id: number;
+  user_id?: number;
 }
 
 interface PaymentSource {
@@ -33,6 +34,7 @@ export default function AddPayment() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [paymentSources, setPaymentSources] = useState<PaymentSource[]>([]);
   const [isLoadingSources, setIsLoadingSources] = useState(true);
+  const { user } = useAuth();
 
   const [payment, setPayment] = useState<Payment>({
     id: Date.now(),
@@ -41,6 +43,7 @@ export default function AddPayment() {
     category: '',
     description: '',
     source_id: 1,
+    user_id: user?.id,
   });
 
   const { createPayment, getPaymentSources, isLoading } = usePaymentOperations();
@@ -211,9 +214,8 @@ export default function AddPayment() {
                     <Pressable
                       key={source.id}
                       onPress={() => setPayment({ ...payment, source_id: source.id })}
-                      className={`flex-row items-center rounded-full px-4 py-2 ${
-                        payment.source_id === source.id ? 'bg-primary' : 'bg-white'
-                      }`}
+                      className={`flex-row items-center rounded-full px-4 py-2 ${payment.source_id === source.id ? 'bg-primary' : 'bg-white'
+                        }`}
                       style={{
                         borderWidth: 1,
                         borderColor:
