@@ -5,5 +5,6 @@ export interface User {
   email: string | null;
   phone: string | null;
   password: string | null;
-  profile_image: string | null;
+  profile_image?: string | null;
+  address?: string | null;
 }

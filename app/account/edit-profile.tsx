@@ -22,7 +22,7 @@ import { useAuth } from '../../contexts/AuthContext';
 export default function EditProfile() {
   const router = useRouter();
   const { showToast } = useToast();
-  const { updateProfile, isLoading } = useProfileOperations();
+  const { updateProfile, isLoading, getProfile } = useProfileOperations();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<UserProfile>({
     first_name: '',
@@ -69,6 +69,9 @@ export default function EditProfile() {
     } else if (!/^([0-9\s\-\+\(\)]*)$/.test(formData.phone) || formData.phone.length < 10) {
       newErrors.phone = 'Please enter a valid phone number';
     }
+    if (formData.address && formData.address.length > 500) {
+      newErrors.address = 'Address cannot exceed 500 characters';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -98,6 +101,18 @@ export default function EditProfile() {
     }));
   };
 
+  const refreshUser = async () => {
+    try {
+      const userData = await getProfile();
+      if (userData) {
+        // Update user context with new data
+        await updateProfile(userData);
+      }
+    } catch (error) {
+      showToast('Failed to refresh user data', 'error');
+    }
+  };
+
   const handleUpdate = async () => {
     if (!validateForm()) {
       showToast('Please correct the errors in the form', 'error');
@@ -108,19 +123,16 @@ export default function EditProfile() {
       const formDataToSend = new FormData();
 
       // Add all text fields
-      formDataToSend.append('first_name', formData.first_name);
-      formDataToSend.append('last_name', formData.last_name);
-      formDataToSend.append('email', formData.email);
-      formDataToSend.append('phone', formData.phone);
+      formDataToSend.append('first_name', formData.first_name.trim());
+      formDataToSend.append('last_name', formData.last_name.trim());
+      formDataToSend.append('email', formData.email.trim());
+      formDataToSend.append('phone', formData.phone.trim());
       formDataToSend.append('address', formData.address?.trim() || '');
 
       // Add image if there's a new one
-      console.log(formData.imageFile);
       if (formData.imageFile) {
         formDataToSend.append('profile_image', formData.imageFile as any);
       }
-
-      console.log(formDataToSend);
 
       const result = await profileService.updateProfile(formDataToSend);
       if (result) {
@@ -257,18 +269,28 @@ export default function EditProfile() {
               Address
             </Text>
             <TextInput
-              className="rounded-xl border p-3"
+              className={`rounded-xl border p-3 ${errors.address ? 'border-error' : 'border-gray-200'}`}
               style={{
                 backgroundColor: COLORS.white,
-                borderColor: COLORS.gray[200],
+                borderColor: errors.address ? COLORS.error : COLORS.gray[200],
                 color: COLORS.secondary,
               }}
-              value={formData.address}
-              onChangeText={(text) => setFormData({ ...formData, address: text })}
+              value={formData.address || ''}
+              onChangeText={(text) => {
+                setFormData({ ...formData, address: text });
+                if (errors.address) {
+                  setErrors({ ...errors, address: '' });
+                }
+              }}
               placeholder="Enter address"
               multiline
               numberOfLines={3}
             />
+            {errors.address && (
+              <Text className="mt-1 text-xs" style={{ color: COLORS.error }}>
+                {errors.address}
+              </Text>
+            )}
           </View>
         </View>
 

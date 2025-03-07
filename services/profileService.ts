@@ -7,7 +7,7 @@ export interface UserProfile {
   last_name: string;
   email: string;
   phone: string;
-  address: string;
+  address?: string | null;
   profile_image: string;
   tempImageUri?: string;
   imageFile?: {
