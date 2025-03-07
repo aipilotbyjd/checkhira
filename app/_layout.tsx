@@ -12,15 +12,6 @@ import * as Updates from 'expo-updates';
 import { Alert } from 'react-native';
 import { ratingService } from '../services/ratingService';
 
-// Temporarily suppress findDOMNode warning from expo-router
-const originalConsoleWarn = console.warn;
-console.warn = (...args) => {
-  if (args[0] && args[0].includes('findDOMNode')) {
-    return;
-  }
-  originalConsoleWarn.apply(console, args);
-};
-
 export const unstable_settings = {
   initialRouteName: '(tabs)',
 };
