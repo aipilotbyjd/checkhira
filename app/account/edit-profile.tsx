@@ -143,9 +143,8 @@ export default function EditProfile() {
 
       const result = await execute(() => profileService.updateProfile(formDataToSend));
 
-      if (result) {
-        // Refresh user data after successful update
-        await refreshUser();
+      if (result?.data) {
+        await updateProfile(result.data);
         router.back();
       }
     } catch (error: any) {
