@@ -41,7 +41,7 @@ export const profileService = {
 
   async updateProfile(data: FormData | Partial<UserProfile>): Promise<ProfileResponse> {
     if (data instanceof FormData) {
-      return api.upload<ProfileResponse>('/profile', data);
+      return api.upload<ProfileResponse>('/profile', data, undefined, {}, 'PUT');
     } else {
       return api.put<ProfileResponse, Partial<UserProfile>>('/profile', data);
     }
