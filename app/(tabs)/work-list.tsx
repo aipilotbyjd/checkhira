@@ -1,110 +1,110 @@
-import { Text, View, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { COLORS } from '../../constants/theme';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  RefreshControl,
+  ActivityIndicator,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { isValid } from 'date-fns';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { useWorkOperations } from '../../hooks/useWorkOperations';
-import { useFocusEffect } from 'expo-router';
-import { Work } from '../../types/work';
-import { dateUtils } from '../../utils/dateUtils';
+import { COLORS } from '../../constants/theme';
 import { WorkListItem } from '../../components/WorkListItem';
 import { WorkSkeleton } from '../../components/WorkSkeleton';
-import { useNotification } from '../../contexts/NotificationContext';
-import { notificationService } from '../../services/notificationService';
 import { useToast } from '../../contexts/ToastContext';
+import { api } from '../../services/axiosClient';
+import { useApi } from '../../hooks/useApi';
+import { Work } from '../../types/work';
 
-export default function WorkList() {
+export default function WorkListScreen() {
   const router = useRouter();
+  const { showToast } = useToast();
   const actionSheetRef = useRef<ActionSheetRef>(null);
-  const [currentFilter, setCurrentFilter] = useState('all');
-  const { getAllWork, isLoading } = useWorkOperations();
+
   const [workList, setWorkList] = useState<Work[]>([]);
-  const [todayTotal, setTodayTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [hasMorePages, setHasMorePages] = useState(true);
+  const [hasMorePages, setHasMorePages] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const { setUnreadCount } = useNotification();
-  const { showToast } = useToast();
+  const [currentFilter, setCurrentFilter] = useState('all');
+  const [todayTotal, setTodayTotal] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const loadWorkRef = useRef(false);
+  // Use the modern API hook pattern
+  const { execute: executeGetWorks, isLoading } = useApi({
+    showErrorToast: true,
+    defaultErrorMessage: 'Failed to load work entries. Please try again.'
+  });
 
-  useFocusEffect(
-    useCallback(() => {
-      loadWork({ page: 1 });
-      return () => {
-        loadWorkRef.current = false;
-      };
-    }, [currentFilter])
-  );
+  const { execute: executeGetNotifications } = useApi({
+    showErrorToast: true,
+    defaultErrorMessage: 'Failed to get unread notifications count. Please try again.'
+  });
 
-  const loadWork = async ({ page = 1 }: { page?: number }) => {
+  const loadWork = useCallback(async ({ page = 1, isRefresh = false }) => {
     try {
-      if (page === 1) {
-        setWorkList([]);
-        setIsLoadingMore(true);
-      }
+      const response = await executeGetWorks(() =>
+        api.get('/works', { params: { page, filter: currentFilter } })
+      );
 
-      const response = await getAllWork({ page, filter: currentFilter });
+      if (response?.data) {
+        const { works, total } = response.data;
+        setTodayTotal(total || 0);
 
-      const data = response?.data;
-
-      if (data?.works?.data) {
-        const newWorks = data.works.data;
-
-        if (page === 1) {
-          setWorkList(newWorks);
-          setTodayTotal(Number(data.total) || 0);
+        if (isRefresh || page === 1) {
+          setWorkList(works.data);
         } else {
-          setWorkList((prev) => [...prev, ...newWorks]);
+          setWorkList((prevList) => [...prevList, ...works.data]);
         }
 
-        setHasMorePages(data.works.current_page < data.works.last_page);
-        setCurrentPage(data.works.current_page);
+        setCurrentPage(works.current_page);
+        setHasMorePages(works.current_page < works.last_page);
       }
-    } catch (error) {
-      console.error('Error loading work:', error);
     } finally {
-      setIsLoadingMore(false);
       setRefreshing(false);
+      setIsLoadingMore(false);
     }
-  };
-
-  const handleFilter = (filter: string) => {
-    if (filter !== currentFilter) {
-      setCurrentFilter(filter);
-      setCurrentPage(1);
-      setWorkList([]);
-    }
-    actionSheetRef.current?.hide();
-  };
+  }, [currentFilter, executeGetWorks]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    await loadWork({ page: 1, isRefresh: true });
+  }, [loadWork]);
+
+  const handleFilter = useCallback((filter: string) => {
+    setCurrentFilter(filter);
+    setWorkList([]);
     setCurrentPage(1);
-    await loadWork({ page: 1 });
+    actionSheetRef.current?.hide();
+  }, []);
+
+  useEffect(() => {
+    loadWork({ page: 1 });
   }, [currentFilter]);
 
   const handleLoadMore = useCallback(async () => {
     if (!hasMorePages || isLoadingMore) return;
     setIsLoadingMore(true);
     await loadWork({ page: currentPage + 1 });
-  }, [currentPage, hasMorePages, isLoadingMore]);
+  }, [currentPage, hasMorePages, isLoadingMore, loadWork]);
 
   const getUnreadNotificationsCount = async () => {
     try {
-      const response = await notificationService.getUnreadNotificationsCount();
-      setUnreadCount(response.data as any);
+      const response = await executeGetNotifications(() =>
+        api.get('/notifications/unread/count')
+      );
+      if (response?.data) {
+        setUnreadCount(response.data);
+      }
     } catch (error) {
-      showToast('Failed to get unread notifications count. Please try again.', 'error');
+      // Error already handled by useApi
     }
   };
 
   useEffect(() => {
     const init = async () => {
-      console.log('notif count');
       await getUnreadNotificationsCount();
     };
     init();
@@ -227,6 +227,23 @@ export default function WorkList() {
         {workList.map((item: Work) => (
           <WorkListItem key={item.id.toString()} item={item} />
         ))}
+
+        {/* Loading more indicator */}
+        {isLoadingMore && (
+          <View className="py-4 items-center">
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          </View>
+        )}
+
+        {/* Empty state */}
+        {!isLoading && workList.length === 0 && (
+          <View className="items-center justify-center py-8">
+            <MaterialCommunityIcons name="file-document-outline" size={48} color={COLORS.gray[400]} />
+            <Text className="mt-2 text-base" style={{ color: COLORS.gray[600] }}>
+              No work entries found
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       <ActionSheet
