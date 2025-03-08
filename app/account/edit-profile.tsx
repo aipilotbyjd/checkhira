@@ -141,12 +141,11 @@ export default function EditProfile() {
         formDataToSend.append('profile_image', formData.imageFile as any);
       }
 
-      const result = await execute(() => profileService.updateProfile(formDataToSend));
+      // Option 1: Use the hook's updateProfile directly with FormData
+      await updateProfile(formDataToSend);
 
-      if (result?.data) {
-        await updateProfile(result.data);
-        router.back();
-      }
+      // Let the hook handle navigation and context updates
+      // (Remove router.back() here)
     } catch (error: any) {
       if (error.status === 422) {
         const serverErrors = error.data?.errors || {};
