@@ -1,24 +1,6 @@
-import { api, handleResponse } from './api';
+import { api } from './axiosClient';
 import { Platform } from 'react-native';
-
-export interface UserProfile {
-  id?: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  address?: string | null;
-  profile_image: string;
-  tempImageUri?: string;
-  imageFile?: {
-    uri: string;
-    name: string;
-    type: string;
-  };
-  email_verified_at?: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
+import { UserProfile } from '../types/user';
 
 export interface ProfileResponse {
   status: boolean;
@@ -52,20 +34,16 @@ const createFormData = (imageUri: string, body: Record<string, any> = {}) => {
 
 export const profileService = {
   async getProfile(): Promise<ProfileResponse> {
-    const response = await fetch(`${api.baseUrl}/profile`, {
-      headers: await api.getHeaders(),
+    return api.get<ProfileResponse>('/profile', undefined, {
+      cacheTime: 5 * 60 * 1000, // Cache for 5 minutes
     });
-    return handleResponse<ProfileResponse>(response);
   },
 
   async updateProfile(data: FormData | Partial<UserProfile>): Promise<ProfileResponse> {
-    const headers = await api.getHeaders();
-
-    const response = await fetch(`${api.baseUrl}/profile`, {
-      method: 'PUT',
-      headers,
-      body: data instanceof FormData ? data : JSON.stringify(data),
-    });
-    return handleResponse<ProfileResponse>(response);
+    if (data instanceof FormData) {
+      return api.upload<ProfileResponse>('/profile', data);
+    } else {
+      return api.put<ProfileResponse, Partial<UserProfile>>('/profile', data);
+    }
   },
 };

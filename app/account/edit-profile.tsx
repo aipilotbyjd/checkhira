@@ -13,11 +13,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { UserProfile } from '../../services/profileService';
+import { UserProfile } from '../../types/user';
 import { useProfileOperations } from '../../hooks/useProfileOperations';
 import { useToast } from '../../contexts/ToastContext';
 import { profileService } from '../../services/profileService';
 import { useAuth } from '../../contexts/AuthContext';
+import { useApi } from '../../hooks/useApi';
 
 export default function EditProfile() {
   const router = useRouter();
@@ -33,6 +34,12 @@ export default function EditProfile() {
     profile_image: '',
   });
   const { user } = useAuth();
+
+  const { isLoading: apiLoading, error, execute } = useApi({
+    showSuccessToast: true,
+    successMessage: 'Profile updated successfully!',
+    defaultErrorMessage: 'Failed to update profile'
+  });
 
   useEffect(() => {
     const loadUser = async () => {
@@ -134,10 +141,10 @@ export default function EditProfile() {
         formDataToSend.append('profile_image', formData.imageFile as any);
       }
 
-      const result = await profileService.updateProfile(formDataToSend);
+      const result = await execute(() => profileService.updateProfile(formDataToSend));
+
       if (result) {
         await refreshUser();
-        showToast('Profile updated successfully!');
         router.back();
       }
     } catch (error: any) {
@@ -145,8 +152,6 @@ export default function EditProfile() {
         const serverErrors = error.data?.errors || {};
         setErrors(serverErrors);
         showToast('Please correct the errors in the form', 'error');
-      } else {
-        showToast('Failed to update profile', 'error');
       }
     }
   };
@@ -297,13 +302,13 @@ export default function EditProfile() {
         {/* Update Button */}
         <Pressable
           onPress={handleUpdate}
-          disabled={isLoading}
+          disabled={apiLoading}
           className="mt-6 rounded-xl p-4"
           style={{
-            backgroundColor: isLoading ? COLORS.gray[400] : COLORS.primary,
-            opacity: isLoading ? 0.7 : 1,
+            backgroundColor: apiLoading ? COLORS.gray[400] : COLORS.primary,
+            opacity: apiLoading ? 0.7 : 1,
           }}>
-          {isLoading ? (
+          {apiLoading ? (
             <ActivityIndicator color="white" />
           ) : (
             <Text className="text-center text-lg font-semibold text-white">Update Profile</Text>
