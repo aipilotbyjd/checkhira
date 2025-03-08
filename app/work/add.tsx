@@ -21,11 +21,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useToast } from '../../contexts/ToastContext';
 import { WorkFormSkeleton } from '../../components/WorkFormSkeleton';
 import { useAuth } from '../../contexts/AuthContext';
+import { useApi } from '../../hooks/useApi';
+import { api, ApiError } from '../../services/axiosClient';
 
 export default function AddWork() {
   const router = useRouter();
-  const { createWork, isLoading } = useWorkOperations();
   const { showToast } = useToast();
+  const { execute, isLoading: isApiLoading } = useApi({
+    showSuccessToast: true,
+    successMessage: 'Work entries saved successfully!',
+    showErrorToast: true,
+    defaultErrorMessage: 'Failed to save work entries. Please try again.'
+  });
   const { user } = useAuth();
 
   const [formData, setFormData] = useState<WorkFormData>({
@@ -244,29 +251,34 @@ export default function AddWork() {
   const handleSave = async () => {
     if (!validateForm() || isSaving) return;
 
-    try {
-      setIsSaving(true);
-      const workData = {
-        date: formatDateForAPI(formData.date),
-        name: formData.name.trim(),
-        entries: formData.entries,
-        total: calculateTotal(),
-        user_id: user?.id,
-      };
+    setIsSaving(true);
+    const workData = {
+      date: formatDateForAPI(formData.date),
+      name: formData.name.trim(),
+      entries: formData.entries,
+      total: calculateTotal(),
+      user_id: user?.id,
+    };
 
-      const result = await createWork(workData);
+    // Show immediate feedback
+    router.back();
+
+    // Perform the API call after navigation
+    try {
+      const result = await api.post('/works', workData);
       if (result) {
         showToast('Work entries saved successfully!');
-        router.back();
       }
     } catch (error) {
-      showToast('Failed to save work entries. Please try again.', 'error');
+      // If there's an error, notify the user
+      const errorMessage = error instanceof ApiError ? error.message : 'Failed to save work entries';
+      showToast(errorMessage, 'error');
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (isLoading) {
+  if (isApiLoading) {
     return <WorkFormSkeleton />;
   }
 

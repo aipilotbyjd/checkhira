@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Alert } from 'react-native';
-import { workService } from '../services/workService';
-import type { WorkEntryPayload } from '../services/workService';
+import { api, ApiError } from '../services/axiosClient';
+import { useToast } from '../contexts/ToastContext';
 import type { Work } from '../types/work';
-import { ApiError } from '../services/api';
+import type { WorkEntryPayload } from '../types/work';
+
 
 interface WorkResponse {
   status: boolean;
@@ -27,17 +27,19 @@ interface SingleWorkResponse {
 export const useWorkOperations = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const createWork = async (workData: WorkEntryPayload) => {
     setIsLoading(true);
     setError(null);
+
     try {
-      const response = await workService.createWork(workData);
+      const response = await api.post<SingleWorkResponse>('/works', workData);
       return response;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to create work entry';
       setError(errorMessage);
-      Alert.alert('Error', errorMessage);
+      showToast(errorMessage, 'error');
       return null;
     } finally {
       setIsLoading(false);
@@ -47,13 +49,14 @@ export const useWorkOperations = () => {
   const updateWork = async (id: number, workData: WorkEntryPayload) => {
     setIsLoading(true);
     setError(null);
+
     try {
-      const response = await workService.updateWork(id, workData);
+      const response = await api.put<SingleWorkResponse>(`/works/${id}`, workData);
       return response;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to update work entry';
       setError(errorMessage);
-      Alert.alert('Error', errorMessage);
+      showToast(errorMessage, 'error');
       return null;
     } finally {
       setIsLoading(false);
@@ -64,12 +67,12 @@ export const useWorkOperations = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await workService.deleteWork(id);
+      const response = await api.delete<SingleWorkResponse>(`/works/${id}`);
       return response;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to delete work entry';
       setError(errorMessage);
-      Alert.alert('Error', errorMessage);
+      showToast(errorMessage, 'error');
       return null;
     } finally {
       setIsLoading(false);
@@ -80,12 +83,12 @@ export const useWorkOperations = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await workService.getWork(id);
-      return response as SingleWorkResponse;
+      const response = await api.get<SingleWorkResponse>(`/works/${id}`);
+      return response;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch work entry';
       setError(errorMessage);
-      Alert.alert('Error', errorMessage);
+      showToast(errorMessage, 'error');
       return null;
     } finally {
       setIsLoading(false);
@@ -96,12 +99,12 @@ export const useWorkOperations = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await workService.getAllWork({ page, filter });
-      return response as WorkResponse;
+      const response = await api.get<WorkResponse>(`/works`, { params: { page, filter } });
+      return response;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch work entries';
       setError(errorMessage);
-      Alert.alert('Error', errorMessage);
+      showToast(errorMessage, 'error');
       return null;
     } finally {
       setIsLoading(false);

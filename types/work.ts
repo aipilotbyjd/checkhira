@@ -55,6 +55,7 @@ export interface WorkEntryPayload {
   name: string;
   entries: WorkEntry[];
   total: number;
+  user_id?: string | number;
 }
 
 export interface DefaultPrice {

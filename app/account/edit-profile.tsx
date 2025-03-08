@@ -7,7 +7,6 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
@@ -16,14 +15,12 @@ import * as ImagePicker from 'expo-image-picker';
 import { UserProfile } from '../../types/user';
 import { useProfileOperations } from '../../hooks/useProfileOperations';
 import { useToast } from '../../contexts/ToastContext';
-import { profileService } from '../../services/profileService';
 import { useAuth } from '../../contexts/AuthContext';
-import { useApi } from '../../hooks/useApi';
 
 export default function EditProfile() {
   const router = useRouter();
   const { showToast } = useToast();
-  const { updateProfile, isLoading, getProfile } = useProfileOperations();
+  const { updateProfile, isLoading } = useProfileOperations();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<UserProfile>({
     first_name: '',
@@ -34,12 +31,6 @@ export default function EditProfile() {
     profile_image: '',
   });
   const { user } = useAuth();
-
-  const { isLoading: apiLoading, error, execute } = useApi({
-    showSuccessToast: true,
-    successMessage: 'Profile updated successfully!',
-    defaultErrorMessage: 'Failed to update profile'
-  });
 
   useEffect(() => {
     const loadUser = async () => {
@@ -87,7 +78,6 @@ export default function EditProfile() {
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      //show toast
       showToast('Please grant camera roll permissions to change profile picture.', 'error');
       return;
     }
@@ -99,24 +89,13 @@ export default function EditProfile() {
       quality: 0.5,
     });
 
-    //set form data
-    setFormData((prev) => ({
-      ...prev,
-      profile_image: result?.assets?.[0]?.uri || '',
-      tempImageUri: result?.assets?.[0]?.uri || '',
-      imageFile: result?.assets?.[0] as any,
-    }));
-  };
-
-  const refreshUser = async () => {
-    try {
-      const result = await execute(() => profileService.getProfile());
-      if (result?.data) {
-        // Update user context with new data
-        await updateProfile(result.data);
-      }
-    } catch (error) {
-      showToast('Failed to refresh user data', 'error');
+    if (!result.canceled && result.assets?.[0]) {
+      setFormData((prev) => ({
+        ...prev,
+        profile_image: result.assets[0].uri || '',
+        tempImageUri: result.assets[0].uri || '',
+        imageFile: result.assets[0] as any,
+      }));
     }
   };
 
@@ -141,11 +120,9 @@ export default function EditProfile() {
         formDataToSend.append('profile_image', formData.imageFile as any);
       }
 
-      // Option 1: Use the hook's updateProfile directly with FormData
+      // Use the hook's updateProfile directly with FormData
       await updateProfile(formDataToSend);
-
-      // Let the hook handle navigation and context updates
-      // (Remove router.back() here)
+      // The hook handles navigation and user context updates
     } catch (error: any) {
       if (error.status === 422) {
         const serverErrors = error.data?.errors || {};
@@ -303,13 +280,13 @@ export default function EditProfile() {
         {/* Update Button */}
         <Pressable
           onPress={handleUpdate}
-          disabled={apiLoading}
+          disabled={isLoading}
           className="mt-6 rounded-xl p-4"
           style={{
-            backgroundColor: apiLoading ? COLORS.gray[400] : COLORS.primary,
-            opacity: apiLoading ? 0.7 : 1,
+            backgroundColor: isLoading ? COLORS.gray[400] : COLORS.primary,
+            opacity: isLoading ? 0.7 : 1,
           }}>
-          {apiLoading ? (
+          {isLoading ? (
             <ActivityIndicator color="white" />
           ) : (
             <Text className="text-center text-lg font-semibold text-white">Update Profile</Text>

@@ -3,9 +3,7 @@ import {
   View,
   TextInput,
   Pressable,
-  Alert,
   ScrollView,
-  ActivityIndicator,
 } from 'react-native';
 import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -13,20 +11,19 @@ import { format } from 'date-fns';
 import { MaterialCommunityIcons, Ionicons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../../constants/theme';
 import { DeleteConfirmationModal } from '../../../components/DeleteConfirmationModal';
-import { SuccessModal } from '../../../components/SuccessModal';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useWorkOperations } from '../../../hooks/useWorkOperations';
 import { formatDateForAPI, parseCustomDate } from '../../../utils/dateFormatter';
-import { WorkEntry, WorkFormData, WorkResponse } from '../../../types/work';
+import { WorkEntry, WorkFormData } from '../../../types/work';
 import { useToast } from '../../../contexts/ToastContext';
 import { WorkFormSkeleton } from '../../../components/WorkFormSkeleton';
 import { useAppRating } from '../../../hooks/useAppRating';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useApi } from '../../../hooks/useApi';
+import { api, ApiError } from '../../../services/axiosClient';
 
 export default function EditWork() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { updateWork, deleteWork, getWork, isLoading } = useWorkOperations();
   const { showToast } = useToast();
   const { trackPositiveAction } = useAppRating();
   const { user } = useAuth();
@@ -42,18 +39,36 @@ export default function EditWork() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteEntryModal, setShowDeleteEntryModal] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<WorkEntry | null>(null);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const { execute, isLoading: isApiLoading } = useApi({
+    showSuccessToast: true,
+    successMessage: 'Work entry updated successfully!',
+    showErrorToast: true,
+    defaultErrorMessage: 'Failed to update work entry. Please try again.'
+  });
+
+  const { execute: executeDelete, isLoading: isDeleteLoading } = useApi({
+    showSuccessToast: true,
+    successMessage: 'Work entry deleted successfully!',
+    showErrorToast: true,
+    defaultErrorMessage: 'Failed to delete work entry. Please try again.'
+  });
+
+  const { execute: executeGet, isLoading: isLoadingData } = useApi({
+    showErrorToast: true,
+    defaultErrorMessage: 'Failed to load work entry. Please try again.'
+  });
 
   useEffect(() => {
     const loadWorkEntry = async () => {
       if (!id) return;
 
       try {
-        const response = await getWork(Number(id));
-        const data = response?.data;
-
-        if (data) {
+        const response = await executeGet(() => api.get(`/works/${id}`));
+        if (response?.data) {
+          const data = response.data;
           setFormData({
             date: parseCustomDate(data?.date),
             name: data?.name,
@@ -63,10 +78,10 @@ export default function EditWork() {
               diamond: item.diamond?.toString() || '',
               price: item.price?.toString() || '',
             })),
+            user_id: user?.id,
           });
         }
       } catch (error) {
-        Alert.alert('Error', 'Failed to load work entry. Please try again.');
         router.back();
       }
     };
@@ -90,11 +105,11 @@ export default function EditWork() {
 
   const addEntry = () => {
     if (formData.entries.length >= 10) {
-      Alert.alert('Maximum Limit', 'You can add up to 10 entries only.');
+      showToast('You can add up to 10 entries only.', 'error');
       return;
     }
     const lastEntry = formData.entries[formData.entries.length - 1];
-    const nextType = getNextType(lastEntry.type);
+    const nextType = lastEntry ? getNextType(lastEntry.type) : 'A';
     setFormData({
       ...formData,
       entries: [...formData.entries, { id: Date.now(), type: nextType, diamond: '', price: '' }],
@@ -103,7 +118,7 @@ export default function EditWork() {
 
   const removeEntry = (entryId?: number) => {
     if (formData.entries.length === 1) {
-      Alert.alert('Cannot Remove', 'At least one entry is required.');
+      showToast('At least one entry is required.', 'error');
       return;
     }
     const entryToDelete = entryId
@@ -113,19 +128,26 @@ export default function EditWork() {
     setEntryToDelete(entryToDelete || null);
   };
 
-  const handleUpdate = async () => {
+  const validateForm = (): boolean => {
     if (!formData.name.trim()) {
-      Alert.alert('Required Field', 'Please enter a name.');
-      return;
+      showToast('Please enter a name.', 'error');
+      return false;
     }
 
     // Validate entries
     const hasEmptyFields = formData.entries.some((entry) => !entry.diamond || !entry.price);
     if (hasEmptyFields) {
-      Alert.alert('Invalid Entries', 'Please fill in all diamond and price fields.');
-      return;
+      showToast('Please fill in all diamond and price fields.', 'error');
+      return false;
     }
 
+    return true;
+  };
+
+  const handleUpdate = async () => {
+    if (!validateForm() || isUpdating) return;
+
+    setIsUpdating(true);
     const workData = {
       date: formatDateForAPI(formData.date),
       name: formData.name.trim(),
@@ -134,38 +156,38 @@ export default function EditWork() {
       user_id: user?.id,
     };
 
+    // Optimistic update - navigate back immediately
+    router.replace('/(tabs)/work-list');
+
+    // Perform the API call after navigation
     try {
-      const result = await updateWork(Number(id), workData);
+      const result = await execute(() => api.put(`/works/${id}`, workData));
       if (result) {
-        showToast('Work entry updated successfully!');
         await trackPositiveAction();
-        router.replace('/(tabs)/work-list');
       }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update work entries. Please try again.');
-      showToast('Something went wrong!', 'error');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   const handleDelete = async () => {
     setIsDeleting(true);
+    setShowDeleteModal(false);
+
+    // Optimistic delete - navigate back immediately
+    router.replace('/(tabs)/work-list');
+
     try {
-      const result = await deleteWork(Number(id));
+      const result = await executeDelete(() => api.delete(`/works/${id}`));
       if (result) {
-        showToast('Work entry deleted successfully!');
         await trackPositiveAction();
-        router.replace('/(tabs)/work-list');
       }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to delete work entry. Please try again.');
-      showToast('Something went wrong!', 'error');
     } finally {
       setIsDeleting(false);
-      setShowDeleteModal(false);
     }
   };
 
-  if (isLoading) {
+  if (isLoadingData || isApiLoading || isDeleteLoading) {
     return <WorkFormSkeleton />;
   }
 
@@ -352,17 +374,21 @@ export default function EditWork() {
         <View className="space-y-3">
           <Pressable
             onPress={handleUpdate}
+            disabled={isUpdating}
             className="mb-4 rounded-2xl p-4"
             style={{ backgroundColor: COLORS.primary }}>
-            <Text className="text-center text-lg font-semibold text-white">Update Entries</Text>
+            <Text className="text-center text-lg font-semibold text-white">
+              {isUpdating ? 'Updating...' : 'Update Entries'}
+            </Text>
           </Pressable>
 
           <Pressable
             onPress={() => setShowDeleteModal(true)}
+            disabled={isDeleting}
             className="mb-4 rounded-2xl p-4"
             style={{ backgroundColor: COLORS.error + '15' }}>
             <Text className="text-center text-lg font-semibold" style={{ color: COLORS.error }}>
-              Delete Work Entry
+              {isDeleting ? 'Deleting...' : 'Delete Work Entry'}
             </Text>
           </Pressable>
         </View>
@@ -383,11 +409,6 @@ export default function EditWork() {
             });
             setShowDeleteEntryModal(false);
             setEntryToDelete(null);
-          } else {
-            // Delete entire work entry
-            console.log('Deleting work:', id);
-            setShowDeleteEntryModal(false);
-            showToast('Work entry deleted successfully!');
           }
         }}
         message={
@@ -401,10 +422,7 @@ export default function EditWork() {
       <DeleteConfirmationModal
         visible={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        onConfirm={() => {
-          handleDelete();
-          setShowDeleteModal(false);
-        }}
+        onConfirm={handleDelete}
         message="Are you sure you want to delete this work entry?"
       />
     </View>
