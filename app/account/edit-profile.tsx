@@ -110,10 +110,10 @@ export default function EditProfile() {
 
   const refreshUser = async () => {
     try {
-      const userData = await getProfile();
-      if (userData) {
+      const result = await execute(() => profileService.getProfile());
+      if (result?.data) {
         // Update user context with new data
-        await updateProfile(userData);
+        await updateProfile(result.data);
       }
     } catch (error) {
       showToast('Failed to refresh user data', 'error');
@@ -144,6 +144,8 @@ export default function EditProfile() {
       const result = await execute(() => profileService.updateProfile(formDataToSend));
 
       if (result) {
+        // Refresh user data after successful update
+        await refreshUser();
         router.back();
       }
     } catch (error: any) {
@@ -151,6 +153,8 @@ export default function EditProfile() {
         const serverErrors = error.data?.errors || {};
         setErrors(serverErrors);
         showToast('Please correct the errors in the form', 'error');
+      } else {
+        showToast('Failed to update profile: ' + (error.message || 'Unknown error'), 'error');
       }
     }
   };

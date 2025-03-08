@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { Alert } from 'react-native';
-import { profileService, UserProfile } from '../services/profileService';
+import { profileService } from '../services/profileService';
 import { ApiError } from '../services/api';
+import { UserProfile } from '../types/user';
 
 export const useProfileOperations = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleApiError = (err: unknown, defaultMessage: string) => {
-    const errorMessage = err instanceof ApiError 
-      ? err.message 
+    const errorMessage = err instanceof ApiError
+      ? err.message
       : defaultMessage;
     setError(errorMessage);
     throw new Error(errorMessage);
