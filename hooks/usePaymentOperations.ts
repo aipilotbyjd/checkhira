@@ -1,23 +1,27 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
-import { paymentService, PaymentPayload } from '../services/paymentService';
-import { ApiError } from '../services/api';
+import { api, ApiError } from '../services/axiosClient';
+import { Payment, PaymentPayload, PaymentSource } from '../types/payment';
 
 export const usePaymentOperations = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const handleApiError = (err: unknown, defaultErrorMessage: string) => {
+    const errorMessage = err instanceof ApiError ? err.message : defaultErrorMessage;
+    setError(errorMessage);
+    Alert.alert('Error', errorMessage);
+    return null;
+  };
+
   const createPayment = async (paymentData: PaymentPayload) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await paymentService.createPayment(paymentData);
-      return response;
+      const response = await api.post<{ data: Payment }>('/payments', paymentData);
+      return response.data;
     } catch (err) {
-      const errorMessage = err instanceof ApiError ? err.message : 'Failed to create payment';
-      setError(errorMessage);
-      Alert.alert('Error', errorMessage);
-      return null;
+      return handleApiError(err, 'Failed to create payment');
     } finally {
       setIsLoading(false);
     }
@@ -27,13 +31,10 @@ export const usePaymentOperations = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await paymentService.updatePayment(id, paymentData);
-      return response;
+      const response = await api.put<{ data: Payment }>(`/payments/${id}`, paymentData);
+      return response.data;
     } catch (err) {
-      const errorMessage = err instanceof ApiError ? err.message : 'Failed to update payment';
-      setError(errorMessage);
-      Alert.alert('Error', errorMessage);
-      return null;
+      return handleApiError(err, 'Failed to update payment');
     } finally {
       setIsLoading(false);
     }
@@ -43,13 +44,10 @@ export const usePaymentOperations = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await paymentService.deletePayment(id);
-      return response;
+      const response = await api.delete<{ data: Payment }>(`/payments/${id}`);
+      return response.data;
     } catch (err) {
-      const errorMessage = err instanceof ApiError ? err.message : 'Failed to delete payment';
-      setError(errorMessage);
-      Alert.alert('Error', errorMessage);
-      return null;
+      return handleApiError(err, 'Failed to delete payment');
     } finally {
       setIsLoading(false);
     }
@@ -59,13 +57,10 @@ export const usePaymentOperations = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await paymentService.getPayment(id);
-      return (response as any).data;
+      const response = await api.get<{ data: Payment }>(`/payments/${id}`);
+      return response.data;
     } catch (err) {
-      const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch payment';
-      setError(errorMessage);
-      Alert.alert('Error', errorMessage);
-      return null;
+      return handleApiError(err, 'Failed to fetch payment');
     } finally {
       setIsLoading(false);
     }
@@ -75,13 +70,13 @@ export const usePaymentOperations = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await paymentService.getAllPayments({ page, filter });
-      return (response as any).data;
+      const response = await api.get<{ data: { payments: { data: Payment[] }, total: number } }>(
+        '/payments',
+        { page, filter }
+      );
+      return response.data;
     } catch (err) {
-      const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch payments';
-      setError(errorMessage);
-      Alert.alert('Error', errorMessage);
-      return null;
+      return handleApiError(err, 'Failed to fetch payments');
     } finally {
       setIsLoading(false);
     }
@@ -91,13 +86,10 @@ export const usePaymentOperations = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await paymentService.getPaymentSources();
-      return (response as any).data;
+      const response = await api.get<{ data: PaymentSource[] }>('/payments/sources');
+      return response.data;
     } catch (err) {
-      const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch payment sources';
-      setError(errorMessage);
-      Alert.alert('Error', errorMessage);
-      return null;
+      return handleApiError(err, 'Failed to fetch payment sources');
     } finally {
       setIsLoading(false);
     }

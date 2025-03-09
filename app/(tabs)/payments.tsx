@@ -1,72 +1,76 @@
-import { Text, View, Pressable, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { Text, View, Pressable, ScrollView, ActivityIndicator, RefreshControl, NativeScrollEvent } from 'react-native';
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 import { useFocusEffect } from 'expo-router';
-import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { format } from 'date-fns';
 import { PaymentSkeleton } from '../../components/PaymentSkeleton';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useToast } from '../../contexts/ToastContext';
-import { notificationService } from '../../services/notificationService';
+import { api } from '../../services/axiosClient';
+import { useApi } from '../../hooks/useApi';
+import { Payment, PaymentsResponse } from '../../types/payment';
 
 export default function PaymentsList() {
   const router = useRouter();
   const actionSheetRef = useRef<ActionSheetRef>(null);
-  const [currentFilter, setCurrentFilter] = useState('all');
-  const { getAllPayments, isLoading } = usePaymentOperations();
-  const [paymentsList, setPaymentsList] = useState<any[]>([]);
-  const [total, setTotal] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hasMorePages, setHasMorePages] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [isLoadingSub, setIsLoadingSub] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const [currentFilter, setCurrentFilter] = useState<string>('all');
+  const [paymentsList, setPaymentsList] = useState<Payment[]>([]);
+  const [total, setTotal] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [hasMorePages, setHasMorePages] = useState<boolean>(true);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const [isLoadingSub, setIsLoadingSub] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
   const { setUnreadCount } = useNotification();
   const { showToast } = useToast();
 
-  const loadPaymentsRef = useRef(false);
+  // Use the modern API hook pattern
+  const { execute: executeGetPayments, isLoading } = useApi({
+    showErrorToast: true,
+    defaultErrorMessage: 'Failed to load payments. Please try again.'
+  });
+
+  const { execute: executeGetNotifications } = useApi({
+    showErrorToast: true,
+    defaultErrorMessage: 'Failed to get unread notifications count. Please try again.'
+  });
 
   useFocusEffect(
     useCallback(() => {
       loadPayments({ page: 1 });
-
-      return () => {
-        loadPaymentsRef.current = false;
-      };
+      return () => { };
     }, [currentFilter])
   );
 
   const loadPayments = async ({ page = 1 }: { page?: number }) => {
-    console.log('Loading payments:', { page, currentFilter, time: new Date().toISOString() });
     try {
       if (page === 1) {
         setPaymentsList([]);
         setIsLoadingSub(true);
+      } else {
+        setIsLoadingMore(true);
       }
 
-      const data = await getAllPayments({ page, filter: currentFilter } as {
-        page?: number;
-        filter: string;
-      });
+      const response = await executeGetPayments(() =>
+        api.get<{ data: PaymentsResponse }>('/payments', { page, filter: currentFilter })
+      );
 
-      if (data.payments && data.payments.data) {
-        const newPayments = data.payments.data;
+      if (response?.data) {
+        const { payments, total } = response.data;
 
         if (page === 1) {
-          setPaymentsList(newPayments);
-          setTotal(data.total || 0);
+          setPaymentsList(payments.data);
+          setTotal(total || 0);
         } else {
-          setPaymentsList((prev) => [...prev, ...newPayments]);
+          setPaymentsList((prev) => [...prev, ...payments.data]);
         }
 
-        setHasMorePages(data.payments.current_page < data.payments.last_page);
-        setCurrentPage(data.payments.current_page);
+        setHasMorePages(payments.current_page < payments.last_page);
+        setCurrentPage(payments.current_page);
       }
-    } catch (error) {
-      console.error('Error loading payments:', error);
     } finally {
       setIsLoadingSub(false);
       setIsLoadingMore(false);
@@ -91,97 +95,38 @@ export default function PaymentsList() {
   }, [currentFilter]);
 
   const handleLoadMore = useCallback(async () => {
-    if (!hasMorePages || isLoadingMore) return;
-
-    setIsLoadingMore(true);
+    if (!hasMorePages || isLoadingMore || isLoadingSub) return;
     await loadPayments({ page: currentPage + 1 });
-  }, [currentPage, hasMorePages, isLoadingMore]);
+  }, [currentPage, hasMorePages, isLoadingMore, isLoadingSub]);
 
-  const displayTotal = useMemo(() => {
+  const displayTotal = useMemo((): number => {
     return Number(total);
   }, [total]);
 
   const getUnreadNotificationsCount = async () => {
     try {
-      const response = await notificationService.getUnreadNotificationsCount();
-      setUnreadCount(response.data as any);
+      const response = await executeGetNotifications(() =>
+        api.get('/notifications/unread/count')
+      );
+      if (response?.data) {
+        setUnreadCount(response.data);
+      }
     } catch (error) {
-      showToast('Failed to get unread notifications count. Please try again.', 'error');
+      // Error already handled by useApi
     }
   };
 
   useEffect(() => {
-    const init = async () => {
-      console.log('get unread notifications count');
-      await getUnreadNotificationsCount();
-    };
-    init();
+    getUnreadNotificationsCount();
   }, []);
 
-  if (isLoading && currentPage === 1) {
-    return (
-      <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
-        <View
-          className="border-b px-6 pb-4 pt-6"
-          style={{
-            borderColor: COLORS.gray[200],
-            backgroundColor: COLORS.background.primary,
-          }}>
-          <View className="flex-row items-center justify-between">
-            <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-              Payments
-            </Text>
-            <View className="flex-row space-x-3">
-              <Pressable
-                onPress={() => router.push('/payments/add')}
-                className="mr-2 rounded-full p-3"
-                style={{ backgroundColor: COLORS.primary }}>
-                <MaterialCommunityIcons name="plus" size={22} color="white" />
-              </Pressable>
-              <Pressable
-                onPress={() => actionSheetRef.current?.show()}
-                className="rounded-full p-3"
-                style={{ backgroundColor: COLORS.gray[100] }}>
-                <MaterialCommunityIcons
-                  name="filter-variant"
-                  size={22}
-                  color={currentFilter === 'all' ? COLORS.gray[600] : COLORS.primary}
-                />
-              </Pressable>
-            </View>
-          </View>
-        </View>
-
-        <View className="my-6 px-4">
-          <View className="rounded-xl p-4" style={{ backgroundColor: COLORS.primary + '15' }}>
-            <View className="h-4 w-20 rounded bg-gray-200" />
-            <View className="mt-2 h-8 w-32 rounded bg-gray-200" />
-          </View>
-        </View>
-
-        <View className="px-4">
-          {[...Array(4)].map((_, index) => (
-            <View
-              key={index}
-              className="mb-4 rounded-xl p-4"
-              style={{ backgroundColor: COLORS.background.secondary }}>
-              <View className="flex-row items-center justify-between">
-                <View>
-                  <View className="h-5 w-24 rounded bg-gray-200" />
-                  <View className="mt-2 h-4 w-32 rounded bg-gray-200" />
-                  <View className="mt-1 h-3 w-20 rounded bg-gray-200" />
-                </View>
-                <View className="h-8 w-8 rounded-full bg-gray-200" />
-              </View>
-            </View>
-          ))}
-        </View>
-      </View>
-    );
+  if (isLoading && currentPage === 1 && isLoadingSub) {
+    return <PaymentSkeleton />;
   }
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
+      {/* Header */}
       <View
         className="border-b px-6 pb-4 pt-6"
         style={{
@@ -228,7 +173,7 @@ export default function PaymentsList() {
             tintColor={COLORS.primary}
           />
         }
-        onScroll={({ nativeEvent }) => {
+        onScroll={({ nativeEvent }: { nativeEvent: NativeScrollEvent }) => {
           const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
           const paddingToBottom = 50;
           const isCloseToBottom =
@@ -255,49 +200,58 @@ export default function PaymentsList() {
           </Text>
         </View>
 
-        {paymentsList.map((item) => (
-          <Pressable
-            key={item.id}
-            onPress={() => router.push(`/payments/${item.id}/edit`)}
-            className="mb-4 rounded-xl p-4"
-            style={{
-              backgroundColor: COLORS.background.secondary,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.05,
-              shadowRadius: 2,
-              elevation: 1,
-            }}>
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="text-base font-medium" style={{ color: COLORS.secondary }}>
-                  ₹ {Number(item.amount).toFixed(2)}
-                </Text>
-                <View className="mt-2 flex-row items-center">
-                  <MaterialCommunityIcons
-                    name={item.source.icon}
-                    size={16}
-                    color={COLORS.gray[500]}
-                  />
-                  <Text className="ml-2 text-sm" style={{ color: COLORS.gray[500] }}>
-                    {item.source.name}
+        {paymentsList.length === 0 && !isLoadingSub && !isLoadingMore ? (
+          <View className="items-center justify-center py-8">
+            <MaterialCommunityIcons name="cash-remove" size={48} color={COLORS.gray[400]} />
+            <Text className="mt-2 text-base" style={{ color: COLORS.gray[600] }}>
+              No payments found
+            </Text>
+          </View>
+        ) : (
+          paymentsList.map((item) => (
+            <Pressable
+              key={item.id}
+              onPress={() => router.push(`/payments/${item.id}/edit`)}
+              className="mb-4 rounded-xl p-4"
+              style={{
+                backgroundColor: COLORS.background.secondary,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+                elevation: 1,
+              }}>
+              <View className="flex-row items-center justify-between">
+                <View>
+                  <Text className="text-base font-medium" style={{ color: COLORS.secondary }}>
+                    ₹ {Number(item.amount).toFixed(2)}
                   </Text>
-                </View>
-                <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
-                  {format(item.date, 'MMMM dd, yyyy')}
-                </Text>
-                {item.from && (
+                  <View className="mt-2 flex-row items-center">
+                    <MaterialCommunityIcons
+                      name={item.source.icon}
+                      size={16}
+                      color={COLORS.gray[500]}
+                    />
+                    <Text className="ml-2 text-sm" style={{ color: COLORS.gray[500] }}>
+                      {item.source.name}
+                    </Text>
+                  </View>
                   <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
-                    From: {item.from}
+                    {format(new Date(item.date), 'MMMM dd, yyyy')}
                   </Text>
-                )}
+                  {item.from && (
+                    <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
+                      From: {item.from}
+                    </Text>
+                  )}
+                </View>
+                <View className="rounded-full p-2" style={{ backgroundColor: COLORS.gray[100] }}>
+                  <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray[500]} />
+                </View>
               </View>
-              <View className="rounded-full p-2" style={{ backgroundColor: COLORS.gray[100] }}>
-                <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray[500]} />
-              </View>
-            </View>
-          </Pressable>
-        ))}
+            </Pressable>
+          ))
+        )}
 
         {isLoadingMore && (
           <View className="py-4">

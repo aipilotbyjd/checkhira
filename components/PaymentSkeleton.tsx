@@ -1,50 +1,73 @@
-import { View } from 'react-native';
+import { Pressable, View, Text } from 'react-native';
 import { COLORS } from '../constants/theme';
-import Animated, {
-  withRepeat,
-  withSequence,
-  withTiming,
-  useAnimatedStyle,
-} from 'react-native-reanimated';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
+import { useRouter } from 'expo-router';
+import { useRef, useState } from 'react';
+
 
 export const PaymentSkeleton = () => {
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: withRepeat(
-      withSequence(withTiming(0.3, { duration: 1000 }), withTiming(0.7, { duration: 1000 })),
-      -1,
-      true
-    ),
-  }));
+  const router = useRouter();
+  const actionSheetRef = useRef<ActionSheetRef>(null);
+  const [currentFilter, setCurrentFilter] = useState('all');
 
   return (
-    <Animated.View
-      style={[
-        {
-          marginBottom: 12,
-          backgroundColor: COLORS.background.secondary,
-          borderRadius: 12,
-          padding: 16,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.05,
-          shadowRadius: 2,
-          elevation: 1,
-        },
-        animatedStyle,
-      ]}>
-      <View className="flex-row items-center justify-between">
-        <View>
-          <View className="h-6 w-24 rounded-lg" style={{ backgroundColor: COLORS.gray[200] }} />
-          <View className="mt-2 flex-row items-center">
-            <View className="h-4 w-4 rounded-full" style={{ backgroundColor: COLORS.gray[200] }} />
-            <View className="ml-2 h-4 w-20 rounded-lg" style={{ backgroundColor: COLORS.gray[200] }} />
+    <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
+      <View
+        className="border-b px-6 pb-4 pt-6"
+        style={{
+          borderColor: COLORS.gray[200],
+          backgroundColor: COLORS.background.primary,
+        }}>
+        <View className="flex-row items-center justify-between">
+          <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
+            Payments
+          </Text>
+          <View className="flex-row space-x-3">
+            <Pressable
+              onPress={() => router.push('/payments/add')}
+              className="mr-2 rounded-full p-3"
+              style={{ backgroundColor: COLORS.primary }}>
+              <MaterialCommunityIcons name="plus" size={22} color="white" />
+            </Pressable>
+            <Pressable
+              onPress={() => actionSheetRef.current?.show()}
+              className="rounded-full p-3"
+              style={{ backgroundColor: COLORS.gray[100] }}>
+              <MaterialCommunityIcons
+                name="filter-variant"
+                size={22}
+                color={currentFilter === 'all' ? COLORS.gray[600] : COLORS.primary}
+              />
+            </Pressable>
           </View>
-          <View className="mt-1 h-3 w-32 rounded-lg" style={{ backgroundColor: COLORS.gray[200] }} />
-        </View>
-        <View className="rounded-full p-2" style={{ backgroundColor: COLORS.gray[100] }}>
-          <View className="h-6 w-6 rounded-full" style={{ backgroundColor: COLORS.gray[200] }} />
         </View>
       </View>
-    </Animated.View>
+
+      <View className="my-6 px-4">
+        <View className="rounded-xl p-4" style={{ backgroundColor: COLORS.primary + '15' }}>
+          <View className="h-4 w-20 rounded bg-gray-200" />
+          <View className="mt-2 h-8 w-32 rounded bg-gray-200" />
+        </View>
+      </View>
+
+      <View className="px-4">
+        {[...Array(4)].map((_, index) => (
+          <View
+            key={index}
+            className="mb-4 rounded-xl p-4"
+            style={{ backgroundColor: COLORS.background.secondary }}>
+            <View className="flex-row items-center justify-between">
+              <View>
+                <View className="h-5 w-24 rounded bg-gray-200" />
+                <View className="mt-2 h-4 w-32 rounded bg-gray-200" />
+                <View className="mt-1 h-3 w-20 rounded bg-gray-200" />
+              </View>
+              <View className="h-8 w-8 rounded-full bg-gray-200" />
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
   );
 };

@@ -1,61 +1,33 @@
-import { api, handleResponse } from './api';
-
-export interface PaymentPayload {
-  date: Date;
-  amount: number;
-  from?: string;
-  category?: string;
-  description: string;
-  source_id: number;
-}
+import { api } from './axiosClient';
+import { Payment, PaymentPayload, PaymentSource } from '../types/payment';
 
 export const paymentService = {
-  async createPayment(data: PaymentPayload) {
-    const response = await fetch(`${api.baseUrl}/payments`, {
-      method: 'POST',
-      headers: await api.getHeaders(),
-      body: JSON.stringify(data),
-    });
-    return handleResponse(response);
+  async createPayment(paymentData: PaymentPayload) {
+    return await api.post<{ data: Payment }>('/payments', paymentData);
   },
 
-  async updatePayment(id: number, data: PaymentPayload) {
-    const response = await fetch(`${api.baseUrl}/payments/${id}`, {
-      method: 'PUT',
-      headers: await api.getHeaders(),
-      body: JSON.stringify(data),
-    });
-    return handleResponse(response);
+  async updatePayment(id: number, paymentData: PaymentPayload) {
+    return await api.put<{ data: Payment }>(`/payments/${id}`, paymentData);
   },
 
   async deletePayment(id: number) {
-    const response = await fetch(`${api.baseUrl}/payments/${id}`, {
-      method: 'DELETE',
-      headers: await api.getHeaders(),
-    });
-    return handleResponse(response);
+    return await api.delete<{ success: boolean }>(`/payments/${id}`);
   },
 
   async getPayment(id: number) {
-    const response = await fetch(`${api.baseUrl}/payments/${id}`, {
-      headers: await api.getHeaders(),
-    });
-    return handleResponse(response);
+    return await api.get<{ data: Payment }>(`/payments/${id}`);
   },
 
   async getAllPayments({ page = 1, filter = 'all' }: { page?: number; filter?: string }) {
-    const response = await fetch(`${api.baseUrl}/payments?page=${page}&filter=${filter}`, {
-      headers: await api.getHeaders(),
-    });
-    const data = await handleResponse(response);
-    console.log(data);
-    return data;
+    return await api.get<{ data: { payments: { data: Payment[] }, total: number } }>(
+      '/payments',
+      { page, filter }
+    );
   },
 
   async getPaymentSources() {
-    const response = await fetch(`${api.baseUrl}/payments/sources`, {
-      headers: await api.getHeaders(),
-    });
-    return handleResponse(response);
+    return await api.get<{ data: PaymentSource[] }>('/payment/sources');
   },
 };
+
+export type { PaymentPayload };

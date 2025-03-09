@@ -11,6 +11,10 @@ import { usePaymentOperations } from '../../../hooks/usePaymentOperations';
 import { useToast } from '../../../contexts/ToastContext';
 import { PaymentFormSkeleton } from '~/components/PaymentFormSkeleton';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useApi } from '../../../hooks/useApi';
+import { api } from '../../../services/axiosClient';
+import { formatDateForAPI, parseCustomDate } from '../../../utils/dateFormatter';
+import { PaymentSource } from '../../../types/payment';
 
 interface Payment {
   id: number;
@@ -20,12 +24,6 @@ interface Payment {
   description?: string;
   source_id: number;
   user_id?: number;
-}
-
-interface PaymentSource {
-  id: number;
-  name: string;
-  icon: string;
 }
 
 export default function EditPayment() {
@@ -50,6 +48,32 @@ export default function EditPayment() {
     usePaymentOperations();
   const [isLoadingSources, setIsLoadingSources] = useState(true);
   const { showToast } = useToast();
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const { execute, isLoading: isApiLoading } = useApi({
+    showSuccessToast: true,
+    successMessage: 'Payment updated successfully!',
+    showErrorToast: true,
+    defaultErrorMessage: 'Failed to update payment. Please try again.'
+  });
+
+  const { execute: executeDelete, isLoading: isDeleteLoading } = useApi({
+    showSuccessToast: true,
+    successMessage: 'Payment deleted successfully!',
+    showErrorToast: true,
+    defaultErrorMessage: 'Failed to delete payment. Please try again.'
+  });
+
+  const { execute: executeGet, isLoading: isLoadingData } = useApi({
+    showErrorToast: true,
+    defaultErrorMessage: 'Failed to load payment. Please try again.'
+  });
+
+  const { execute: executeGetSources, isLoading: isSourcesLoading } = useApi({
+    showErrorToast: true,
+    defaultErrorMessage: 'Failed to load payment sources. Please try again.'
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -98,25 +122,32 @@ export default function EditPayment() {
     };
 
     try {
-      const result = await updatePayment(Number(id), paymentData);
+      setIsUpdating(true);
+      const result = await execute(() => api.put(`/payments/${id}`, paymentData));
       if (result) {
         showToast('Payment updated successfully!');
         router.replace('/(tabs)/payments');
       }
     } catch (error) {
       showToast('Failed to update payment', 'error');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   const handleDelete = async () => {
     try {
-      const result = await deletePayment(Number(id));
+      setIsDeleting(true);
+      const result = await executeDelete(() => api.delete(`/payments/${id}`));
       if (result) {
         showToast('Payment deleted successfully!');
         router.replace('/(tabs)/payments');
       }
     } catch (error) {
       showToast('Failed to delete payment', 'error');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -170,42 +201,6 @@ export default function EditPayment() {
           )}
 
           <View className="mt-6 space-y-4">
-            {/* <View>
-              <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
-                Description <Text style={{ color: COLORS.error }}>*</Text>
-              </Text>
-              <TextInput
-                className="rounded-xl border p-3"
-                style={{
-                  backgroundColor: COLORS.white,
-                  borderColor: COLORS.gray[200],
-                  color: COLORS.secondary,
-                }}
-                placeholder="e.g., Monthly Rent, Electricity Bill"
-                placeholderTextColor={COLORS.gray[300]}
-                value={payment.description}
-                onChangeText={(text) => setPayment({ ...payment, description: text })}
-              />
-            </View>
-
-            <View>
-              <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
-                Category
-              </Text>
-              <TextInput
-                className="rounded-xl border p-3"
-                style={{
-                  backgroundColor: COLORS.white,
-                  borderColor: COLORS.gray[200],
-                  color: COLORS.secondary,
-                }}
-                placeholder="e.g., Housing, Utilities, Food"
-                placeholderTextColor={COLORS.gray[300]}
-                value={payment.category}
-                onChangeText={(text) => setPayment({ ...payment, category: text })}
-              />
-            </View> */}
-
             <View>
               <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
                 From <Text style={{ color: COLORS.error }}>*</Text>

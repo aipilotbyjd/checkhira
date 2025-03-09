@@ -124,9 +124,8 @@ export class ApiClient {
 
                 // Transform error to ApiError format
                 if (error.response) {
-                    // Server responded with an error status
                     const status = error.response.status;
-                    const data = error.response.data;
+                    const data = error.response.data as { message?: string };
                     const message = data?.message || error.message || 'Server error';
 
                     return Promise.reject(new ApiError(status, message, data, error));

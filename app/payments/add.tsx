@@ -5,27 +5,14 @@ import { COLORS, SIZES } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { SuccessModal } from '../../components/SuccessModal';
-import { usePaymentOperations } from '../../hooks/usePaymentOperations';
 import { useAppSettings } from '../../contexts/SettingsContext';
 import { PaymentFormSkeleton } from '../../components/PaymentFormSkeleton';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
-interface Payment {
-  id: number;
-  amount: number;
-  from?: string;
-  category?: string;
-  description?: string;
-  source_id: number;
-  user_id?: number;
-}
-
-interface PaymentSource {
-  id: number;
-  name: string;
-  icon: string;
-}
+import { formatDateForAPI } from '../../utils/dateFormatter';
+import { Payment, PaymentSource } from '../../types/payment';
+import { useApi } from '../../hooks/useApi';
+import { api } from '../../services/axiosClient';
 
 export default function AddPayment() {
   const router = useRouter();
@@ -33,39 +20,91 @@ export default function AddPayment() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [paymentSources, setPaymentSources] = useState<PaymentSource[]>([]);
-  const [isLoadingSources, setIsLoadingSources] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
 
   const [payment, setPayment] = useState<Payment>({
     id: Date.now(),
-    amount: '' as any,
+    amount: '',
     from: '',
     category: '',
     description: '',
     source_id: 1,
     user_id: user?.id,
+    date: formatDateForAPI(new Date())
   });
 
-  const { createPayment, getPaymentSources, isLoading } = usePaymentOperations();
+  const { execute, isLoading: isApiLoading } = useApi({
+    showSuccessToast: true,
+    successMessage: 'Payment added successfully!',
+    showErrorToast: true,
+    defaultErrorMessage: 'Failed to add payment. Please try again.'
+  });
+
+  const { execute: executeGetSources, isLoading: isSourcesLoading } = useApi({
+    showErrorToast: true,
+    defaultErrorMessage: 'Failed to load payment sources. Please try again.'
+  });
+
   const { settings } = useAppSettings();
   const { showToast } = useToast();
 
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoadingSources(true);
-      if (settings?.payment_sources) {
+    loadPaymentSources();
+  }, [settings]);
+
+  const validateForm = () => {
+    if (!payment.from || !payment.description || !payment.amount) {
+      showToast('Please fill in all required fields', 'error');
+      return false;
+    }
+
+    const numericAmount = parseFloat(payment.amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      showToast('Please enter a valid positive number', 'error');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm() || isSaving) return;
+
+    try {
+      setIsSaving(true);
+      const paymentData = {
+        date: formatDateForAPI(selectedDate),
+        amount: parseFloat(payment.amount),
+        from: payment.from.trim(),
+        description: payment.description.trim(),
+        source_id: payment.source_id,
+        user_id: user?.id,
+      };
+
+      const result = await execute(() => api.post('/payments', paymentData));
+      if (result) {
+        router.back();
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const loadPaymentSources = async () => {
+    try {
+      if (settings?.payment_sources && settings.payment_sources.length > 0) {
         setPaymentSources(settings.payment_sources);
       } else {
-        const sources = await getPaymentSources();
-        if (sources) {
-          setPaymentSources(sources);
+        const response = await executeGetSources(() => api.get('/payments/sources'));
+        if (response?.data) {
+          setPaymentSources(response.data);
         }
       }
-      setIsLoadingSources(false);
-    };
-
-    loadData();
-  }, [settings]);
+    } catch (error) {
+      // Error handled by useApi
+    }
+  };
 
   const renderPaymentSourcesSkeleton = () => (
     <View className="flex-row flex-wrap gap-2">
@@ -83,39 +122,7 @@ export default function AddPayment() {
     </View>
   );
 
-  const handleSave = async () => {
-    if (!payment.from || !payment.description || !payment.amount) {
-      showToast('Please fill in all required fields', 'error');
-      return;
-    }
-
-    const numericAmount = payment.amount;
-    if (isNaN(numericAmount) || numericAmount <= 0) {
-      showToast('Please enter a valid positive number', 'error');
-      return;
-    }
-
-    const paymentData = {
-      date: selectedDate,
-      amount: numericAmount,
-      from: payment.from?.trim(),
-      category: payment.category || undefined,
-      description: payment.description.trim(),
-      source_id: payment.source_id,
-    };
-
-    try {
-      const result = await createPayment(paymentData);
-      if (result) {
-        showToast('Payment added successfully');
-        router.replace('/(tabs)/payments');
-      }
-    } catch (error) {
-      showToast('Failed to save payment', 'error');
-    }
-  };
-
-  if (isLoading) {
+  if (isSourcesLoading) {
     return <PaymentFormSkeleton />;
   }
 
@@ -128,11 +135,11 @@ export default function AddPayment() {
             onPress={() => setShowDatePicker(true)}
             className="flex-row items-center rounded-2xl p-4"
             style={{ backgroundColor: COLORS.gray[100] }}>
-            <Octicons name="calendar" size={24} color={COLORS.primary} />
+            <MaterialCommunityIcons name="calendar" size={24} color={COLORS.primary} />
             <Text className="ml-3 flex-1 text-base" style={{ color: COLORS.gray[600] }}>
               {format(selectedDate, 'MMMM dd, yyyy')}
             </Text>
-            <Ionicons name="chevron-down" size={20} color={COLORS.gray[400]} />
+            <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.gray[400]} />
           </Pressable>
 
           {showDatePicker && (
@@ -148,42 +155,6 @@ export default function AddPayment() {
           )}
 
           <View className="mt-6 space-y-4">
-            {/* <View>
-              <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
-                Description <Text style={{ color: COLORS.error }}>*</Text>
-              </Text>
-              <TextInput
-                className="rounded-xl border p-3"
-                style={{
-                  backgroundColor: COLORS.white,
-                  borderColor: COLORS.gray[200],
-                  color: COLORS.secondary,
-                }}
-                placeholder="e.g., Monthly Rent, Electricity Bill"
-                placeholderTextColor={COLORS.gray[300]}
-                value={payment.description}
-                onChangeText={(text) => setPayment({ ...payment, description: text })}
-              />
-            </View> */}
-
-            {/* <View>
-              <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
-                Category
-              </Text>
-              <TextInput
-                className="rounded-xl border p-3"
-                style={{
-                  backgroundColor: COLORS.white,
-                  borderColor: COLORS.gray[200],
-                  color: COLORS.secondary,
-                }}
-                placeholder="e.g., Housing, Utilities, Food"
-                placeholderTextColor={COLORS.gray[300]}
-                value={payment.category}
-                onChangeText={(text) => setPayment({ ...payment, category: text })}
-              />
-            </View> */}
-
             <View>
               <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
                 From <Text style={{ color: COLORS.error }}>*</Text>
@@ -206,37 +177,33 @@ export default function AddPayment() {
               <Text className="mb-3 text-sm" style={{ color: COLORS.gray[400] }}>
                 Payment Source <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
-              {isLoadingSources ? (
-                renderPaymentSourcesSkeleton()
-              ) : (
-                <View className="flex-row flex-wrap gap-2">
-                  {paymentSources.map((source) => (
-                    <Pressable
-                      key={source.id}
-                      onPress={() => setPayment({ ...payment, source_id: source.id })}
-                      className={`flex-row items-center rounded-full px-4 py-2 ${payment.source_id === source.id ? 'bg-primary' : 'bg-white'
-                        }`}
+              <View className="flex-row flex-wrap gap-2">
+                {paymentSources.map((source) => (
+                  <Pressable
+                    key={source.id}
+                    onPress={() => setPayment({ ...payment, source_id: source.id })}
+                    className={`flex-row items-center rounded-full px-4 py-2 ${payment.source_id === source.id ? 'bg-primary' : 'bg-white'
+                      }`}
+                    style={{
+                      borderWidth: 1,
+                      borderColor:
+                        payment.source_id === source.id ? COLORS.primary : COLORS.gray[200],
+                    }}>
+                    <MaterialCommunityIcons
+                      name={source.icon as any}
+                      size={20}
+                      color={payment.source_id === source.id ? COLORS.black : COLORS.secondary}
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text
                       style={{
-                        borderWidth: 1,
-                        borderColor:
-                          payment.source_id === source.id ? COLORS.primary : COLORS.gray[200],
+                        color: payment.source_id === source.id ? COLORS.black : COLORS.secondary,
                       }}>
-                      <MaterialCommunityIcons
-                        name={source.icon as any}
-                        size={20}
-                        color={payment.source_id === source.id ? COLORS.black : COLORS.secondary}
-                        style={{ marginRight: 8 }}
-                      />
-                      <Text
-                        style={{
-                          color: payment.source_id === source.id ? COLORS.black : COLORS.secondary,
-                        }}>
-                        {source.name}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              )}
+                      {source.name}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
             </View>
 
             <View>
@@ -260,7 +227,7 @@ export default function AddPayment() {
                     const parts = numericText.split('.');
                     const formattedText =
                       parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : numericText;
-                    setPayment({ ...payment, amount: Number(formattedText) });
+                    setPayment({ ...payment, amount: formattedText });
                   }}
                 />
               </View>
@@ -296,9 +263,14 @@ export default function AddPayment() {
       <View className="space-y-3 p-6">
         <Pressable
           onPress={handleSave}
+          disabled={isSaving || isApiLoading}
           className="rounded-2xl p-4"
-          style={{ backgroundColor: COLORS.primary }}>
-          <Text className="text-center text-lg font-semibold text-white">Save Payment</Text>
+          style={{
+            backgroundColor: isSaving || isApiLoading ? COLORS.gray[300] : COLORS.primary,
+          }}>
+          <Text className="text-center text-lg font-semibold text-white">
+            {isSaving || isApiLoading ? 'Saving...' : 'Save Payment'}
+          </Text>
         </Pressable>
       </View>
     </View>
