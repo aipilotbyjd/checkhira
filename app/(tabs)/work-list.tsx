@@ -46,7 +46,7 @@ export default function WorkListScreen() {
   const loadWork = useCallback(async ({ page = 1, isRefresh = false }) => {
     try {
       const response = await executeGetWorks(() =>
-        api.get('/works', { params: { page, filter: currentFilter } })
+        api.get('/works', { page, filter: currentFilter })
       );
 
       if (response?.data) {

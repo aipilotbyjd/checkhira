@@ -99,7 +99,7 @@ export const useWorkOperations = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.get<WorkResponse>(`/works`, { params: { page, filter } });
+      const response = await api.get<WorkResponse>(`/works`, { page, filter });
       return response;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to fetch work entries';
