@@ -1,4 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect } from 'react';
+import { ratingService } from '../services/ratingService';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export const storage = {
   async getNumber(key: string): Promise<number> {
@@ -28,3 +31,27 @@ export const storage = {
     }
   },
 };
+
+export function useAppRating() {
+  const { t } = useLanguage();
+
+  const initializeAppRating = async () => {
+    await ratingService.promptForRating({
+      enjoyingApp: t('enjoyingApp'),
+      rateExperience: t('rateExperience'),
+      notNow: t('notNow'),
+      rateNow: t('rateNow')
+    });
+  };
+
+  useEffect(() => {
+    // Rest of your initialization logic...
+    initializeAppRating();
+  }, []);
+
+  return {
+    trackPositiveAction: ratingService.trackPositiveAction.bind(ratingService),
+    trackAppTime: ratingService.trackAppTime.bind(ratingService),
+    incrementAppUsage: ratingService.incrementAppUsage.bind(ratingService)
+  };
+}

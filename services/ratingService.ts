@@ -3,6 +3,13 @@ import * as StoreReview from 'expo-store-review';
 import { RATING_CONFIG } from '../config/ratingConfig';
 import { storage } from '../utils/appRating';
 
+interface RatingTranslations {
+  enjoyingApp: string;
+  rateExperience: string;
+  notNow: string;
+  rateNow: string;
+}
+
 class RatingService {
   async trackPositiveAction(): Promise<void> {
     const currentCount = await storage.getNumber(RATING_CONFIG.STORAGE_KEYS.POSITIVE_ACTIONS);
@@ -42,21 +49,31 @@ class RatingService {
     );
   }
 
-  async promptForRating(): Promise<void> {
+  async promptForRating(translations?: RatingTranslations): Promise<void> {
     const shouldPrompt = await this.shouldPromptRating();
     if (!shouldPrompt) return;
 
+    const defaultTranslations: RatingTranslations = {
+      enjoyingApp: 'Enjoying Checkhira?',
+      rateExperience: 'Would you like to rate your experience? Your feedback helps us improve!',
+      notNow: 'Not Now',
+      rateNow: 'Rate Now'
+    };
+
+    // Use provided translations or fallback to defaults
+    const t = translations || defaultTranslations;
+
     Alert.alert(
-      'Enjoying Checkhira?',
-      'Would you like to rate your experience? Your feedback helps us improve!',
+      t.enjoyingApp,
+      t.rateExperience,
       [
         {
-          text: 'Not Now',
+          text: t.notNow,
           style: 'cancel',
           onPress: () => storage.setValue(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT, Date.now()),
         },
         {
-          text: 'Rate Now',
+          text: t.rateNow,
           onPress: async () => {
             try {
               if (await StoreReview.hasAction()) {

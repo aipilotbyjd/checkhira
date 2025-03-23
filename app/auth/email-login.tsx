@@ -5,11 +5,13 @@ import { COLORS } from '../../constants/theme';
 import { PublicRoute } from '../../components/PublicRoute';
 import { AuthHeader } from '../../components/AuthHeader';
 import { AuthInput } from '../../components/AuthInput';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function EmailLogin() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useLanguage();
 
   const handleContinue = () => {
     if (!email.trim()) {
@@ -26,8 +28,8 @@ export default function EmailLogin() {
         className="flex-1 bg-white"
       >
         <AuthHeader
-          title="Welcome Back"
-          subtitle="Login to continue your journey"
+          title={t('welcomeBack')}
+          subtitle={t('loginToContinue')}
           showBack={false}
         />
 
@@ -53,7 +55,7 @@ export default function EmailLogin() {
             android_ripple={{ color: COLORS.primary }}
           >
             <Text className="text-center text-lg font-semibold text-white">
-              Continue
+              {t('continue')}
             </Text>
           </Pressable>
 
@@ -71,7 +73,7 @@ export default function EmailLogin() {
             style={{ borderColor: COLORS.primary }}
           >
             <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
-              Continue with Phone
+              {t('continueWithPhone')}
             </Text>
           </Pressable>
 

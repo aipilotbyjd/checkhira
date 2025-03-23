@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import * as Localization from 'expo-localization';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import en from '../locales/en.json'
@@ -16,6 +16,7 @@ interface LanguageContextType {
     t: (key: TranslationKey) => string;
     isRTL: boolean;
     availableLocales: { code: string; name: string }[];
+    loading: boolean;
 }
 
 const translations: Record<string, PartialTranslations> = {
@@ -38,6 +39,7 @@ const LanguageContext = createContext<LanguageContextType>({
     t: (key) => '',
     isRTL: false,
     availableLocales,
+    loading: true,
 });
 
 export const useLanguage = () => useContext(LanguageContext);
@@ -48,9 +50,11 @@ interface LanguageProviderProps {
 
 export const LanguageProvider = ({ children }: LanguageProviderProps) => {
     const [locale, setLocaleState] = useState('en');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadSavedLocale = async () => {
+            setLoading(true);
             try {
                 const savedLocale = await AsyncStorage.getItem('userLocale');
                 if (savedLocale) {
@@ -64,6 +68,8 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
                 }
             } catch (error) {
                 console.error('Failed to load locale:', error);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -79,15 +85,28 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
         }
     };
 
-    const t = (key: TranslationKey) => {
-        const currentTranslations = translations[locale] || translations.en;
-        return (currentTranslations[key] as string) || translations.en[key] || key;
-    };
+    // Memoize translation function for better performance
+    const t = useMemo(() => {
+        return (key: TranslationKey) => {
+            const currentTranslations = translations[locale] || translations.en;
+            return (currentTranslations[key] as string) || translations.en[key] || key;
+        };
+    }, [locale]);
 
     const isRTL = rtlLocales.includes(locale);
 
+    // Memoize context value to prevent unnecessary re-renders
+    const contextValue = useMemo(() => ({ 
+        locale, 
+        setLocale, 
+        t, 
+        isRTL, 
+        availableLocales,
+        loading
+    }), [locale, t, isRTL, loading]);
+
     return (
-        <LanguageContext.Provider value={{ locale, setLocale, t, isRTL, availableLocales }}>
+        <LanguageContext.Provider value={contextValue}>
             {children}
         </LanguageContext.Provider>
     );

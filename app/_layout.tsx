@@ -15,12 +15,44 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { AnalyticsProvider } from '../contexts/AnalyticsContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { LanguageProvider, useLanguage } from '../contexts/LanguageContext';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
 };
 
+function RootLayoutNav() {
+  const { t } = useLanguage();
+  
+  return (
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/phone-login" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/email-login" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/password" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/register-email" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/register" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/register-password" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/update-profile" options={{ headerShown: false }} />
+      <Stack.Screen name="payments/add" options={{ title: t('addPayment') }} />
+      <Stack.Screen name="payments/[id]/edit" options={{ title: t('editPayment') }} />
+      <Stack.Screen name="work/add" options={{ title: t('addWorkEntry') }} />
+      <Stack.Screen name="work/[id]/edit" options={{ title: t('editWorkEntry') }} />
+      <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="account/edit-profile" options={{ title: t('editProfile') }} />
+      <Stack.Screen name="account/terms" options={{ title: t('termsAndConditions') }} />
+      <Stack.Screen name="account/privacy" options={{ title: t('privacyPolicy') }} />
+      <Stack.Screen name="account/language" options={{ title: t('languageSettings') }} />
+      <Stack.Screen name="account/theme" options={{ title: t('themeSettings') }} />
+      <Stack.Screen name="account/about" options={{ title: t('aboutApp') }} />
+      <Stack.Screen name="account/default-prices" options={{ title: t('defaultPrices') }} />
+    </Stack>
+  );
+}
+
 export default function RootLayout() {
+  const { t } = useLanguage();
+
   useEffect(() => {
     const initializeOneSignal = async () => {
       const isDevMode = !environment.production;
@@ -52,39 +84,30 @@ export default function RootLayout() {
   }, []);
 
   const checkAppUpdates = async () => {
+    if (!environment.production) return;
+
     try {
       const update = await Updates.checkForUpdateAsync();
       if (update.isAvailable) {
         Alert.alert(
           'Update Available',
-          `A new version of ${environment.appName} is available with latest features and improvements.`,
+          'A new version of the app is available. Would you like to update now?',
           [
             {
               text: 'Later',
               style: 'cancel',
             },
             {
-              text: 'Update Now',
+              text: 'Update',
               onPress: async () => {
                 try {
                   await Updates.fetchUpdateAsync();
-                  Alert.alert(
-                    'Update Downloaded',
-                    'The app will now restart to apply the update.',
-                    [
-                      {
-                        text: 'OK',
-                        onPress: async () => {
-                          await Updates.reloadAsync();
-                        },
-                      },
-                    ]
-                  );
+                  await Updates.reloadAsync();
                 } catch (error) {
-                  console.error('Error updating app:', error);
+                  console.error('Failed to fetch or reload update:', error);
                   Alert.alert(
                     'Update Failed',
-                    'Please check your internet connection and try again later.'
+                    'There was a problem updating the app. Please try again later.'
                   );
                 }
               },
@@ -93,69 +116,56 @@ export default function RootLayout() {
         );
       }
     } catch (error) {
-      console.error('Error checking updates:', error);
+      console.error('Failed to check for updates:', error);
     }
   };
 
   useEffect(() => {
-    console.log('Updates.isEmbeddedLaunch', Updates.isEmbeddedLaunch);
-
     if (environment.production && Updates.isEmbeddedLaunch) {
       checkAppUpdates();
     }
   }, []);
 
-  useEffect(() => {
-    const initializeAppRating = async () => {
-      await ratingService.incrementAppUsage();
-      await ratingService.promptForRating();
-    };
+  const AppRatingManager = () => {
+    const { t } = useLanguage();
+    
+    useEffect(() => {
+      const initializeAppRating = async () => {
+        await ratingService.incrementAppUsage();
+        await ratingService.promptForRating({
+          enjoyingApp: t('enjoyingApp'),
+          rateExperience: t('rateExperience'),
+          notNow: t('notNow'),
+          rateNow: t('rateNow')
+        });
+      };
 
-    initializeAppRating();
-  }, []);
+      initializeAppRating();
+    }, [t]);
+    
+    return null;
+  };
 
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
         <ThemeProvider>
-          <ToastProvider>
-            <AuthProvider>
-              <NotificationProvider>
-                <SettingsProvider>
-                  <AnalyticsProvider>
-                    <RootLayoutNav />
-                  </AnalyticsProvider>
-                </SettingsProvider>
-              </NotificationProvider>
-            </AuthProvider>
-          </ToastProvider>
+          <LanguageProvider>
+            <ToastProvider>
+              <AuthProvider>
+                <NotificationProvider>
+                  <SettingsProvider>
+                    <AnalyticsProvider>
+                      <AppRatingManager />
+                      <RootLayoutNav />
+                    </AnalyticsProvider>
+                  </SettingsProvider>
+                </NotificationProvider>
+              </AuthProvider>
+            </ToastProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
-  );
-}
-
-function RootLayoutNav() {
-  return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/phone-login" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/email-login" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/password" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/register-email" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/register" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/register-password" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/update-profile" options={{ headerShown: false }} />
-      <Stack.Screen name="payments/add" options={{ title: 'Add Payment' }} />
-      <Stack.Screen name="payments/[id]/edit" options={{ title: 'Edit Payment' }} />
-      <Stack.Screen name="work/add" options={{ title: 'Add Work Entry' }} />
-      <Stack.Screen name="work/[id]/edit" options={{ title: 'Edit Work Entry' }} />
-      <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="account/edit-profile" options={{ title: 'Edit Profile' }} />
-      <Stack.Screen name="account/terms" options={{ title: 'Terms & Conditions' }} />
-      <Stack.Screen name="account/privacy" options={{ title: 'Privacy Policy' }} />
-      <Stack.Screen name="account/about" options={{ title: 'About App' }} />
-      <Stack.Screen name="account/default-prices" options={{ title: 'Default Prices' }} />
-    </Stack>
   );
 }

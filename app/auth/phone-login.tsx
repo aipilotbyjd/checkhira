@@ -13,10 +13,12 @@ import { COLORS } from '../../constants/theme';
 import { PublicRoute } from '../../components/PublicRoute';
 import { AuthHeader } from '../../components/AuthHeader';
 import { AuthInput } from '../../components/AuthInput';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function PhoneLogin() {
   const router = useRouter();
   const [phone, setPhone] = useState('');
+  const { t } = useLanguage();
 
   const validatePhone = (number: string) => {
     const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/;
@@ -46,8 +48,8 @@ export default function PhoneLogin() {
         className="flex-1 bg-white"
       >
         <AuthHeader
-          title="Welcome Back"
-          subtitle="Login to continue your journey"
+          title={t('welcomeBack')}
+          subtitle={t('loginToContinue')}
           showBack={false}
         />
 

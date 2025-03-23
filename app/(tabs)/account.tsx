@@ -9,6 +9,7 @@ import { notificationService } from '../../services/notificationService';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useProfileOperations } from '../../hooks/useProfileOperations';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function Account() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function Account() {
   const { setUnreadCount } = useNotification();
   const { isAuthenticated, logout } = useAuth();
   const { getProfile, updateProfile } = useProfileOperations();
+  const { t, loading } = useLanguage();
   const [user, setUser] = useState({
     first_name: '',
     last_name: '',
@@ -68,32 +70,37 @@ export default function Account() {
 
   const menuItems = [
     {
-      title: 'Edit Profile',
+      title: t('editProfile'),
       icon: 'account-edit',
       href: '/account/edit-profile',
     },
     {
-      title: 'Terms & Conditions',
+      title: t('termsAndConditions'),
       icon: 'file-document',
       href: '/account/terms',
     },
     {
-      title: 'Privacy Policy',
+      title: t('privacyPolicy'),
       icon: 'shield-lock',
       href: '/account/privacy',
     },
     {
-      title: 'Language Settings',
+      title: t('languageSettings'),
       icon: 'translate',
       href: '/account/language',
     },
     {
-      title: 'About App',
+      title: t('themeSettings'),
+      icon: 'theme-light-dark',
+      href: '/account/theme',
+    },
+    {
+      title: t('aboutApp'),
       icon: 'information',
       href: '/account/about',
     },
     {
-      title: 'Default Prices',
+      title: t('defaultPrices'),
       icon: 'diamond-stone',
       href: '/account/default-prices',
     },
@@ -106,24 +113,24 @@ export default function Account() {
           <View className="items-center py-12">
             <MaterialCommunityIcons name="account-circle" size={80} color={COLORS.gray[400]} />
             <Text className="mt-4 text-xl font-semibold" style={{ color: COLORS.secondary }}>
-              Welcome to the App
+              {t('welcomeBack')}
             </Text>
             <Text className="mt-2 text-center text-base" style={{ color: COLORS.gray[400] }}>
-              Please login or create an account to access all features
+              {t('loginToContinue')}
             </Text>
           </View>
 
           <View className="space-y-4">
             <Link href="/auth/phone-login" asChild>
               <Pressable className="rounded-xl p-4" style={{ backgroundColor: COLORS.primary }}>
-                <Text className="text-center text-lg font-semibold text-white">Login</Text>
+                <Text className="text-center text-lg font-semibold text-white">{t('login')}</Text>
               </Pressable>
             </Link>
 
             <Link href="/auth/register" asChild>
               <Pressable className="rounded-xl border p-4" style={{ borderColor: COLORS.primary }}>
                 <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
-                  Create Account
+                  {t('createAccount')}
                 </Text>
               </Pressable>
             </Link>
@@ -153,31 +160,47 @@ export default function Account() {
           </View>
 
           {/* Menu Items */}
-          <View className="mt-8 px-6">
-            {menuItems.map((item) => (
-              <Link key={item.href} href={item.href as any} asChild>
-                <TouchableOpacity
-                  className="mb-4 flex-row items-center rounded-2xl p-4"
-                  style={{ backgroundColor: COLORS.background.secondary }}>
-                  <MaterialCommunityIcons
-                    name={item.icon as any}
-                    size={24}
-                    color={COLORS.primary}
-                  />
-                  <Text className="ml-3 flex-1 text-base" style={{ color: COLORS.gray[600] }}>
-                    {item.title}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={20} color={COLORS.gray[400]} />
-                </TouchableOpacity>
+          <View className="mt-6 space-y-3">
+            {menuItems.map((item, index) => (
+              <Link key={index} href={item.href} asChild>
+                <Pressable className="flex-row items-center justify-between rounded-xl border p-4" style={{ borderColor: COLORS.gray[200] }}>
+                  <View className="flex-row items-center">
+                    <MaterialCommunityIcons name={item.icon as any} size={24} color={COLORS.primary} />
+                    <Text className="ml-3 text-base font-medium" style={{ color: COLORS.secondary }}>
+                      {item.title}
+                    </Text>
+                  </View>
+                  <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray[400]} />
+                </Pressable>
               </Link>
             ))}
+          </View>
 
-            {/* Logout Button */}
+          <View className="mt-auto mb-6">
             <Pressable
-              onPress={handleLogout}
+              onPress={() => {
+                Alert.alert(
+                  t('logout'),
+                  t('logoutConfirmation'),
+                  [
+                    {
+                      text: t('cancel'),
+                      style: 'cancel',
+                    },
+                    {
+                      text: t('logout'),
+                      style: 'destructive',
+                      onPress: async () => {
+                        await logout();
+                        showToast(t('logoutSuccess'));
+                      },
+                    },
+                  ]
+                );
+              }}
               className="mt-4 rounded-2xl p-4"
               style={{ backgroundColor: COLORS.error }}>
-              <Text className="text-center text-lg font-semibold text-white">Logout</Text>
+              <Text className="text-center text-lg font-semibold text-white">{t('logout')}</Text>
             </Pressable>
           </View>
 
@@ -188,7 +211,7 @@ export default function Account() {
               await refreshUser();
               router.back();
             }}
-            message="Profile updated successfully!"
+            message={t('profileUpdatedSuccess')}
           />
         </View>
       )}

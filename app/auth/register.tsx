@@ -14,10 +14,12 @@ import { COLORS } from '../../constants/theme';
 import { AuthHeader } from '../../components/AuthHeader';
 import { PublicRoute } from '../../components/PublicRoute';
 import { AuthInput } from '../../components/AuthInput';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function RegisterPhone() {
   const router = useRouter();
   const [phone, setPhone] = useState('');
+  const { t } = useLanguage();
 
   const validatePhone = (number: string) => {
     const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/;
@@ -49,8 +51,8 @@ export default function RegisterPhone() {
         className="flex-1 bg-white"
       >
         <AuthHeader
-          title="Create Account"
-          subtitle="We'll need your phone number to continue"
+          title={t('createAccount')}
+          subtitle={t('phoneNeeded')}
           showBack={false}
         />
 

@@ -73,7 +73,7 @@ export default function About() {
 
         <View className="mt-8 space-y-4">
           <Text className="text-center text-base leading-6" style={{ color: COLORS.gray[600] }}>
-            Checkhira helps diamond industry professionals track work, manage payments, and streamline operations with an intuitive mobile app.
+            {t('appDescription') || 'Checkhira helps diamond industry professionals track work, manage payments, and streamline operations with an intuitive mobile app.'}
           </Text>
 
           {/* Features Section */}
