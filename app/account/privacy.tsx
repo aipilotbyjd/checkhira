@@ -1,58 +1,57 @@
 import { Text, View, ScrollView } from 'react-native';
 import { COLORS } from '../../constants/theme';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function Privacy() {
+  const { t } = useLanguage();
+
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
       <ScrollView className="px-6 pt-8">
         <Text className="mb-6 text-2xl font-semibold" style={{ color: COLORS.secondary }}>
-          Privacy Policy
+          {t('privacyPolicy')}
         </Text>
 
         <View className="space-y-6">
           <View>
             <Text className="mb-2 text-lg font-semibold" style={{ color: COLORS.secondary }}>
-              Information Collection
+              {t('informationCollection')}
             </Text>
             <Text className="text-base leading-6" style={{ color: COLORS.gray[600] }}>
-              We collect information that you provide directly to us, including your name, email
-              address, and any other information you choose to provide.
+              {t('informationCollectionDesc')}
             </Text>
           </View>
 
           <View>
             <Text className="mb-2 text-lg font-semibold" style={{ color: COLORS.secondary }}>
-              How We Use Your Information
+              {t('howWeUseYourInformation')}
             </Text>
             <Text className="text-base leading-6" style={{ color: COLORS.gray[600] }}>
-              We use the information we collect to provide, maintain, and improve our services,
-              communicate with you, and protect our services and users.
+              {t('howWeUseYourInformationDesc')}
             </Text>
           </View>
 
           <View>
             <Text className="mb-2 text-lg font-semibold" style={{ color: COLORS.secondary }}>
-              Data Security
+              {t('dataSecurity')}
             </Text>
             <Text className="text-base leading-6" style={{ color: COLORS.gray[600] }}>
-              We implement appropriate security measures to protect your personal information
-              against unauthorized access, alteration, disclosure, or destruction.
+              {t('dataSecurityDesc')}
             </Text>
           </View>
 
           <View>
             <Text className="mb-2 text-lg font-semibold" style={{ color: COLORS.secondary }}>
-              Your Rights
+              {t('yourRights')}
             </Text>
             <Text className="text-base leading-6" style={{ color: COLORS.gray[600] }}>
-              You have the right to access, update, or delete your personal information at any time.
-              You can do this through your account settings or by contacting us directly.
+              {t('yourRightsDesc')}
             </Text>
           </View>
 
           <View>
             <Text className="mt-4 text-base italic" style={{ color: COLORS.gray[400] }}>
-              Last updated: January 1, 2024
+              {t('lastUpdated')}: {t('privacyLastUpdatedDate')}
             </Text>
           </View>
         </View>

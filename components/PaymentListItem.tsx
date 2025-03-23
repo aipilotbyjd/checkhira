@@ -1,28 +1,21 @@
 import { Pressable, View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '../constants/theme';
-import { Work } from '../types/work';
+import { Payment } from '../types/payment';
 import { useLanguage } from '../contexts/LanguageContext';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-type WorkListItemProps = {
-  item: Work;
+type PaymentListItemProps = {
+  item: Payment;
 };
 
-export function WorkListItem({ item }: WorkListItemProps) {
+export function PaymentListItem({ item }: PaymentListItemProps) {
   const router = useRouter();
   const { t } = useLanguage();
 
-  const calculateTotal = (workItems: Work['work_items']) => {
-    return workItems.reduce((sum, wi) => {
-      const diamond = Number(wi.diamond) || 0;
-      const price = Number(wi.price) || 0;
-      return sum + (diamond * price);
-    }, 0);
-  };
-
   return (
     <Pressable
-      onPress={() => router.push(`/work/${item.id}/edit`)}
+      onPress={() => router.push(`/payments/${item.id}/edit`)}
       className="mb-4 rounded-xl p-4"
       style={{
         backgroundColor: COLORS.background.secondary,
@@ -38,18 +31,16 @@ export function WorkListItem({ item }: WorkListItemProps) {
             {item.date}
           </Text>
           <Text className="mt-1 text-base" style={{ color: COLORS.secondary }}>
-            {item.name}
+            {item.from}
           </Text>
+          {item.description && (
+            <Text className="mt-1 text-sm" style={{ color: COLORS.gray[600] }}>
+              {item.description}
+            </Text>
+          )}
         </View>
-        <View className="items-end">
-          <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-            {item.work_items.reduce((sum, wi) => sum + (Number(wi.diamond) || 0), 0)} {t('diamondCount')}
-          </Text>
-          <Text className="mt-1 text-lg font-semibold" style={{ color: COLORS.success }}>
-            ₹ {calculateTotal(item.work_items).toFixed(2)}
-          </Text>
-        </View>
+        <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.gray[400]} />
       </View>
     </Pressable>
   );
-}
+} 

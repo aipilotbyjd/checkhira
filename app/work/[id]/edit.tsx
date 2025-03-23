@@ -4,10 +4,12 @@ import {
   TextInput,
   Pressable,
   ScrollView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { MaterialCommunityIcons, Ionicons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../../constants/theme';
 import { DeleteConfirmationModal } from '../../../components/DeleteConfirmationModal';
@@ -20,6 +22,8 @@ import { useAppRating } from '../../../hooks/useAppRating';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useApi } from '../../../hooks/useApi';
 import { api, ApiError } from '../../../services/axiosClient';
+import { useWorkOperations } from '../../../hooks/useWorkOperations';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 export default function EditWork() {
   const router = useRouter();
@@ -27,6 +31,9 @@ export default function EditWork() {
   const { showToast } = useToast();
   const { trackPositiveAction } = useAppRating();
   const { user } = useAuth();
+  const { t } = useLanguage();
+
+  const { getWork, updateWork, deleteWork, isLoading } = useWorkOperations();
 
   const [formData, setFormData] = useState<WorkFormData>({
     date: new Date(),
@@ -130,14 +137,14 @@ export default function EditWork() {
 
   const validateForm = (): boolean => {
     if (!formData.name.trim()) {
-      showToast('Please enter a name.', 'error');
+      showToast(t('enterName'), 'error');
       return false;
     }
 
     // Validate entries
     const hasEmptyFields = formData.entries.some((entry) => !entry.diamond || !entry.price);
     if (hasEmptyFields) {
-      showToast('Please fill in all diamond and price fields.', 'error');
+      showToast(t('invalidInput'), 'error');
       return false;
     }
 
@@ -170,21 +177,29 @@ export default function EditWork() {
     }
   };
 
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    setShowDeleteModal(false);
-
-    // Optimistic delete - navigate back immediately
-    router.replace('/(tabs)/work-list');
-
-    try {
-      const result = await executeDelete(() => api.delete(`/works/${id}`));
-      if (result) {
-        await trackPositiveAction();
-      }
-    } finally {
-      setIsDeleting(false);
-    }
+  const handleDelete = () => {
+    Alert.alert(
+      t('deleteWork'),
+      t('deleteWorkConfirmation'),
+      [
+        {
+          text: t('cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('deleteWork'),
+          onPress: async () => {
+            setIsDeleting(true);
+            const result = await deleteWork(Number(id));
+            if (result) {
+              router.back();
+            }
+            setIsDeleting(false);
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   };
 
   if (isLoadingData || isApiLoading || isDeleteLoading) {
@@ -222,7 +237,7 @@ export default function EditWork() {
       {/* Add name field */}
       <View className="px-6">
         <Text className="mb-2 mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
-          Name <Text style={{ color: COLORS.error }}>*</Text>
+          {t('name')} <Text style={{ color: COLORS.error }}>*</Text>
         </Text>
         <TextInput
           className="rounded-xl border p-3"
@@ -233,7 +248,7 @@ export default function EditWork() {
           }}
           value={formData.name}
           onChangeText={(text) => setFormData({ ...formData, name: text })}
-          placeholder="Enter name"
+          placeholder={t('enterName')}
           placeholderTextColor={COLORS.gray[400]}
         />
       </View>
@@ -242,7 +257,7 @@ export default function EditWork() {
       <ScrollView className="mt-6 flex-1 px-6">
         <View className="mb-4 flex-row items-center justify-between">
           <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
-            Entries
+            {t('works')}
           </Text>
           <View className="flex-row items-center justify-end space-x-2">
             <Pressable
@@ -269,7 +284,7 @@ export default function EditWork() {
             <View className="mb-3 flex-row items-center justify-between">
               <View className="flex-row items-center">
                 <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-                  Entry {index + 1}
+                  {t('workItemDetails')} {index + 1}
                 </Text>
                 <View
                   className="ml-2 rounded-full px-3 py-1"
@@ -290,7 +305,7 @@ export default function EditWork() {
             <View className="flex-row space-x-3">
               <View className="mr-2 flex-1">
                 <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
-                  Diamond
+                  {t('diamondWeight')}
                 </Text>
                 <TextInput
                   className="rounded-xl border p-3"
@@ -315,7 +330,7 @@ export default function EditWork() {
               </View>
               <View className="mr-2 flex-1">
                 <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
-                  Price
+                  {t('price')}
                 </Text>
                 <TextInput
                   className="rounded-xl border p-3"
@@ -340,7 +355,7 @@ export default function EditWork() {
               </View>
               <View className="flex-1">
                 <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
-                  Total
+                  {t('total')}
                 </Text>
                 <View
                   className="rounded-xl border bg-gray-200 p-3"
@@ -362,7 +377,7 @@ export default function EditWork() {
             <View className="flex-row items-center">
               <MaterialCommunityIcons name="cash-multiple" size={24} color={COLORS.primary} />
               <Text className="ml-3 text-lg font-semibold" style={{ color: COLORS.secondary }}>
-                Total Amount
+                {t('totalPrice')}
               </Text>
             </View>
             <Text className="text-xl font-bold" style={{ color: COLORS.primary }}>
@@ -378,17 +393,17 @@ export default function EditWork() {
             className="mb-4 rounded-2xl p-4"
             style={{ backgroundColor: COLORS.primary }}>
             <Text className="text-center text-lg font-semibold text-white">
-              {isUpdating ? 'Updating...' : 'Update Entries'}
+              {isUpdating ? t('Updating...') : t('editWork')}
             </Text>
           </Pressable>
 
           <Pressable
-            onPress={() => setShowDeleteModal(true)}
+            onPress={handleDelete}
             disabled={isDeleting}
             className="mb-4 rounded-2xl p-4"
-            style={{ backgroundColor: COLORS.error + '15' }}>
-            <Text className="text-center text-lg font-semibold" style={{ color: COLORS.error }}>
-              {isDeleting ? 'Deleting...' : 'Delete Work Entry'}
+            style={{ backgroundColor: COLORS.danger }}>
+            <Text className="text-center text-lg font-semibold text-white">
+              {isDeleting ? t('Deleting...') : t('deleteWork')}
             </Text>
           </Pressable>
         </View>
@@ -413,17 +428,10 @@ export default function EditWork() {
         }}
         message={
           entryToDelete
-            ? `Are you sure you want to remove Entry ${formData.entries.findIndex((e) => e.id === entryToDelete.id) + 1
+            ? t('deleteConfirmation') + ` ${formData.entries.findIndex((e) => e.id === entryToDelete.id) + 1
             } (Type ${entryToDelete.type})?`
-            : 'Are you sure you want to delete these entries?'
+            : t('deleteWorkConfirmation')
         }
-      />
-
-      <DeleteConfirmationModal
-        visible={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={handleDelete}
-        message="Are you sure you want to delete this work entry?"
       />
     </View>
   );

@@ -17,11 +17,13 @@ import { useToast } from '../../contexts/ToastContext';
 import { api } from '../../services/axiosClient';
 import { useApi } from '../../hooks/useApi';
 import { Work } from '../../types/work';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function WorkListScreen() {
   const router = useRouter();
   const { showToast } = useToast();
   const actionSheetRef = useRef<ActionSheetRef>(null);
+  const { t } = useLanguage();
 
   const [workList, setWorkList] = useState<Work[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,12 +37,12 @@ export default function WorkListScreen() {
   // Use the modern API hook pattern
   const { execute: executeGetWorks, isLoading } = useApi({
     showErrorToast: true,
-    defaultErrorMessage: 'Failed to load work entries. Please try again.'
+    defaultErrorMessage: t('Failed to load work entries. Please try again.')
   });
 
   const { execute: executeGetNotifications } = useApi({
     showErrorToast: true,
-    defaultErrorMessage: 'Failed to get unread notifications count. Please try again.'
+    defaultErrorMessage: t('Failed to get unread notifications count. Please try again.')
   });
 
   const loadWork = useCallback(async ({ page = 1, isRefresh = false }) => {
@@ -121,7 +123,7 @@ export default function WorkListScreen() {
           }}>
           <View className="flex-row items-center justify-between">
             <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-              Work List
+              {t('workList')}
             </Text>
             <View className="flex-row space-x-3">
               <Pressable
@@ -169,7 +171,7 @@ export default function WorkListScreen() {
         }}>
         <View className="flex-row items-center justify-between">
           <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-            Work List
+            {t('workList')}
           </Text>
           <View className="flex-row space-x-3">
             <Pressable
@@ -216,7 +218,7 @@ export default function WorkListScreen() {
         {/* Today's total section */}
         <View className="my-6 rounded-xl p-4" style={{ backgroundColor: COLORS.primary + '15' }}>
           <Text className="text-sm font-medium" style={{ color: COLORS.gray[600] }}>
-            Today's Total
+            {t('todayTotal')}
           </Text>
           <Text className="mt-2 text-3xl font-bold" style={{ color: COLORS.primary }}>
             ₹ {todayTotal.toFixed(2)}
@@ -240,7 +242,7 @@ export default function WorkListScreen() {
           <View className="items-center justify-center py-8">
             <MaterialCommunityIcons name="file-document-outline" size={48} color={COLORS.gray[400]} />
             <Text className="mt-2 text-base" style={{ color: COLORS.gray[600] }}>
-              No work entries found
+              {t('noWorkEntries')}
             </Text>
           </View>
         )}
@@ -251,14 +253,14 @@ export default function WorkListScreen() {
         containerStyle={{ backgroundColor: COLORS.background.primary }}>
         <View className="p-4">
           <Text className="mb-4 text-lg font-bold" style={{ color: COLORS.secondary }}>
-            Filter Work List
+            {t('filterWorkList')}
           </Text>
 
           {[
-            { label: 'All', value: 'all' },
-            { label: 'Today', value: 'today' },
-            { label: 'This Week', value: 'week' },
-            { label: 'This Month', value: 'month' },
+            { label: t('all'), value: 'all' },
+            { label: t('today'), value: 'today' },
+            { label: t('thisWeek'), value: 'week' },
+            { label: t('thisMonth'), value: 'month' },
           ].map((option) => (
             <Pressable
               key={option.value}

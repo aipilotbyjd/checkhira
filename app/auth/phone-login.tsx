@@ -75,7 +75,7 @@ export default function PhoneLogin() {
             android_ripple={{ color: COLORS.primary }}
           >
             <Text className="text-center text-lg font-semibold text-white">
-              Continue
+              {t('continue')}
             </Text>
           </Pressable>
 
@@ -93,7 +93,7 @@ export default function PhoneLogin() {
             style={{ borderColor: COLORS.primary }}
           >
             <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
-              Continue with Email
+              {t('continueWithEmail')}
             </Text>
           </Pressable>
 

@@ -12,6 +12,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { api } from '../../services/axiosClient';
 import { useApi } from '../../hooks/useApi';
 import { Payment, PaymentsResponse } from '../../types/payment';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function PaymentsList() {
   const router = useRouter();
@@ -26,11 +27,12 @@ export default function PaymentsList() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const { setUnreadCount } = useNotification();
   const { showToast } = useToast();
+  const { t } = useLanguage();
 
   // Use the modern API hook pattern
   const { execute: executeGetPayments, isLoading } = useApi({
     showErrorToast: true,
-    defaultErrorMessage: 'Failed to load payments. Please try again.'
+    defaultErrorMessage: t('failedToLoadPayments')
   });
 
   const { execute: executeGetNotifications } = useApi({
@@ -71,6 +73,8 @@ export default function PaymentsList() {
         setHasMorePages(payments.current_page < payments.last_page);
         setCurrentPage(payments.current_page);
       }
+    } catch (error) {
+      console.error('Error loading payments:', error);
     } finally {
       setIsLoadingSub(false);
       setIsLoadingMore(false);
@@ -140,7 +144,7 @@ export default function PaymentsList() {
         }}>
         <View className="flex-row items-center justify-between">
           <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-            Payments
+            {t('paymentsList')}
           </Text>
           <View className="flex-row space-x-3">
             <Pressable
@@ -188,12 +192,12 @@ export default function PaymentsList() {
         <View className="my-6 rounded-xl p-4" style={{ backgroundColor: COLORS.primary + '15' }}>
           <Text className="text-sm font-medium" style={{ color: COLORS.gray[600] }}>
             {currentFilter === 'all'
-              ? 'Total'
+              ? t('total')
               : currentFilter === 'today'
-                ? "Today's Total"
+                ? t('todayTotal')
                 : currentFilter === 'week'
-                  ? "This Week's Total"
-                  : "This Month's Total"}
+                  ? t('thisWeek') + ' ' + t('total')
+                  : t('thisMonth') + ' ' + t('total')}
           </Text>
           <Text className="mt-2 text-3xl font-bold" style={{ color: COLORS.primary }}>
             ₹ {Number(displayTotal).toFixed(2)}
@@ -204,7 +208,7 @@ export default function PaymentsList() {
           <View className="items-center justify-center py-8">
             <MaterialCommunityIcons name="cash-remove" size={48} color={COLORS.gray[400]} />
             <Text className="mt-2 text-base" style={{ color: COLORS.gray[600] }}>
-              No payments found
+              {t('noPaymentsFound')}
             </Text>
           </View>
         ) : (
@@ -265,14 +269,14 @@ export default function PaymentsList() {
         containerStyle={{ backgroundColor: COLORS.background.primary }}>
         <View className="p-4">
           <Text className="mb-4 text-lg font-bold" style={{ color: COLORS.secondary }}>
-            Filter Payments
+            {t('filterPaymentsList')}
           </Text>
 
           {[
-            { label: 'All', value: 'all' },
-            { label: 'Today', value: 'today' },
-            { label: 'This Week', value: 'week' },
-            { label: 'This Month', value: 'month' },
+            { label: t('all'), value: 'all' },
+            { label: t('today'), value: 'today' },
+            { label: t('thisWeek'), value: 'week' },
+            { label: t('thisMonth'), value: 'month' },
           ].map((option) => (
             <Pressable
               key={option.value}

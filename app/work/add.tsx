@@ -23,6 +23,7 @@ import { WorkFormSkeleton } from '../../components/WorkFormSkeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { api, ApiError } from '../../services/axiosClient';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function AddWork() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function AddWork() {
     defaultErrorMessage: 'Failed to save work entries. Please try again.'
   });
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const [formData, setFormData] = useState<WorkFormData>({
     date: new Date(),
@@ -235,13 +237,13 @@ export default function AddWork() {
 
   const validateForm = (): boolean => {
     if (!formData.name.trim()) {
-      showToast('Please enter a name.', 'error');
+      showToast(t('enterName'), 'error');
       return false;
     }
 
     const hasEmptyFields = formData.entries.some((entry) => !entry.diamond || !entry.price);
     if (hasEmptyFields) {
-      showToast('Please fill in all diamond and price fields.', 'error');
+      showToast(t('invalidInput'), 'error');
       return false;
     }
 
@@ -313,7 +315,7 @@ export default function AddWork() {
       {/* Name Field */}
       <View className="px-6">
         <Text className="mb-2 mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
-          Name <Text style={{ color: COLORS.error }}>*</Text>
+          {t('name')} <Text style={{ color: COLORS.error }}>*</Text>
         </Text>
         <TextInput
           className="rounded-xl border p-3"
@@ -324,7 +326,7 @@ export default function AddWork() {
           }}
           value={formData.name}
           onChangeText={(text) => setFormData({ ...formData, name: text })}
-          placeholder="Enter name"
+          placeholder={t('enterName')}
           placeholderTextColor={COLORS.gray[400]}
         />
       </View>
@@ -333,7 +335,7 @@ export default function AddWork() {
       <ScrollView className="mt-6 flex-1 px-6">
         <View className="mb-4 flex-row items-center justify-between">
           <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
-            Entries
+            {t('works')}
           </Text>
           <View className="flex-row items-center justify-end space-x-2">
             <Pressable
@@ -360,7 +362,7 @@ export default function AddWork() {
             <View className="mb-3 flex-row items-center justify-between">
               <View className="flex-row items-center">
                 <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-                  Entry {index + 1}
+                  {t('workItemDetails')} {index + 1}
                 </Text>
                 <View
                   className="ml-2 rounded-full px-3 py-1"
@@ -382,7 +384,7 @@ export default function AddWork() {
             <View className="flex-row space-x-3">
               <View className="mr-2 flex-1">
                 <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
-                  Diamond
+                  {t('diamondWeight')}
                 </Text>
                 <TextInput
                   className="rounded-xl border p-3"
@@ -392,7 +394,7 @@ export default function AddWork() {
                     color: COLORS.secondary,
                   }}
                   value={entry.diamond}
-                  placeholder="0"
+                  placeholder={t('enterWeight')}
                   keyboardType="numeric"
                   onChangeText={(text) => {
                     const numericText = text.replace(/[^0-9]/g, '');
@@ -402,7 +404,7 @@ export default function AddWork() {
               </View>
               <View className="mr-2 flex-1">
                 <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
-                  Price
+                  {t('price')}
                 </Text>
                 <TextInput
                   className="rounded-xl border p-3"
@@ -412,7 +414,7 @@ export default function AddWork() {
                     color: COLORS.secondary,
                   }}
                   value={entry.price}
-                  placeholder="0.00"
+                  placeholder={t('enterPrice')}
                   keyboardType="numeric"
                   onChangeText={(text) => {
                     const numericText = text.replace(/[^0-9.]/g, '');
@@ -422,7 +424,7 @@ export default function AddWork() {
               </View>
               <View className="flex-1">
                 <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
-                  Total
+                  {t('total')}
                 </Text>
                 <View
                   className="rounded-xl border bg-gray-200 p-3"
@@ -444,7 +446,7 @@ export default function AddWork() {
             <View className="flex-row items-center">
               <MaterialCommunityIcons name="cash-multiple" size={24} color={COLORS.primary} />
               <Text className="ml-3 text-lg font-semibold" style={{ color: COLORS.secondary }}>
-                Total Amount
+                {t('totalPrice')}
               </Text>
             </View>
             <Text className="text-xl font-bold" style={{ color: COLORS.primary }}>
@@ -462,7 +464,7 @@ export default function AddWork() {
             opacity: isSaving ? 0.7 : 1,
           }}>
           <Text className="text-center text-lg font-semibold text-white">
-            {isSaving ? 'Saving...' : 'Save Entries'}
+            {isSaving ? 'Saving...' : t('saveWork')}
           </Text>
         </Pressable>
       </View>
@@ -482,7 +484,7 @@ export default function AddWork() {
           setShowDeleteModal(false);
           setEntryToDelete(null);
         }}
-        message={`Are you sure you want to remove Entry ${formData.entries.findIndex((e) => e.id === entryToDelete?.id) + 1
+        message={`${t('deleteConfirmation')} ${formData.entries.findIndex((e) => e.id === entryToDelete?.id) + 1
           } (Type ${entryToDelete?.type})?`}
       />
     </View>

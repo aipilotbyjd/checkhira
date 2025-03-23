@@ -16,6 +16,7 @@ import { notificationService } from '../../services/notificationService';
 import { statsService } from '../../services/statsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNotification } from '../../contexts/NotificationContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 // Add this type definition above the Home component
 interface Activity {
@@ -44,6 +45,7 @@ export default function Home() {
   const [user, setUser] = useState<any | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const { setUnreadCount, refreshUnreadCount } = useNotification();
+  const { t } = useLanguage();
 
   const fetchActivities = async () => {
     try {
@@ -176,7 +178,7 @@ export default function Home() {
       {/* Work Dashboard */}
       <View className="mt-6 px-6">
         <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
-          Work Dashboard
+          {t('workDashboard')}
         </Text>
         <View className="mt-4 flex-row flex-wrap justify-between">
           {/* Today's Work Stats */}
@@ -186,7 +188,7 @@ export default function Home() {
             <View className="flex-row items-center justify-between">
               <MaterialCommunityIcons name="calendar-today" size={24} color={COLORS.primary} />
               <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
-                Today
+                {t('today')}
               </Text>
             </View>
             <View className="mt-3">
@@ -194,7 +196,7 @@ export default function Home() {
                 ₹{Number(stats.today?.work_amount || '0.00').toFixed(2)}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                Works: {stats.today?.works || 0}
+                {t('works')}: {stats.today?.works || 0}
               </Text>
             </View>
           </View>
@@ -206,7 +208,7 @@ export default function Home() {
             <View className="flex-row items-center justify-between">
               <MaterialCommunityIcons name="calendar-week" size={24} color={COLORS.success} />
               <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
-                This Week
+                {t('thisWeek')}
               </Text>
             </View>
             <View className="mt-3">
@@ -214,7 +216,7 @@ export default function Home() {
                 ₹{Number(stats.weekly?.work_amount || '0.00').toFixed(2)}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                Works: {stats.weekly?.works || 0}
+                {t('works')}: {stats.weekly?.works || 0}
               </Text>
             </View>
           </View>
@@ -226,7 +228,7 @@ export default function Home() {
             <View className="flex-row items-center justify-between">
               <MaterialCommunityIcons name="calendar-month" size={24} color="#FF6B6B" />
               <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
-                This Month
+                {t('thisMonth')}
               </Text>
             </View>
             <View className="mt-3">
@@ -234,7 +236,7 @@ export default function Home() {
                 ₹{Number(stats.monthly?.work_amount || '0.00').toFixed(2)}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                Works: {stats.monthly?.works || 0}
+                {t('works')}: {stats.monthly?.works || 0}
               </Text>
             </View>
           </View>
@@ -246,7 +248,7 @@ export default function Home() {
             <View className="flex-row items-center justify-between">
               <MaterialCommunityIcons name="chart-box" size={24} color="#4ECDC4" />
               <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
-                Total
+                {t('total')}
               </Text>
             </View>
             <View className="mt-3">
@@ -254,7 +256,7 @@ export default function Home() {
                 ₹{Number(stats.total_work_amount || '0.00').toFixed(2)}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                Works: {stats.total_works || 0}
+                {t('works')}: {stats.total_works || 0}
               </Text>
             </View>
           </View>
