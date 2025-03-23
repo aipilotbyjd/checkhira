@@ -44,7 +44,8 @@
         {
           "mode": "production"
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,

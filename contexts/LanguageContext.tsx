@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import * as Localization from 'expo-localization';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import en from '../locales/en.json';
+import en from '../locales/en.json'
 import hi from '../locales/hi.json';
 import gu from '../locales/gu.json';
 
@@ -27,7 +27,7 @@ const availableLocales = [
     { code: 'gu', name: 'ગુજરાતી' },
 ];
 
-const rtlLocales = []; // Add RTL language codes like 'ar', 'he', etc if needed
+const rtlLocales: string[] = []; // Add RTL language codes like 'ar', 'he', etc if needed
 
 const LanguageContext = createContext<LanguageContextType>({
     locale: 'en',

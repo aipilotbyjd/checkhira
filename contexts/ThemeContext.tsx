@@ -6,7 +6,7 @@ import { COLORS, DARK_COLORS } from '../constants/theme';
 type ThemeMode = 'light' | 'dark' | 'system';
 
 interface ThemeContextType {
-    theme: typeof COLORS;
+    theme: typeof COLORS | typeof DARK_COLORS;
     themeMode: ThemeMode;
     setThemeMode: (mode: ThemeMode) => Promise<void>;
     isDark: boolean;
