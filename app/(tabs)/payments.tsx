@@ -232,12 +232,12 @@ export default function PaymentsList() {
                   </Text>
                   <View className="mt-2 flex-row items-center">
                     <MaterialCommunityIcons
-                      name={item.source.icon}
+                      name={item.source?.icon}
                       size={16}
                       color={COLORS.gray[500]}
                     />
                     <Text className="ml-2 text-sm" style={{ color: COLORS.gray[500] }}>
-                      {item.source.name}
+                      {item.source?.name}
                     </Text>
                   </View>
                   <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>

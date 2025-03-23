@@ -32,7 +32,12 @@ export default function AddPayment() {
     description: '',
     source_id: 1,
     user_id: user?.id,
-    date: formatDateForAPI(new Date())
+    date: formatDateForAPI(new Date()),
+    source: {
+      id: 1,
+      name: 'Default',
+      icon: 'credit-card'
+    }
   });
 
   const { execute, isLoading: isApiLoading } = useApi({
@@ -57,15 +62,18 @@ export default function AddPayment() {
   const validateForm = () => {
     const errors = [];
 
-    if (!payment.from.trim()) {
+    if (!payment.from?.trim()) {
       errors.push(t('pleaseEnterFrom'));
     }
 
-    if (!payment.description.trim()) {
+    if (!payment.description?.trim()) {
       errors.push(t('pleaseEnterDescription'));
     }
 
-    const numericAmount = parseFloat(payment.amount);
+    const numericAmount = typeof payment.amount === 'number'
+      ? payment.amount
+      : parseFloat(payment.amount);
+
     if (isNaN(numericAmount) || numericAmount <= 0) {
       errors.push(t('pleaseEnterValidAmount'));
     }
@@ -237,7 +245,7 @@ export default function AddPayment() {
                   }}
                   placeholder="0.00"
                   placeholderTextColor={COLORS.gray[300]}
-                  value={payment.amount.toString()}
+                  value={String(payment.amount)}
                   keyboardType="decimal-pad"
                   onChangeText={(text) => {
                     let numericText = text.replace(/[^0-9.]/g, '');

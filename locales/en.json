@@ -128,5 +128,8 @@
   "failedToAddPayment": "Failed to add payment. Please try again.",
   "failedToUpdatePayment": "Failed to update payment. Please try again.",
   "failedToDeletePayment": "Failed to delete payment. Please try again.",
-  "failedToLoadPaymentSources": "Failed to load payment sources. Please try again."
+  "failedToLoadPaymentSources": "Failed to load payment sources. Please try again.",
+  "pleaseEnterFrom": "Please enter who the payment is from",
+  "pleaseEnterDescription": "Please enter a description",
+  "pleaseEnterValidAmount": "Please enter a valid amount"
 } 

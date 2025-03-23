@@ -5,7 +5,8 @@ export interface Payment {
     from?: string;
     source_id: number;
     user_id?: number;
-    source: {
+    description?: string;
+    source?: {
         id: number;
         name: string;
         icon: string;

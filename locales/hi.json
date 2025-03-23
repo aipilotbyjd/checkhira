@@ -120,12 +120,14 @@
     "fromExample": "उदा., जॉन डो, कंपनी इंक",
     "addPaymentDetails": "इस भुगतान के बारे में कोई अतिरिक्त विवरण जोड़ें",
     "saving": "सहेज रहा है...",
-    "savePayment": "भुगतान सहेजें",
     "updatePayment": "भुगतान अपडेट करें",
     "paymentUpdatedSuccess": "भुगतान सफलतापूर्वक अपडेट किया गया",
     "paymentDeletedSuccess": "भुगतान सफलतापूर्वक हटाया गया",
     "failedToAddPayment": "भुगतान जोड़ने में विफल। कृपया पुनः प्रयास करें।",
     "failedToUpdatePayment": "भुगतान अपडेट करने में विफल। कृपया पुनः प्रयास करें।",
     "failedToDeletePayment": "भुगतान हटाने में विफल। कृपया पुनः प्रयास करें।",
-    "failedToLoadPaymentSources": "भुगतान स्रोत लोड करने में विफल। कृपया पुनः प्रयास करें।"
+    "failedToLoadPaymentSources": "भुगतान स्रोत लोड करने में विफल। कृपया पुनः प्रयास करें।",
+    "pleaseEnterFrom": "कृपया भुगतान किससे मिला दर्ज करें",
+    "pleaseEnterDescription": "कृपया वर्णन दर्ज करें",
+    "pleaseEnterValidAmount": "कृपया वैध राशि दर्ज करें"
 }
