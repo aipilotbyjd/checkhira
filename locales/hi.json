@@ -114,5 +114,18 @@
     "paymentDashboard": "भुगतान डैशबोर्ड",
     "todaysPayments": "आज के भुगतान",
     "recentActivities": "हाल की गतिविधियाँ",
-    "failedToLoadPayments": "भुगतान लोड करने में विफल हो गए। कृपया फिर से प्रयास करें।"
+    "failedToLoadPayments": "भुगतान लोड करने में विफल हो गए। कृपया फिर से प्रयास करें।",
+    "notes": "नोट्स",
+    "enterAmountInRupees": "राशि रुपये में दर्ज करें",
+    "fromExample": "उदा., जॉन डो, कंपनी इंक",
+    "addPaymentDetails": "इस भुगतान के बारे में कोई अतिरिक्त विवरण जोड़ें",
+    "saving": "सहेज रहा है...",
+    "savePayment": "भुगतान सहेजें",
+    "updatePayment": "भुगतान अपडेट करें",
+    "paymentUpdatedSuccess": "भुगतान सफलतापूर्वक अपडेट किया गया",
+    "paymentDeletedSuccess": "भुगतान सफलतापूर्वक हटाया गया",
+    "failedToAddPayment": "भुगतान जोड़ने में विफल। कृपया पुनः प्रयास करें।",
+    "failedToUpdatePayment": "भुगतान अपडेट करने में विफल। कृपया पुनः प्रयास करें।",
+    "failedToDeletePayment": "भुगतान हटाने में विफल। कृपया पुनः प्रयास करें।",
+    "failedToLoadPaymentSources": "भुगतान स्रोत लोड करने में विफल। कृपया पुनः प्रयास करें।"
 }

@@ -116,5 +116,17 @@
   "paymentDashboard": "Payment Dashboard",
   "todaysPayments": "Today's Payments",
   "recentActivities": "Recent Activities",
-  "failedToLoadPayments": "Failed to load payments. Please try again."
+  "failedToLoadPayments": "Failed to load payments. Please try again.",
+  "notes": "Notes",
+  "enterAmountInRupees": "Enter amount in rupees",
+  "fromExample": "e.g., John Doe, Company Inc",
+  "addPaymentDetails": "Add any additional details about this payment",
+  "saving": "Saving...",
+  "updatePayment": "Update Payment",
+  "paymentUpdatedSuccess": "Payment updated successfully",
+  "paymentDeletedSuccess": "Payment deleted successfully",
+  "failedToAddPayment": "Failed to add payment. Please try again.",
+  "failedToUpdatePayment": "Failed to update payment. Please try again.",
+  "failedToDeletePayment": "Failed to delete payment. Please try again.",
+  "failedToLoadPaymentSources": "Failed to load payment sources. Please try again."
 } 

@@ -15,6 +15,7 @@ import { useApi } from '../../../hooks/useApi';
 import { api } from '../../../services/axiosClient';
 import { formatDateForAPI, parseCustomDate } from '../../../utils/dateFormatter';
 import { PaymentSource } from '../../../types/payment';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 interface Payment {
   id: number;
@@ -50,12 +51,13 @@ export default function EditPayment() {
   const { showToast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { t } = useLanguage();
 
   const { execute, isLoading: isApiLoading } = useApi({
     showSuccessToast: true,
-    successMessage: 'Payment updated successfully!',
+    successMessage: t('paymentUpdatedSuccess'),
     showErrorToast: true,
-    defaultErrorMessage: 'Failed to update payment. Please try again.'
+    defaultErrorMessage: t('failedToUpdatePayment')
   });
 
   const { execute: executeDelete, isLoading: isDeleteLoading } = useApi({
@@ -203,7 +205,7 @@ export default function EditPayment() {
           <View className="mt-6 space-y-4">
             <View>
               <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
-                From <Text style={{ color: COLORS.error }}>*</Text>
+                {t('from')} <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
               <TextInput
                 className="rounded-xl border p-3"
@@ -221,7 +223,7 @@ export default function EditPayment() {
 
             <View>
               <Text className="mb-3 text-sm" style={{ color: COLORS.gray[400] }}>
-                Payment Source <Text style={{ color: COLORS.error }}>*</Text>
+                {t('paymentMethod')} <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
               {isLoadingSources ? (
                 renderPaymentSourcesSkeleton()
@@ -258,7 +260,7 @@ export default function EditPayment() {
 
             <View>
               <Text className="mb-2 mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
-                Amount <Text style={{ color: COLORS.error }}>*</Text>
+                {t('amount')} <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
               <View className="relative">
                 <TextInput
@@ -279,13 +281,13 @@ export default function EditPayment() {
                 />
               </View>
               <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
-                Enter amount in dollars
+                {t('enterAmountInRupees')}
               </Text>
             </View>
 
             <View>
               <Text className="mb-2 mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
-                Notes
+                {t('notes')}
               </Text>
               <TextInput
                 className="rounded-xl border p-3"
@@ -295,7 +297,7 @@ export default function EditPayment() {
                   color: COLORS.secondary,
                   height: 100,
                 }}
-                placeholder="Add any additional details about this payment"
+                placeholder={t('addPaymentDetails')}
                 placeholderTextColor={COLORS.gray[300]}
                 multiline={true}
                 textAlignVertical="top"
@@ -312,7 +314,9 @@ export default function EditPayment() {
           onPress={handleUpdate}
           className="mb-4 rounded-2xl p-4"
           style={{ backgroundColor: COLORS.primary }}>
-          <Text className="text-center text-lg font-semibold text-white">Update Payment</Text>
+          <Text className="text-center text-lg font-semibold text-white">
+            {t('updatePayment')}
+          </Text>
         </Pressable>
 
         <Pressable
@@ -320,7 +324,7 @@ export default function EditPayment() {
           className="rounded-2xl p-4"
           style={{ backgroundColor: COLORS.error + '15' }}>
           <Text className="text-center text-lg font-semibold" style={{ color: COLORS.error }}>
-            Delete Payment
+            {t('deletePayment')}
           </Text>
         </Pressable>
       </View>
@@ -332,7 +336,7 @@ export default function EditPayment() {
           handleDelete();
           setShowDeleteModal(false);
         }}
-        message="Are you sure you want to delete this payment?"
+        message={t('deletePaymentConfirmation')}
       />
 
       <SuccessModal
@@ -341,7 +345,7 @@ export default function EditPayment() {
           setShowSuccessModal(false);
           router.replace('/(tabs)/payments');
         }}
-        message={showDeleteModal ? 'Payment deleted successfully' : 'Payment updated successfully'}
+        message={isDeleting ? t('paymentDeletedSuccess') : t('paymentUpdatedSuccess')}
       />
     </View>
   );

@@ -13,6 +13,7 @@ import { formatDateForAPI } from '../../utils/dateFormatter';
 import { Payment, PaymentSource } from '../../types/payment';
 import { useApi } from '../../hooks/useApi';
 import { api } from '../../services/axiosClient';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function AddPayment() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function AddPayment() {
   const [paymentSources, setPaymentSources] = useState<PaymentSource[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const [payment, setPayment] = useState<Payment>({
     id: Date.now(),
@@ -36,14 +38,14 @@ export default function AddPayment() {
 
   const { execute, isLoading: isApiLoading } = useApi({
     showSuccessToast: true,
-    successMessage: 'Payment added successfully!',
+    successMessage: t('paymentUpdatedSuccess'),
     showErrorToast: true,
-    defaultErrorMessage: 'Failed to add payment. Please try again.'
+    defaultErrorMessage: t('failedToAddPayment')
   });
 
   const { execute: executeGetSources, isLoading: isSourcesLoading } = useApi({
     showErrorToast: true,
-    defaultErrorMessage: 'Failed to load payment sources. Please try again.'
+    defaultErrorMessage: t('failedToLoadPaymentSources')
   });
 
   const { settings } = useAppSettings();
@@ -55,13 +57,13 @@ export default function AddPayment() {
 
   const validateForm = () => {
     if (!payment.from || !payment.description || !payment.amount) {
-      showToast('Please fill in all required fields', 'error');
+      showToast(t('invalidInput'), 'error');
       return false;
     }
 
     const numericAmount = parseFloat(payment.amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
-      showToast('Please enter a valid positive number', 'error');
+      showToast(t('invalidInput'), 'error');
       return false;
     }
 
@@ -157,7 +159,7 @@ export default function AddPayment() {
           <View className="mt-6 space-y-4">
             <View>
               <Text className="mb-2 text-sm" style={{ color: COLORS.gray[400] }}>
-                From <Text style={{ color: COLORS.error }}>*</Text>
+                {t('from')} <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
               <TextInput
                 className="rounded-xl border p-3"
@@ -166,7 +168,7 @@ export default function AddPayment() {
                   borderColor: COLORS.gray[200],
                   color: COLORS.secondary,
                 }}
-                placeholder="e.g., John Doe, Company Inc"
+                placeholder={t('fromExample')}
                 placeholderTextColor={COLORS.gray[300]}
                 value={payment.from}
                 onChangeText={(text) => setPayment({ ...payment, from: text })}
@@ -175,7 +177,7 @@ export default function AddPayment() {
 
             <View>
               <Text className="mb-3 text-sm" style={{ color: COLORS.gray[400] }}>
-                Payment Source <Text style={{ color: COLORS.error }}>*</Text>
+                {t('paymentMethod')} <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
               <View className="flex-row flex-wrap gap-2">
                 {paymentSources.map((source) => (
@@ -208,7 +210,7 @@ export default function AddPayment() {
 
             <View>
               <Text className="mb-2 mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
-                Amount <Text style={{ color: COLORS.error }}>*</Text>
+                {t('amount')} <Text style={{ color: COLORS.error }}>*</Text>
               </Text>
               <View className="relative">
                 <TextInput
@@ -232,13 +234,13 @@ export default function AddPayment() {
                 />
               </View>
               <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
-                Enter amount in dollars
+                {t('enterAmountInRupees')}
               </Text>
             </View>
 
             <View>
               <Text className="mb-2 mt-3 text-sm" style={{ color: COLORS.gray[400] }}>
-                Notes
+                {t('notes')}
               </Text>
               <TextInput
                 className="rounded-xl border p-3"
@@ -248,7 +250,7 @@ export default function AddPayment() {
                   color: COLORS.secondary,
                   height: 100,
                 }}
-                placeholder="Add any additional details about this payment"
+                placeholder={t('addPaymentDetails')}
                 placeholderTextColor={COLORS.gray[300]}
                 multiline={true}
                 textAlignVertical="top"
@@ -269,7 +271,7 @@ export default function AddPayment() {
             backgroundColor: isSaving || isApiLoading ? COLORS.gray[300] : COLORS.primary,
           }}>
           <Text className="text-center text-lg font-semibold text-white">
-            {isSaving || isApiLoading ? 'Saving...' : 'Save Payment'}
+            {isSaving || isApiLoading ? t('saving') : t('savePayment')}
           </Text>
         </Pressable>
       </View>

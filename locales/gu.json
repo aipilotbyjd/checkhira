@@ -114,5 +114,18 @@
   "paymentDashboard": "ચુકવણી ડેશબોર્ડ",
   "todaysPayments": "આજની ચુકવણીઓ",
   "recentActivities": "તાજેતરની પ્રવૃત્તિઓ",
-  "failedToLoadPayments": "ચુકવણીઓ લાવવામાં વિફલ થઈ ગયું છે. કૃપા કરીને ફરીથી પ્રયાસ કરો."
+  "failedToLoadPayments": "ચુકવણીઓ લાવવામાં વિફલ થઈ ગયું છે. કૃપા કરીને ફરીથી પ્રયાસ કરો.",
+  "notes": "નોંધ",
+  "enterAmountInRupees": "રકમ રૂપિયામાં દાખલ કરો",
+  "fromExample": "દા.ત., જોન ડો, કંપની ઇન્ક",
+  "addPaymentDetails": "આ ચુકવણી વિશે કોઈપણ વધારાની વિગતો ઉમેરો",
+  "saving": "સાચવી રહ્યું છે...",
+  "savePayment": "ચુકવણી સાચવો",
+  "updatePayment": "ચુકવણી અપડેટ કરો",
+  "paymentUpdatedSuccess": "ચુકવણી સફળતાપૂર્વક અપડેટ થઈ",
+  "paymentDeletedSuccess": "ચુકવણી સફળતાપૂર્વક કાઢી નાખવામાં આવી",
+  "failedToAddPayment": "ચુકવણી ઉમેરવામાં નિષ્ફળ. કૃપા કરીને ફરીથી પ્રયાસ કરો.",
+  "failedToUpdatePayment": "ચુકવણી અપડેટ કરવામાં નિષ્ફળ. કૃપા કરીને ફરીથી પ્રયાસ કરો.",
+  "failedToDeletePayment": "ચુકવણી કાઢી નાખવામાં નિષ્ફળ. કૃપા કરીને ફરીથી પ્રયાસ કરો.",
+  "failedToLoadPaymentSources": "ચુકવણી સ્ત્રોતો લોડ કરવામાં નિષ્ફળ. કૃપા કરીને ફરીથી પ્રયાસ કરો."
 }
