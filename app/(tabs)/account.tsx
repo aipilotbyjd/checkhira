@@ -83,6 +83,11 @@ export default function Account() {
       href: '/account/privacy',
     },
     {
+      title: 'Language Settings',
+      icon: 'translate',
+      href: '/account/language',
+    },
+    {
       title: 'About App',
       icon: 'information',
       href: '/account/about',

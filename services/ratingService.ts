@@ -64,7 +64,7 @@ class RatingService {
                 await storage.setValue(RATING_CONFIG.STORAGE_KEYS.HAS_RATED, 'true');
               } else {
                 const storeUrl = Platform.select({
-                  ios: 'https://apps.apple.com/app/id[YOUR_APP_STORE_ID]', // Replace with your App Store ID
+                  ios: 'https://apps.apple.com/app/id1234567890', // Replace with your actual App Store ID
                   android: 'market://details?id=com.jaydeepdhrangiya.checkhira',
                 });
 

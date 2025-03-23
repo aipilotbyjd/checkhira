@@ -18,9 +18,7 @@
           "launchMode": "most-recent"
         }
       ],
-      [
-        "expo-build-properties"
-      ],
+      ["expo-build-properties"],
       [
         "expo-sqlite",
         {
@@ -31,9 +29,7 @@
             "useSQLCipher": false
           },
           "ios": {
-            "customBuildFlags": [
-              "-DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_ENABLE_SNAPSHOT=1"
-            ]
+            "customBuildFlags": ["-DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_ENABLE_SNAPSHOT=1"]
           }
         }
       ],
@@ -62,9 +58,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.jaydeepdhrangiya.checkhira"
@@ -75,9 +69,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.jaydeepdhrangiya.checkhira",
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "extra": {
       "router": {
@@ -87,7 +79,12 @@
         "projectId": "bdc9fac3-4aa5-4a0d-b73a-65a15e901bf4"
       },
       "oneSignalAppId": "9b67efd6-0e42-4f80-88c7-74b79b0efac7",
-      "apiUrl": "https://api.hirabook.icu/api/v1"
+      "apiUrl": "https://api.hirabook.icu/api/v1",
+      "supportEmail": "support@checkhira.com",
+      "privacyPolicyUrl": "https://checkhira.com/privacy",
+      "termsUrl": "https://checkhira.com/terms",
+      "appStoreId": "1234567890",
+      "playStoreId": "com.jaydeepdhrangiya.checkhira"
     },
     "runtimeVersion": {
       "policy": "sdkVersion"

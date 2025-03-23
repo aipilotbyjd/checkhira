@@ -46,7 +46,7 @@ export default function EditProfile() {
       }
     };
     loadUser();
-  }, [user]);
+  }, []);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};

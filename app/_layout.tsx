@@ -9,8 +9,12 @@ import { AuthProvider } from '../contexts/AuthContext';
 import { useEffect } from 'react';
 import { environment } from '~/config/environment';
 import * as Updates from 'expo-updates';
-import { Alert } from 'react-native';
+import { Alert, View, Text } from 'react-native';
 import { ratingService } from '../services/ratingService';
+import { ErrorBoundary } from '../components/ErrorBoundary';
+import { AnalyticsProvider } from '../contexts/AnalyticsContext';
+import { ThemeProvider } from '../contexts/ThemeContext';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -53,7 +57,7 @@ export default function RootLayout() {
       if (update.isAvailable) {
         Alert.alert(
           'Update Available',
-          'A new version of Checkhira is available with latest features and improvements.',
+          `A new version of ${environment.appName} is available with latest features and improvements.`,
           [
             {
               text: 'Later',
@@ -111,15 +115,23 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <NotificationProvider>
-          <SettingsProvider>
-            <RootLayoutNav />
-          </SettingsProvider>
-        </NotificationProvider>
-      </AuthProvider>
-    </ToastProvider>
+    <SafeAreaProvider>
+      <ErrorBoundary>
+        <ThemeProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <NotificationProvider>
+                <SettingsProvider>
+                  <AnalyticsProvider>
+                    <RootLayoutNav />
+                  </AnalyticsProvider>
+                </SettingsProvider>
+              </NotificationProvider>
+            </AuthProvider>
+          </ToastProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }
 
@@ -133,6 +145,7 @@ function RootLayoutNav() {
       <Stack.Screen name="auth/register-email" options={{ headerShown: false }} />
       <Stack.Screen name="auth/register" options={{ headerShown: false }} />
       <Stack.Screen name="auth/register-password" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/update-profile" options={{ headerShown: false }} />
       <Stack.Screen name="payments/add" options={{ title: 'Add Payment' }} />
       <Stack.Screen name="payments/[id]/edit" options={{ title: 'Edit Payment' }} />
       <Stack.Screen name="work/add" options={{ title: 'Add Work Entry' }} />

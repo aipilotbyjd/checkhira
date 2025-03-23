@@ -41,6 +41,33 @@ export const COLORS = {
   },
 } as const;
 
+export const DARK_COLORS = {
+  primary: '#4A9DFF', // Slightly brighter blue for dark mode
+  secondary: '#E6E6E6', // Light grey for text
+  background: {
+    primary: '#121212',
+    secondary: '#1E1E1E',
+  },
+  white: '#FFFFFF',
+  black: '#000000',
+  error: '#FF6B6B',
+  success: '#4CAF50',
+  warning: '#FFC107',
+  info: '#2196F3',
+  gray: {
+    50: '#1E1E1E',
+    100: '#292929',
+    200: '#333333',
+    300: '#444444',
+    400: '#666666',
+    500: '#888888',
+    600: '#AAAAAA',
+    700: '#CCCCCC',
+    800: '#DDDDDD',
+    900: '#EEEEEE',
+  },
+};
+
 export const SCREEN_SIZES = {
   xs: 320,
   sm: 375,
@@ -76,7 +103,7 @@ export const SIZES = {
   body: SCREEN_SIZES.sm > 375 ? 16 : 14,
   caption: SCREEN_SIZES.sm > 375 ? 14 : 12,
   small: SCREEN_SIZES.sm > 375 ? 12 : 10,
-  
+
   // UI Elements
   tabIcon: SCREEN_SIZES.sm > 375 ? 24 : 20,
   tabLabel: SCREEN_SIZES.sm > 375 ? 12 : 10,
