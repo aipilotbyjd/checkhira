@@ -93,9 +93,9 @@ export default function AddPayment() {
       setIsSaving(true);
       const paymentData = {
         date: formatDateForAPI(selectedDate),
-        amount: parseFloat(payment.amount),
-        from: payment.from.trim(),
-        description: payment.description.trim(),
+        amount: parseFloat(String(payment.amount)),
+        from: typeof payment.from === 'string' ? payment.from.trim() : '',
+        description: typeof payment.description === 'string' ? payment.description.trim() : '',
         source_id: payment.source_id,
         user_id: user?.id,
       };

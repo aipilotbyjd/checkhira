@@ -84,7 +84,7 @@ export default function EditPayment() {
 
       const data = await getPayment(Number(id));
       if (data) {
-        setPayment(data);
+        setPayment(data as Payment);
         const parsedDate = new Date(data.date);
         setSelectedDate(
           parsedDate instanceof Date && !isNaN(parsedDate.getTime()) ? parsedDate : new Date()

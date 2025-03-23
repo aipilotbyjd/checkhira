@@ -129,5 +129,17 @@
   "failedToLoadPaymentSources": "ચુકવણી સ્ત્રોતો લોડ કરવામાં નિષ્ફળ. કૃપા કરીને ફરીથી પ્રયાસ કરો.",
   "pleaseEnterFrom": "કૃપા કરીને તે ચુકવણી કોનાથી મળ્યું તે દાખલ કરો",
   "pleaseEnterDescription": "કૃપા કરીને વર્ણન દાખલ કરો",
-  "pleaseEnterValidAmount": "કૃપા કરીને વૈધ રકમ દાખલ કરો"
+  "pleaseEnterValidAmount": "કૃપા કરીને વૈધ રકમ દાખલ કરો",
+  "failedToLoadWorkEntries": "કામની નોંધો લાવવામાં નિષ્ફળ. કૃપા કરીને ફરીથી પ્રયાસ કરો.",
+  "failedToGetUnreadNotificationsCount": "અમલાવવાની નોંધો લાવવામાં નિષ્ફળ. કૃપા કરીને ફરીથી પ્રયાસ કરો.",
+  "howWeUseYourInformation": "અમે તમારી જાનકારી વિષે શું કરીએ છીએ",
+  "howWeUseYourInformationDesc": "અમે તમારી જાનકારી વિષે શું કરીએ છીએ",
+  "dataSecurity": "ડેટા સુરક્ષા",
+  "dataSecurityDesc": "અમે તમારી જાનકારી વિષે શું કરીએ છીએ",
+  "yourRights": "તમારા અધિકારો",
+  "yourRightsDesc": "તમે તમારી જાનકારી વિષે શું કરીએ છીએ",
+  "termsAcceptance": "નિયમો અને શરતો સ્વીકારવા",
+  "termsAcceptanceDesc": "તમે તમારી જાનકારી વિષે શું કરીએ છીએ",
+  "termsUseLicense": "નિયમો અને શરતો સ્વીકારવા",
+  "termsUseLicenseDesc": "તમે તમારી જાનકારી વિષે શું કરીએ છીએ"
 }

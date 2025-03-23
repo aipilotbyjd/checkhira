@@ -232,7 +232,7 @@ export default function PaymentsList() {
                   </Text>
                   <View className="mt-2 flex-row items-center">
                     <MaterialCommunityIcons
-                      name={item.source?.icon}
+                      name={item.source?.icon as any}
                       size={16}
                       color={COLORS.gray[500]}
                     />

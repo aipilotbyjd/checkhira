@@ -85,7 +85,7 @@ export default function About() {
             {appFeatures.map((feature, index) => (
               <View key={index} className="mb-4 flex-row">
                 <View className="w-10 items-center mt-1">
-                  <MaterialCommunityIcons name={feature.icon} size={24} color={COLORS.primary} />
+                  <MaterialCommunityIcons name={feature.icon as any} size={24} color={COLORS.primary} />
                 </View>
                 <View className="flex-1 ml-3">
                   <Text className="font-semibold" style={{ color: COLORS.secondary }}>
@@ -111,7 +111,7 @@ export default function About() {
                   key={index}
                   onPress={() => Linking.openURL(link.url)}
                   className="items-center mb-3 mx-2">
-                  <MaterialCommunityIcons name={link.icon} size={24} color={COLORS.primary} />
+                  <MaterialCommunityIcons name={link.icon as any} size={24} color={COLORS.primary} />
                   <Text className="mt-1 text-sm" style={{ color: COLORS.gray[600] }}>
                     {link.label}
                   </Text>

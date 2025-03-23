@@ -37,12 +37,12 @@ export default function WorkListScreen() {
   // Use the modern API hook pattern
   const { execute: executeGetWorks, isLoading } = useApi({
     showErrorToast: true,
-    defaultErrorMessage: t('Failed to load work entries. Please try again.')
+    defaultErrorMessage: t('failedToLoadWorkEntries')
   });
 
   const { execute: executeGetNotifications } = useApi({
     showErrorToast: true,
-    defaultErrorMessage: t('Failed to get unread notifications count. Please try again.')
+    defaultErrorMessage: t('failedToGetUnreadNotificationsCount')
   });
 
   const loadWork = useCallback(async ({ page = 1, isRefresh = false }) => {
