@@ -29,7 +29,6 @@ export default function AddPayment() {
     id: Date.now(),
     amount: '',
     from: '',
-    category: '',
     description: '',
     source_id: 1,
     user_id: user?.id,
@@ -56,14 +55,23 @@ export default function AddPayment() {
   }, [settings]);
 
   const validateForm = () => {
-    if (!payment.from || !payment.description || !payment.amount) {
-      showToast(t('invalidInput'), 'error');
-      return false;
+    const errors = [];
+
+    if (!payment.from.trim()) {
+      errors.push(t('pleaseEnterFrom'));
+    }
+
+    if (!payment.description.trim()) {
+      errors.push(t('pleaseEnterDescription'));
     }
 
     const numericAmount = parseFloat(payment.amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
-      showToast(t('invalidInput'), 'error');
+      errors.push(t('pleaseEnterValidAmount'));
+    }
+
+    if (errors.length > 0) {
+      showToast(errors[0], 'error');
       return false;
     }
 
@@ -97,10 +105,14 @@ export default function AddPayment() {
     try {
       if (settings?.payment_sources && settings.payment_sources.length > 0) {
         setPaymentSources(settings.payment_sources);
+        if (payment.source_id === 1 && settings.payment_sources.length > 0) {
+          setPayment({ ...payment, source_id: settings.payment_sources[0].id });
+        }
       } else {
         const response = await executeGetSources(() => api.get('/payments/sources'));
-        if (response?.data) {
+        if (response?.data && response.data.length > 0) {
           setPaymentSources(response.data);
+          setPayment({ ...payment, source_id: response.data[0].id });
         }
       }
     } catch (error) {
@@ -151,7 +163,10 @@ export default function AddPayment() {
               value={selectedDate}
               onChange={(event, date) => {
                 setShowDatePicker(false);
-                if (date) setSelectedDate(date);
+                if (date) {
+                  setSelectedDate(date);
+                  setPayment({ ...payment, date: formatDateForAPI(date) });
+                }
               }}
             />
           )}
@@ -225,11 +240,18 @@ export default function AddPayment() {
                   value={payment.amount.toString()}
                   keyboardType="decimal-pad"
                   onChangeText={(text) => {
-                    const numericText = text.replace(/[^0-9.]/g, '');
+                    let numericText = text.replace(/[^0-9.]/g, '');
+
                     const parts = numericText.split('.');
-                    const formattedText =
-                      parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : numericText;
-                    setPayment({ ...payment, amount: formattedText });
+                    if (parts.length > 2) {
+                      numericText = parts[0] + '.' + parts.slice(1).join('');
+                    }
+
+                    if (parts.length === 2 && parts[1].length > 2) {
+                      numericText = parts[0] + '.' + parts[1].substring(0, 2);
+                    }
+
+                    setPayment({ ...payment, amount: numericText });
                   }}
                 />
               </View>
@@ -269,6 +291,7 @@ export default function AddPayment() {
           className="rounded-2xl p-4"
           style={{
             backgroundColor: isSaving || isApiLoading ? COLORS.gray[300] : COLORS.primary,
+            opacity: isSaving || isApiLoading ? 0.7 : 1,
           }}>
           <Text className="text-center text-lg font-semibold text-white">
             {isSaving || isApiLoading ? t('saving') : t('savePayment')}
