@@ -11,5 +11,19 @@
   "contactSupport": "Contact Support",
   "madeWith": "Made with",
   "by": "by",
-  "allRightsReserved": "All rights reserved"
+  "allRightsReserved": "All rights reserved",
+  "selectLanguage": "Select Language",
+  "languageChangeInfo": "App language will change immediately after selection.",
+  "selectTheme": "Select Theme",
+  "themeChangeInfo": "App appearance will change immediately after selection.",
+  "lightTheme": "Light Theme",
+  "darkTheme": "Dark Theme",
+  "systemTheme": "System Default",
+  "languageSettings": "Language Settings",
+  "themeSettings": "Theme Settings",
+  "editProfile": "Edit Profile",
+  "termsAndConditions": "Terms & Conditions",
+  "privacyPolicy": "Privacy Policy",
+  "aboutApp": "About App",
+  "defaultPrices": "Default Prices"
 } 

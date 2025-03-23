@@ -5,17 +5,20 @@ import en from '../locales/en.json'
 import hi from '../locales/hi.json';
 import gu from '../locales/gu.json';
 
-type Translations = typeof en;
+// Define the type for translations
+type TranslationKey = keyof typeof en;
+type PartialTranslations = Partial<typeof en>;
+type CompleteTranslations = typeof en;
 
 interface LanguageContextType {
     locale: string;
     setLocale: (locale: string) => Promise<void>;
-    t: (key: keyof typeof en) => string;
+    t: (key: TranslationKey) => string;
     isRTL: boolean;
     availableLocales: { code: string; name: string }[];
 }
 
-const translations: Record<string, Translations> = {
+const translations: Record<string, PartialTranslations> = {
     en,
     hi,
     gu,
@@ -76,9 +79,9 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
         }
     };
 
-    const t = (key: keyof typeof en) => {
+    const t = (key: TranslationKey) => {
         const currentTranslations = translations[locale] || translations.en;
-        return currentTranslations[key] || key;
+        return (currentTranslations[key] as string) || translations.en[key] || key;
     };
 
     const isRTL = rtlLocales.includes(locale);

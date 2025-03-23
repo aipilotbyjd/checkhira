@@ -11,5 +11,19 @@
   "contactSupport": "સપોર્ટને સંપર્ક કરો",
   "madeWith": "બનાવ્યું છે",
   "by": "દ્વારા",
-  "allRightsReserved": "સર્વાધિકાર સુરક્ષિત"
+  "allRightsReserved": "સર્વાધિકાર સુરક્ષિત",
+  "selectLanguage": "ભાષા પસંદ કરો",
+  "languageChangeInfo": "ભાષા પસંદગી કર્યા પછી એપ્લિકેશન ભાષા તરત બદલાશે.",
+  "selectTheme": "થીમ પસંદ કરો",
+  "themeChangeInfo": "થીમ પસંદગી કર્યા પછી એપ્લિકેશન દેખાવ તરત બદલાશે.",
+  "lightTheme": "લાઇટ થીમ",
+  "darkTheme": "ડાર્ક થીમ",
+  "systemTheme": "સિસ્ટમ ડિફૉલ્ટ",
+  "languageSettings": "ભાષા સેટિંગ્સ",
+  "themeSettings": "થીમ સેટિંગ્સ",
+  "editProfile": "પ્રોફાઇલ સંપાદિત કરો",
+  "termsAndConditions": "નિયમો અને શરતો",
+  "privacyPolicy": "ગોપનીયતા નીતિ",
+  "aboutApp": "એપ્લિકેશન વિશે",
+  "defaultPrices": "ડિફૉલ્ટ કિંમતો"
 }
