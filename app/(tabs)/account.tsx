@@ -89,11 +89,11 @@ export default function Account() {
       icon: 'translate',
       href: '/account/language',
     },
-    {
-      title: t('themeSettings'),
-      icon: 'theme-light-dark',
-      href: '/account/theme',
-    },
+    // {
+    //   title: t('themeSettings'),
+    //   icon: 'theme-light-dark',
+    //   href: '/account/theme',
+    // },
     {
       title: t('aboutApp'),
       icon: 'information',
