@@ -43,10 +43,13 @@ export default function GoogleLogin() {
                     const { idToken, user } = userInfo.data;
                     const { name, email, photo } = user;
 
-                    // Call the googleLogin method from AuthContext
-                    await googleLogin(idToken, user);
-                    showToast(t('loginSuccess'), 'success');
-                    router.replace('/(tabs)');
+                    if (idToken) {
+                        await googleLogin(idToken, user);
+                        showToast(t('loginSuccess'), 'success');
+                        router.replace('/(tabs)');
+                    } else {
+                        showToast(t('googleSignInErrorsNoIdToken') || 'No ID token received', 'error');
+                    }
                 } catch (error) {
                     console.error('Google login error:', error);
                     showToast(t('googleSignInErrorsUnknownError'), 'error');

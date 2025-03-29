@@ -160,5 +160,6 @@
   "googleSignInErrorsInvalidAccount": "Invalid Google account",
   "googleSignInErrorsUnknownError": "Unknown error occurred",
   "googleSignInErrorsNotRelatedToGoogleSignIn": "An error that's not related to google sign in occurred.",
-  "loginSuccess": "Successfully logged in"
+  "loginSuccess": "Successfully logged in",
+  "googleSignInErrorsNoIdToken": "No ID token received"
 }
