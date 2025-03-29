@@ -28,8 +28,9 @@ function RootLayoutNav() {
   return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/phone-login" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/email-login" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/google-login" options={{ headerShown: false }} />
+      {/* <Stack.Screen name="auth/phone-login" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/email-login" options={{ headerShown: false }} /> */}
       <Stack.Screen name="auth/password" options={{ headerShown: false }} />
       <Stack.Screen name="auth/register-email" options={{ headerShown: false }} />
       <Stack.Screen name="auth/register" options={{ headerShown: false }} />
@@ -87,7 +88,9 @@ export default function RootLayout() {
     GoogleSignin.configure({
       iosClientId: '195151324772-4gc4nhb0ou80sij272shuaa512irgap8.apps.googleusercontent.com',
       webClientId: '195151324772-tpq4g2ctsltd8gd1on3e3nt3vlgbi33c.apps.googleusercontent.com',
-      profileImageSize: 150
+      profileImageSize: 150,
+      offlineAccess: true,
+      scopes: ['profile', 'email']
     });
   }, []);
 

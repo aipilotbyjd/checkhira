@@ -134,6 +134,17 @@ export default function Account() {
                 </Text>
               </Pressable>
             </Link>
+
+            <Link href="/auth/google-login" asChild>
+              <Pressable
+                className="rounded-xl p-4 mt-4"
+                style={{ backgroundColor: '#4285F4' }}
+              >
+                <Text className="text-center text-lg font-semibold text-white">
+                  {t('signInWithGoogle')}
+                </Text>
+              </Pressable>
+            </Link>
           </View>
         </>
       ) : (

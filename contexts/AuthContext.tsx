@@ -5,14 +5,15 @@ import { api } from '../services/api';
 import { User } from '../types/user';
 import * as SecureStore from 'expo-secure-store';
 
-type AuthContextType = {
+interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (identifier: string, password: string) => Promise<void>;
-  register: (data: User) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<any>;
+  register: (data: User) => Promise<any>;
   logout: () => Promise<void>;
-};
+  googleLogin: (idToken: string, userData: any) => Promise<any>;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -112,6 +113,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const googleLogin = async (idToken: string, userData: any) => {
+    try {
+      // Call the backend with Google ID token
+      const response = await authService.googleLogin(idToken);
+      const { user, token } = response.data;
+
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+      await AsyncStorage.setItem('token', token);
+      setUser(user);
+      setIsAuthenticated(true);
+      return response;
+    } catch (error) {
+      // If the backend call fails, we can create a user from Google data
+      // or handle the error appropriately
+      console.error('Google login error:', error);
+      await handleLogout();
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -121,6 +142,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         login,
         register,
         logout,
+        googleLogin,
       }}>
       {children}
     </AuthContext.Provider>

@@ -15,6 +15,7 @@ import { PublicRoute } from '../../components/PublicRoute';
 import { AuthHeader } from '../../components/AuthHeader';
 import { AuthInput } from '../../components/AuthInput';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useToast } from '../../contexts/ToastContext';
 import {
   GoogleSignin,
   isErrorWithCode,
@@ -27,6 +28,7 @@ export default function PhoneLogin() {
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { t } = useLanguage();
+  const { showToast } = useToast();
 
   const validatePhone = (number: string) => {
     const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/;
@@ -67,12 +69,12 @@ export default function PhoneLogin() {
         );
       } else {
         // sign in was cancelled by user
-        Alert.alert(
-          'Google Sign In',
-          'Sign in was cancelled by user',
-          [{ text: 'OK', onPress: () => setIsLoading(false) }],
-          { cancelable: false },
-        );
+        showToast(t('googleSignInErrorsSignInCancelled'), 'error')
+
+        //after 2 seconds
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 2000);
       }
 
       setIsLoading(false);
@@ -81,43 +83,57 @@ export default function PhoneLogin() {
         switch (error.code) {
           case statusCodes.IN_PROGRESS:
             // operation (eg. sign in) already in progress
-            Alert.alert(
-              'Google Sign In',
-              'Operation (eg. sign in) already in progress',
-              [{ text: 'OK', onPress: () => setIsLoading(false) }],
-              { cancelable: false },
-            );
+            showToast(t('googleSignInErrorsInProgress'), 'error')
+
+            //after 2 seconds
+            setTimeout(() => {
+              setIsLoading(false);
+            }, 2000);
             break;
           case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
             // Android only, play services not available or outdated
-            Alert.alert(
-              'Google Sign In',
-              'Android only, play services not available or outdated',
-              [{ text: 'OK', onPress: () => setIsLoading(false) }],
-              { cancelable: false },
-            )
+            showToast(t('googleSignInErrorsPlayServicesNotAvailable'), 'error')
+
+            //after 2 seconds
+            setTimeout(() => {
+              setIsLoading(false);
+            }, 2000);
             break;
           default:
             // some other error happened
-            console.log(error);
-            Alert.alert(
-              'Google Sign In',
-              'Some other error happened',
-              [{ text: 'OK', onPress: () => setIsLoading(false) }],
-              { cancelable: false },
-            );
+            showToast(t('googleSignInErrorsUnknownError'), 'error')
+
+            //after 2 seconds
+            setTimeout(() => {
+              setIsLoading(false);
+            }, 2000);
         }
       } else {
         // an error that's not related to google sign in occurred
-        Alert.alert(
-          'Google Sign In',
-          'An error that\'s not related to google sign in occurred',
-          [{ text: 'OK', onPress: () => setIsLoading(false) }],
-          { cancelable: false },
-        )
+        showToast(t('googleSignInErrorsNotRelatedToGoogleSignIn'), 'error')
+
+        //after 2 seconds
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 2000);
       }
     }
   }
+
+  const getGoogleErrorKey = (code: string) => {
+    switch (code) {
+      case statusCodes.IN_PROGRESS:
+        return 'googleSignInErrors.IN_PROGRESS';
+      case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+        return 'googleSignInErrors.PLAY_SERVICES_NOT_AVAILABLE';
+      case statusCodes.SIGN_IN_CANCELLED:
+        return 'googleSignInErrors.SIGN_IN_CANCELLED';
+      case statusCodes.SIGN_IN_REQUIRED:
+        return 'googleSignInErrors.SIGN_IN_REQUIRED';
+      default:
+        return 'googleSignInErrors.UNKNOWN_ERROR';
+    }
+  };
 
   return (
     <PublicRoute>
@@ -164,31 +180,6 @@ export default function PhoneLogin() {
             </Text>
             <View className="flex-1 h-px bg-gray-200" />
           </View>
-
-          <Pressable
-            onPress={handleGoogleSignIn}
-            disabled={isLoading}
-            className="rounded-xl border p-4 mb-4"
-            style={{ borderColor: COLORS.primary }}
-          >
-            {isLoading ? (
-              <ActivityIndicator color={COLORS.primary} />
-            ) : (
-              <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
-                {t('signInWithGoogle')}
-              </Text>
-            )}
-          </Pressable>
-
-          <Pressable
-            onPress={() => GoogleSignin.signOut()}
-            className="rounded-xl border p-4 mb-4"
-            style={{ borderColor: COLORS.primary }}
-          >
-            <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
-              Sign Out
-            </Text>
-          </Pressable>
 
           <Pressable
             onPress={() => router.push('/auth/email-login')}

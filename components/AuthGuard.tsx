@@ -11,7 +11,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace('/auth/phone-login');
+      router.replace('/auth/google-login');
     }
   }, [isLoading, isAuthenticated, router]);
 
@@ -20,7 +20,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       if (isAuthenticated) {
         const isValid = await authService.checkAuth();
         if (!isValid) {
-          router.replace('/auth/phone-login');
+          router.replace('/auth/google-login');
         }
       }
     }, 300000); // Check every 5 minutes

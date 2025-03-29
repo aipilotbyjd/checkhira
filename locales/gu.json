@@ -142,5 +142,13 @@
   "termsAcceptanceDesc": "તમે તમારી જાનકારી વિષે શું કરીએ છીએ",
   "termsUseLicense": "નિયમો અને શરતો સ્વીકારવા",
   "termsUseLicenseDesc": "તમે તમારી જાનકારી વિષે શું કરીએ છીએ",
-  "signInWithGoogle": "ગૉગલ સાઉન ઇન"
+  "signInWithGoogle": "ગૉગલ સાઉન ઇન",
+  "googleSignInErrors": {
+    "IN_PROGRESS": "Operation already in progress",
+    "PLAY_SERVICES_NOT_AVAILABLE": "Google Play services required",
+    "SIGN_IN_CANCELLED": "Sign in cancelled",
+    "SIGN_IN_REQUIRED": "Please sign in again",
+    "INVALID_ACCOUNT": "Invalid Google account",
+    "UNKNOWN_ERROR": "Unknown error occurred"
+  }
 }

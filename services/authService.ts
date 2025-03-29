@@ -75,4 +75,16 @@ export const authService = {
       return false;
     }
   },
+
+  async googleLogin(idToken: string): Promise<AuthResponse> {
+    const response = await api.request<AuthResponse>('/google-login', {
+      method: 'POST',
+      body: JSON.stringify({ id_token: idToken }),
+    });
+
+    if (response.data.token) {
+      await api.setToken(response.data.token);
+    }
+    return response;
+  },
 };

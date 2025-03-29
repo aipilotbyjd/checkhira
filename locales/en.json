@@ -152,5 +152,13 @@
   "termsAcceptanceDesc": "By using this app, you agree to the terms and conditions of the app.",
   "termsUseLicense": "Terms Use License",
   "termsUseLicenseDesc": "You are granted a non-exclusive, non-transferable, revocable license to use the app for your personal or commercial purposes.",
-  "signInWithGoogle": "Sign in with Google"
+  "signInWithGoogle": "Sign in with Google",
+  "googleSignInErrorsInProgress": "Sign in in progress",
+  "googleSignInErrorsPlayServicesNotAvailable": "Google Play services required",
+  "googleSignInErrorsSignInCancelled": "Sign in cancelled",
+  "googleSignInErrorsSignInRequired": "Please sign in again",
+  "googleSignInErrorsInvalidAccount": "Invalid Google account",
+  "googleSignInErrorsUnknownError": "Unknown error occurred",
+  "googleSignInErrorsNotRelatedToGoogleSignIn": "An error that's not related to google sign in occurred.",
+  "loginSuccess": "Successfully logged in"
 }
