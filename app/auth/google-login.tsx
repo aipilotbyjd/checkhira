@@ -8,7 +8,6 @@ import {
     ScrollView,
     ActivityIndicator,
     Image,
-    StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { COLORS, SIZES } from '../../constants/theme';
@@ -34,14 +33,14 @@ export default function GoogleLogin() {
     const handleGoogleSignIn = async () => {
         try {
             setIsLoading(true);
+            GoogleSignin.signOut();
+            
             await GoogleSignin.hasPlayServices();
             const userInfo = await GoogleSignin.signIn();
 
             if (isSuccessResponse(userInfo)) {
                 try {
                     const { idToken, user } = userInfo.data;
-                    const { name, email, photo } = user;
-
                     if (idToken) {
                         await googleLogin(idToken, user);
                         showToast(t('loginSuccess'), 'success');
@@ -83,33 +82,38 @@ export default function GoogleLogin() {
         <PublicRoute>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                className="flex-1"
+                className="flex-1 bg-white"
                 style={{ backgroundColor: COLORS.background.primary || COLORS.white }}
             >
                 <ScrollView
-                    className="flex-1"
+                    className="flex-1 px-6 pt-10 pb-8"
                     keyboardShouldPersistTaps="handled"
-                    contentContainerStyle={styles.scrollContent}
                 >
                     {/* Logo and Header */}
-                    <View className="items-center">
+                    <View className="items-center mb-6">
                         <Image
                             source={require('../../assets/hirabook-logo.png')}
-                            style={styles.logo}
+                            className="w-[240px] h-[144px]"
+                            style={{ resizeMode: 'contain' }}
                         />
                     </View>
 
                     {/* Welcome Message */}
-                    <View style={styles.welcomeContainer}>
-                        <Text style={styles.welcomeText}>{t('welcomeBack')}</Text>
-                        <Text style={styles.subtitleText}>{t('loginToContinue')}</Text>
+                    <View className="items-center mb-8">
+                        <Text className="text-3xl font-bold text-center" style={{ color: COLORS.secondary }}>
+                            {t('welcomeBack')}
+                        </Text>
+                        <Text className="text-base text-center mt-2" style={{ color: COLORS.gray[600] }}>
+                            {t('loginToContinue')}
+                        </Text>
                     </View>
 
                     {/* Login Illustration */}
-                    <View className="items-center my-8">
+                    <View className="items-center mb-10">
                         <Image
                             source={require('../../assets/login-illustration.jpg')}
-                            style={styles.illustration}
+                            className="w-[220px] h-[180px]"
+                            style={{ resizeMode: 'contain' }}
                         />
                     </View>
 
@@ -117,62 +121,32 @@ export default function GoogleLogin() {
                     <Pressable
                         onPress={handleGoogleSignIn}
                         disabled={isLoading}
-                        style={[styles.googleButton, isLoading && styles.disabledButton]}
+                        className={`flex-row items-center justify-center py-4 px-5 rounded-xl mb-3 ${isLoading ? 'opacity-70' : ''}`}
+                        style={{ 
+                            backgroundColor: '#4285F4',
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.1,
+                            shadowRadius: 4,
+                            elevation: 3,
+                        }}
                         android_ripple={{ color: '#3367D6' }}
                     >
-                        <Image
-                            source={require('../../assets/google-icon.png')}
-                            style={styles.googleIcon}
-                        />
-                        <Text style={styles.buttonText}>
+                        <View className="bg-white p-1.5 rounded-full mr-4">
+                            <Image
+                                source={require('../../assets/google-icon.png')}
+                                className="w-6 h-6"
+                                style={{ resizeMode: 'contain' }}
+                            />
+                        </View>
+                        <Text className="text-white text-base font-semibold">
                             {t('signInWithGoogle')}
                         </Text>
                     </Pressable>
 
-                    {/* Loading Indicator */}
-                    {isLoading && (
-                        <View className="items-center mt-4">
-                            <ActivityIndicator size="large" color={COLORS.primary} />
-                        </View>
-                    )}
-
-                    {/* Divider */}
-                    <View style={styles.dividerContainer}>
-                        <View style={styles.divider} />
-                        <Text style={styles.dividerText}>OR</Text>
-                        <View style={styles.divider} />
-                    </View>
-
-                    {/* Other Sign In Options */}
-                    <Pressable
-                        onPress={() => router.push('/auth/phone-login')}
-                        style={styles.altLoginButton}
-                        android_ripple={{ color: COLORS.gray[100] }}
-                    >
-                        <MaterialCommunityIcons name="phone" size={22} color={COLORS.primary} />
-                        <Text style={styles.altLoginText}>{t('continueWithPhone')}</Text>
-                    </Pressable>
-
-                    <Pressable
-                        onPress={() => router.push('/auth/email-login')}
-                        style={styles.altLoginButton}
-                        android_ripple={{ color: COLORS.gray[100] }}
-                    >
-                        <MaterialCommunityIcons name="email" size={22} color={COLORS.primary} />
-                        <Text style={styles.altLoginText}>{t('continueWithEmail')}</Text>
-                    </Pressable>
-
-                    {/* Register Link */}
-                    <View style={styles.registerContainer}>
-                        <Text style={styles.registerText}>{t('dontHaveAccount')} </Text>
-                        <Pressable onPress={() => router.push('/auth/register')}>
-                            <Text style={styles.registerLink}>{t('createAccount')}</Text>
-                        </Pressable>
-                    </View>
-
                     {/* Made with love footer */}
-                    <View style={styles.footer}>
-                        <Text style={styles.footerText}>
+                    <View className="items-center mt-8">
+                        <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
                             {t('madeWith')} ❤️ {t('by')} Hirabook
                         </Text>
                     </View>
@@ -181,121 +155,3 @@ export default function GoogleLogin() {
         </PublicRoute>
     );
 }
-
-const styles = StyleSheet.create({
-    scrollContent: {
-        paddingHorizontal: 24,
-        paddingTop: 40,
-        paddingBottom: 32,
-    },
-    logo: {
-        width: SIZES.h1 * 10,
-        height: SIZES.h1 * 6,
-        resizeMode: 'contain',
-    },
-    welcomeContainer: {
-        alignItems: 'center',
-        marginTop: 20,
-    },
-    welcomeText: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: COLORS.secondary,
-        textAlign: 'center',
-    },
-    subtitleText: {
-        fontSize: 16,
-        color: COLORS.gray[600],
-        textAlign: 'center',
-        marginTop: 8,
-    },
-    illustration: {
-        width: 220,
-        height: 180,
-        resizeMode: 'contain',
-    },
-    googleButton: {
-        backgroundColor: '#4285F4',
-        borderRadius: 12,
-        paddingVertical: 14,
-        paddingHorizontal: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    disabledButton: {
-        opacity: 0.7,
-    },
-    googleIcon: {
-        width: 24,
-        height: 24,
-        resizeMode: 'contain',
-    },
-    buttonText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: '600',
-        marginLeft: 12,
-    },
-    dividerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 24,
-    },
-    divider: {
-        flex: 1,
-        height: 1,
-        backgroundColor: COLORS.gray[200],
-    },
-    dividerText: {
-        paddingHorizontal: 16,
-        color: COLORS.gray[400],
-        fontSize: 14,
-    },
-    altLoginButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: COLORS.gray[200],
-        borderRadius: 12,
-        paddingVertical: 14,
-        paddingHorizontal: 20,
-        marginBottom: 12,
-        backgroundColor: COLORS.white,
-    },
-    altLoginText: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: COLORS.primary,
-        marginLeft: 12,
-    },
-    registerContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 20,
-    },
-    registerText: {
-        fontSize: 14,
-        color: COLORS.gray[600],
-    },
-    registerLink: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: COLORS.primary,
-    },
-    footer: {
-        marginTop: 32,
-        alignItems: 'center',
-    },
-    footerText: {
-        fontSize: 12,
-        color: COLORS.gray[400],
-    }
-});
