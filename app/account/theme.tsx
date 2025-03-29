@@ -35,35 +35,36 @@ export default function ThemeSettings() {
           {t('selectTheme')}
         </Text>
 
-        <View className="space-y-3">
+        <View>
           {themeOptions.map((option) => (
             <Pressable
               key={option.key}
               onPress={() => handleChangeTheme(option.key as 'light' | 'dark' | 'system')}
               disabled={isChanging || themeMode === option.key}
-              className={`flex-row items-center justify-between rounded-xl border p-4 ${
-                themeMode === option.key ? 'border-primary' : 'border-gray-200'
-              }`}
+              className="mb-3 flex-row items-center justify-between rounded-xl border p-3"
               style={{
-                backgroundColor: themeMode === option.key ? COLORS.primary + '15' : COLORS.white,
-                opacity: isChanging ? 0.7 : 1,
+                borderColor: themeMode === option.key ? COLORS.primary : COLORS.gray[200],
+                backgroundColor: themeMode === option.key ? COLORS.primary + '15' : COLORS.background.primary,
               }}
             >
-              <View className="flex-row items-center">
-                <MaterialCommunityIcons 
-                  name={option.icon as any} 
-                  size={24} 
-                  color={themeMode === option.key ? COLORS.primary : COLORS.secondary} 
-                />
+              <View className="flex-row items-center flex-1">
+                <View className="p-2 rounded-lg" style={{ backgroundColor: themeMode === option.key ? COLORS.primary + '30' : COLORS.background.primary }}>
+                  <MaterialCommunityIcons
+                    name={option.icon as any}
+                    size={22}
+                    color={themeMode === option.key ? COLORS.primary : COLORS.secondary}
+                  />
+                </View>
                 <Text
-                  className="text-base ml-3"
+                  className="ml-3 text-base font-medium flex-1"
                   style={{ color: themeMode === option.key ? COLORS.primary : COLORS.secondary }}
+                  numberOfLines={1}
                 >
                   {option.label}
                 </Text>
               </View>
               {themeMode === option.key && (
-                <MaterialCommunityIcons name="check" size={20} color={COLORS.primary} />
+                <MaterialCommunityIcons name="check-circle" size={20} color={COLORS.primary} />
               )}
             </Pressable>
           ))}

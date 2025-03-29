@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image, Pressable, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Pressable, Alert, ScrollView } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
@@ -107,10 +107,15 @@ export default function Account() {
   ];
 
   return (
-    <View className="flex-1 px-6" style={{ backgroundColor: COLORS.background.primary }}>
+    <ScrollView
+      className="flex-1"
+      style={{ backgroundColor: COLORS.background.primary }}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingBottom: 20 }}
+    >
       {!isAuthenticated ? (
-        <>
-          <View className="items-center py-12">
+        <View className="flex-1 justify-center py-12">
+          <View className="items-center">
             <MaterialCommunityIcons name="account-circle" size={80} color={COLORS.gray[400]} />
             <Text className="mt-4 text-xl font-semibold" style={{ color: COLORS.secondary }}>
               {t('welcomeBack')}
@@ -120,7 +125,7 @@ export default function Account() {
             </Text>
           </View>
 
-          <View className="space-y-4">
+          <View className="space-y-4 mt-6">
             <Link href="/auth/phone-login" asChild>
               <Pressable className="rounded-xl p-4" style={{ backgroundColor: COLORS.primary }}>
                 <Text className="text-center text-lg font-semibold text-white">{t('login')}</Text>
@@ -146,11 +151,11 @@ export default function Account() {
               </Pressable>
             </Link>
           </View>
-        </>
+        </View>
       ) : (
-        <View>
+        <View className="min-h-full pb-4">
           {/* Profile Section */}
-          <View className="items-center px-6 pt-8">
+          <View className="items-center pt-8">
             <View className="h-24 w-24 rounded-full bg-gray-200">
               <Image
                 source={
@@ -170,24 +175,34 @@ export default function Account() {
             </Text>
           </View>
 
-          {/* Menu Items */}
-          <View className="mt-6 space-y-3">
+          {/* Menu Items - Improved for better mobile display */}
+          <View className="mt-6 px-1">
             {menuItems.map((item, index) => (
               <Link key={index} href={item.href} asChild>
-                <Pressable className="flex-row items-center justify-between rounded-xl border p-4" style={{ borderColor: COLORS.gray[200] }}>
-                  <View className="flex-row items-center">
-                    <MaterialCommunityIcons name={item.icon as any} size={24} color={COLORS.primary} />
-                    <Text className="ml-3 text-base font-medium" style={{ color: COLORS.secondary }}>
+                <Pressable
+                  className="mb-3 flex-row items-center justify-between rounded-xl border p-3"
+                  style={{
+                    borderColor: COLORS.gray[200],
+                    backgroundColor: COLORS.background.primary,
+                  }}>
+                  <View className="flex-row items-center flex-1">
+                    <View className="p-2 rounded-lg" style={{ backgroundColor: COLORS.primary + '15' }}>
+                      <MaterialCommunityIcons name={item.icon as any} size={22} color={COLORS.primary} />
+                    </View>
+                    <Text
+                      className="ml-3 text-base font-medium flex-1"
+                      style={{ color: COLORS.secondary }}
+                      numberOfLines={1}>
                       {item.title}
                     </Text>
                   </View>
-                  <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray[400]} />
+                  <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.gray[400]} />
                 </Pressable>
               </Link>
             ))}
           </View>
 
-          <View className="mt-auto mb-6">
+          <View className="mt-8 mb-4">
             <Pressable
               onPress={() => {
                 Alert.alert(
@@ -209,7 +224,7 @@ export default function Account() {
                   ]
                 );
               }}
-              className="mt-4 rounded-2xl p-4"
+              className="rounded-2xl p-4"
               style={{ backgroundColor: COLORS.error }}>
               <Text className="text-center text-lg font-semibold text-white">{t('logout')}</Text>
             </Pressable>
@@ -226,6 +241,6 @@ export default function Account() {
           />
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 }

@@ -27,27 +27,36 @@ export default function LanguageSettings() {
                     {t('selectLanguage')}
                 </Text>
 
-                <View className="space-y-3">
+                <View>
                     {availableLocales.map((lang) => (
                         <Pressable
                             key={lang.code}
                             onPress={() => handleChangeLanguage(lang.code)}
                             disabled={isChanging || locale === lang.code}
-                            className={`flex-row items-center justify-between rounded-xl border p-4 ${locale === lang.code ? 'border-primary' : 'border-gray-200'
-                                }`}
+                            className="mb-3 flex-row items-center justify-between rounded-xl border p-3"
                             style={{
-                                backgroundColor: locale === lang.code ? COLORS.primary + '15' : COLORS.white,
-                                opacity: isChanging ? 0.7 : 1,
+                                borderColor: locale === lang.code ? COLORS.primary : COLORS.gray[200],
+                                backgroundColor: locale === lang.code ? COLORS.primary + '15' : COLORS.background.primary,
                             }}
                         >
-                            <Text
-                                className="text-base"
-                                style={{ color: locale === lang.code ? COLORS.primary : COLORS.secondary }}
-                            >
-                                {lang.name}
-                            </Text>
+                            <View className="flex-row items-center flex-1">
+                                <View className="p-2 rounded-lg" style={{ backgroundColor: locale === lang.code ? COLORS.primary + '30' : COLORS.background.primary }}>
+                                    <MaterialCommunityIcons
+                                        name="translate"
+                                        size={22}
+                                        color={locale === lang.code ? COLORS.primary : COLORS.secondary}
+                                    />
+                                </View>
+                                <Text
+                                    className="ml-3 text-base font-medium flex-1"
+                                    style={{ color: locale === lang.code ? COLORS.primary : COLORS.secondary }}
+                                    numberOfLines={1}
+                                >
+                                    {lang.name}
+                                </Text>
+                            </View>
                             {locale === lang.code && (
-                                <MaterialCommunityIcons name="check" size={20} color={COLORS.primary} />
+                                <MaterialCommunityIcons name="check-circle" size={20} color={COLORS.primary} />
                             )}
                         </Pressable>
                     ))}
