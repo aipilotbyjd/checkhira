@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -7,23 +7,22 @@ import {
     Platform,
     ScrollView,
     ActivityIndicator,
-    Alert,
     Image,
+    StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { COLORS } from '../../constants/theme';
+import { COLORS, SIZES } from '../../constants/theme';
 import { PublicRoute } from '../../components/PublicRoute';
-import { AuthHeader } from '../../components/AuthHeader';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
     GoogleSignin,
     isSuccessResponse,
     isErrorWithCode,
     statusCodes,
 } from '@react-native-google-signin/google-signin';
-import { SocialLoginButton } from '../../components/SocialLoginButton';
 
 export default function GoogleLogin() {
     const router = useRouter();
@@ -84,39 +83,219 @@ export default function GoogleLogin() {
         <PublicRoute>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                className="flex-1 bg-white"
+                className="flex-1"
+                style={{ backgroundColor: COLORS.background.primary || COLORS.white }}
             >
-                <AuthHeader
-                    title={t('welcomeBack')}
-                    subtitle={t('loginToContinue')}
-                    showBack={true}
-                />
-
-                <ScrollView className="px-6" keyboardShouldPersistTaps="handled">
-                    <View className="items-center mb-8">
+                <ScrollView
+                    className="flex-1"
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={styles.scrollContent}
+                >
+                    {/* Logo and Header */}
+                    <View className="items-center">
                         <Image
-                            source={require('../../assets/google-login.png')}
-                            style={{ width: 180, height: 180, resizeMode: 'contain' }}
+                            source={require('../../assets/hirabook-logo.png')}
+                            style={styles.logo}
                         />
-                        <Text className="text-lg text-center mt-4" style={{ color: COLORS.gray[600] }}>
-                            {t('loginToContinue')}
-                        </Text>
                     </View>
 
-                    <SocialLoginButton
-                        icon="google"
-                        label={t('signInWithGoogle')}
+                    {/* Welcome Message */}
+                    <View style={styles.welcomeContainer}>
+                        <Text style={styles.welcomeText}>{t('welcomeBack')}</Text>
+                        <Text style={styles.subtitleText}>{t('loginToContinue')}</Text>
+                    </View>
+
+                    {/* Login Illustration */}
+                    <View className="items-center my-8">
+                        <Image
+                            source={require('../../assets/login-illustration.jpg')}
+                            style={styles.illustration}
+                        />
+                    </View>
+
+                    {/* Google Sign In Button */}
+                    <Pressable
                         onPress={handleGoogleSignIn}
                         disabled={isLoading}
-                    />
+                        style={[styles.googleButton, isLoading && styles.disabledButton]}
+                        android_ripple={{ color: '#3367D6' }}
+                    >
+                        <Image
+                            source={require('../../assets/google-icon.png')}
+                            style={styles.googleIcon}
+                        />
+                        <Text style={styles.buttonText}>
+                            {t('signInWithGoogle')}
+                        </Text>
+                    </Pressable>
 
+                    {/* Loading Indicator */}
                     {isLoading && (
                         <View className="items-center mt-4">
                             <ActivityIndicator size="large" color={COLORS.primary} />
                         </View>
                     )}
+
+                    {/* Divider */}
+                    <View style={styles.dividerContainer}>
+                        <View style={styles.divider} />
+                        <Text style={styles.dividerText}>OR</Text>
+                        <View style={styles.divider} />
+                    </View>
+
+                    {/* Other Sign In Options */}
+                    <Pressable
+                        onPress={() => router.push('/auth/phone-login')}
+                        style={styles.altLoginButton}
+                        android_ripple={{ color: COLORS.gray[100] }}
+                    >
+                        <MaterialCommunityIcons name="phone" size={22} color={COLORS.primary} />
+                        <Text style={styles.altLoginText}>{t('continueWithPhone')}</Text>
+                    </Pressable>
+
+                    <Pressable
+                        onPress={() => router.push('/auth/email-login')}
+                        style={styles.altLoginButton}
+                        android_ripple={{ color: COLORS.gray[100] }}
+                    >
+                        <MaterialCommunityIcons name="email" size={22} color={COLORS.primary} />
+                        <Text style={styles.altLoginText}>{t('continueWithEmail')}</Text>
+                    </Pressable>
+
+                    {/* Register Link */}
+                    <View style={styles.registerContainer}>
+                        <Text style={styles.registerText}>{t('dontHaveAccount')} </Text>
+                        <Pressable onPress={() => router.push('/auth/register')}>
+                            <Text style={styles.registerLink}>{t('createAccount')}</Text>
+                        </Pressable>
+                    </View>
+
+                    {/* Made with love footer */}
+                    <View style={styles.footer}>
+                        <Text style={styles.footerText}>
+                            {t('madeWith')} ❤️ {t('by')} Hirabook
+                        </Text>
+                    </View>
                 </ScrollView>
             </KeyboardAvoidingView>
         </PublicRoute>
     );
 }
+
+const styles = StyleSheet.create({
+    scrollContent: {
+        paddingHorizontal: 24,
+        paddingTop: 40,
+        paddingBottom: 32,
+    },
+    logo: {
+        width: SIZES.h1 * 10,
+        height: SIZES.h1 * 6,
+        resizeMode: 'contain',
+    },
+    welcomeContainer: {
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    welcomeText: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: COLORS.secondary,
+        textAlign: 'center',
+    },
+    subtitleText: {
+        fontSize: 16,
+        color: COLORS.gray[600],
+        textAlign: 'center',
+        marginTop: 8,
+    },
+    illustration: {
+        width: 220,
+        height: 180,
+        resizeMode: 'contain',
+    },
+    googleButton: {
+        backgroundColor: '#4285F4',
+        borderRadius: 12,
+        paddingVertical: 14,
+        paddingHorizontal: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    disabledButton: {
+        opacity: 0.7,
+    },
+    googleIcon: {
+        width: 24,
+        height: 24,
+        resizeMode: 'contain',
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+        marginLeft: 12,
+    },
+    dividerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 24,
+    },
+    divider: {
+        flex: 1,
+        height: 1,
+        backgroundColor: COLORS.gray[200],
+    },
+    dividerText: {
+        paddingHorizontal: 16,
+        color: COLORS.gray[400],
+        fontSize: 14,
+    },
+    altLoginButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.gray[200],
+        borderRadius: 12,
+        paddingVertical: 14,
+        paddingHorizontal: 20,
+        marginBottom: 12,
+        backgroundColor: COLORS.white,
+    },
+    altLoginText: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: COLORS.primary,
+        marginLeft: 12,
+    },
+    registerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    registerText: {
+        fontSize: 14,
+        color: COLORS.gray[600],
+    },
+    registerLink: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: COLORS.primary,
+    },
+    footer: {
+        marginTop: 32,
+        alignItems: 'center',
+    },
+    footerText: {
+        fontSize: 12,
+        color: COLORS.gray[400],
+    }
+});
