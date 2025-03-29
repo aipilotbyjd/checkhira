@@ -16,6 +16,7 @@ import { AnalyticsProvider } from '../contexts/AnalyticsContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LanguageProvider, useLanguage } from '../contexts/LanguageContext';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -23,7 +24,7 @@ export const unstable_settings = {
 
 function RootLayoutNav() {
   const { t } = useLanguage();
-  
+
   return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -81,6 +82,13 @@ export default function RootLayout() {
     };
 
     initializeOneSignal();
+
+    //google login configare
+    GoogleSignin.configure({
+      iosClientId: '195151324772-4gc4nhb0ou80sij272shuaa512irgap8.apps.googleusercontent.com',
+      webClientId: '195151324772-tpq4g2ctsltd8gd1on3e3nt3vlgbi33c.apps.googleusercontent.com',
+      profileImageSize: 150
+    });
   }, []);
 
   const checkAppUpdates = async () => {
@@ -128,7 +136,7 @@ export default function RootLayout() {
 
   const AppRatingManager = () => {
     const { t } = useLanguage();
-    
+
     useEffect(() => {
       const initializeAppRating = async () => {
         await ratingService.incrementAppUsage();
@@ -142,7 +150,7 @@ export default function RootLayout() {
 
       initializeAppRating();
     }, [t]);
-    
+
     return null;
   };
 

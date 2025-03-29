@@ -7,6 +7,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '../../constants/theme';
@@ -14,10 +15,17 @@ import { PublicRoute } from '../../components/PublicRoute';
 import { AuthHeader } from '../../components/AuthHeader';
 import { AuthInput } from '../../components/AuthInput';
 import { useLanguage } from '../../contexts/LanguageContext';
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  isSuccessResponse,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 
 export default function PhoneLogin() {
   const router = useRouter();
   const [phone, setPhone] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { t } = useLanguage();
 
   const validatePhone = (number: string) => {
@@ -40,6 +48,76 @@ export default function PhoneLogin() {
 
     router.push(`/auth/password?phone=${encodeURIComponent(cleanedPhone)}`);
   };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true);
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+
+      if (isSuccessResponse(response)) {
+        const { idToken, user } = response.data;
+        const { name, email, photo } = user;
+
+        Alert.alert(
+          'Google Sign In',
+          `User ID: ${idToken}\nUser Name: ${name}\nUser Email: ${email}\nUser Photo: ${photo}`,
+          [{ text: 'OK', onPress: () => setIsLoading(false) }],
+          { cancelable: false },
+        );
+      } else {
+        // sign in was cancelled by user
+        Alert.alert(
+          'Google Sign In',
+          'Sign in was cancelled by user',
+          [{ text: 'OK', onPress: () => setIsLoading(false) }],
+          { cancelable: false },
+        );
+      }
+
+      setIsLoading(false);
+    } catch (error) {
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.IN_PROGRESS:
+            // operation (eg. sign in) already in progress
+            Alert.alert(
+              'Google Sign In',
+              'Operation (eg. sign in) already in progress',
+              [{ text: 'OK', onPress: () => setIsLoading(false) }],
+              { cancelable: false },
+            );
+            break;
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            // Android only, play services not available or outdated
+            Alert.alert(
+              'Google Sign In',
+              'Android only, play services not available or outdated',
+              [{ text: 'OK', onPress: () => setIsLoading(false) }],
+              { cancelable: false },
+            )
+            break;
+          default:
+            // some other error happened
+            console.log(error);
+            Alert.alert(
+              'Google Sign In',
+              'Some other error happened',
+              [{ text: 'OK', onPress: () => setIsLoading(false) }],
+              { cancelable: false },
+            );
+        }
+      } else {
+        // an error that's not related to google sign in occurred
+        Alert.alert(
+          'Google Sign In',
+          'An error that\'s not related to google sign in occurred',
+          [{ text: 'OK', onPress: () => setIsLoading(false) }],
+          { cancelable: false },
+        )
+      }
+    }
+  }
 
   return (
     <PublicRoute>
@@ -86,6 +164,31 @@ export default function PhoneLogin() {
             </Text>
             <View className="flex-1 h-px bg-gray-200" />
           </View>
+
+          <Pressable
+            onPress={handleGoogleSignIn}
+            disabled={isLoading}
+            className="rounded-xl border p-4 mb-4"
+            style={{ borderColor: COLORS.primary }}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={COLORS.primary} />
+            ) : (
+              <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
+                {t('signInWithGoogle')}
+              </Text>
+            )}
+          </Pressable>
+
+          <Pressable
+            onPress={() => GoogleSignin.signOut()}
+            className="rounded-xl border p-4 mb-4"
+            style={{ borderColor: COLORS.primary }}
+          >
+            <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
+              Sign Out
+            </Text>
+          </Pressable>
 
           <Pressable
             onPress={() => router.push('/auth/email-login')}

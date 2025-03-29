@@ -45,7 +45,13 @@
           "mode": "production"
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.195151324772-4gc4nhb0ou80sij272shuaa512irgap8"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

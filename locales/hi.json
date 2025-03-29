@@ -151,5 +151,6 @@
     "termsAcceptance": "नियमों और शर्तों का स्वीकार",
     "termsAcceptanceDesc": "यह एक सीमा है जो ऐप के नियमों और शर्तों के लिए है।",
     "termsUseLicense": "नियमों और शर्तों का स्वीकार",
-    "termsUseLicenseDesc": "यह एक सीमा है जो ऐप के नियमों और शर्तों के लिए है।"
+    "termsUseLicenseDesc": "यह एक सीमा है जो ऐप के नियमों और शर्तों के लिए है।",
+    "signInWithGoogle" : "Google के साथ साइन इन करें"
 }

@@ -151,5 +151,6 @@
   "termsAcceptance": "Terms Acceptance",
   "termsAcceptanceDesc": "By using this app, you agree to the terms and conditions of the app.",
   "termsUseLicense": "Terms Use License",
-  "termsUseLicenseDesc": "You are granted a non-exclusive, non-transferable, revocable license to use the app for your personal or commercial purposes."
-} 
+  "termsUseLicenseDesc": "You are granted a non-exclusive, non-transferable, revocable license to use the app for your personal or commercial purposes.",
+  "signInWithGoogle": "Sign in with Google"
+}
