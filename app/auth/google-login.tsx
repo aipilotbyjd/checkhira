@@ -39,55 +39,38 @@ export default function GoogleLogin() {
             const userInfo = await GoogleSignin.signIn();
 
             if (isSuccessResponse(userInfo)) {
-                const { idToken, user } = userInfo.data;
-                const { name, email, photo } = user;
+                try {
+                    const { idToken, user } = userInfo.data;
+                    const { name, email, photo } = user;
 
-                // Call the googleLogin method from AuthContext
-                await googleLogin(idToken, user);
-                showToast(t('loginSuccess'), 'success');
-                router.replace('/(tabs)');
+                    // Call the googleLogin method from AuthContext
+                    await googleLogin(idToken, user);
+                    showToast(t('loginSuccess'), 'success');
+                    router.replace('/(tabs)');
+                } catch (error) {
+                    console.error('Google login error:', error);
+                    showToast(t('googleSignInErrorsUnknownError'), 'error');
+                }
             } else {
-                // sign in was cancelled by user
-                showToast(t('googleSignInErrorsSignInCancelled'), 'error')
+                showToast(t('googleSignInErrorsSignInCancelled'), 'error');
             }
         } catch (error) {
             if (isErrorWithCode(error)) {
                 switch (error.code) {
                     case statusCodes.IN_PROGRESS:
-                        // operation (eg. sign in) already in progress
-                        showToast(t('googleSignInErrorsInProgress'), 'error')
-
-                        //after 2 seconds
-                        setTimeout(() => {
-                            setIsLoading(false);
-                        }, 2000);
+                        showToast(t('googleSignInErrorsInProgress'), 'error');
                         break;
                     case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-                        // Android only, play services not available or outdated
-                        showToast(t('googleSignInErrorsPlayServicesNotAvailable'), 'error')
-
-                        //after 2 seconds
-                        setTimeout(() => {
-                            setIsLoading(false);
-                        }, 2000);
+                        showToast(t('googleSignInErrorsPlayServicesNotAvailable'), 'error');
+                        break;
+                    case statusCodes.SIGN_IN_CANCELLED:
+                        showToast(t('googleSignInErrorsSignInCancelled'), 'error');
                         break;
                     default:
-                        // some other error happened
-                        showToast(t('googleSignInErrorsUnknownError'), 'error')
-
-                        //after 2 seconds
-                        setTimeout(() => {
-                            setIsLoading(false);
-                        }, 2000);
+                        showToast(t('googleSignInErrorsUnknownError'), 'error');
                 }
             } else {
-                // an error that's not related to google sign in occurred
-                showToast(t('googleSignInErrorsNotRelatedToGoogleSignIn'), 'error')
-
-                //after 2 seconds
-                setTimeout(() => {
-                    setIsLoading(false);
-                }, 2000);
+                showToast(t('googleSignInErrorsNotRelatedToGoogleSignIn'), 'error');
             }
         } finally {
             setIsLoading(false);
@@ -110,7 +93,7 @@ export default function GoogleLogin() {
                     <View className="items-center mb-8">
                         <Image
                             source={require('../../assets/google-login.png')}
-                            style={{ width: 150, height: 150, resizeMode: 'contain' }}
+                            style={{ width: 180, height: 180, resizeMode: 'contain' }}
                         />
                         <Text className="text-lg text-center mt-4" style={{ color: COLORS.gray[600] }}>
                             {t('loginToContinue')}
@@ -129,45 +112,6 @@ export default function GoogleLogin() {
                             <ActivityIndicator size="large" color={COLORS.primary} />
                         </View>
                     )}
-
-                    <View className="flex-row items-center my-6">
-                        <View className="flex-1 h-px bg-gray-200" />
-                        <Text className="px-4 text-sm" style={{ color: COLORS.gray[400] }}>
-                            OR
-                        </Text>
-                        <View className="flex-1 h-px bg-gray-200" />
-                    </View>
-
-                    <Pressable
-                        onPress={() => router.push('/auth/phone-login')}
-                        className="rounded-xl border p-4 mb-4"
-                        style={{ borderColor: COLORS.primary }}
-                    >
-                        <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
-                            {t('continueWithPhone')}
-                        </Text>
-                    </Pressable>
-
-                    <Pressable
-                        onPress={() => router.push('/auth/email-login')}
-                        className="rounded-xl border p-4 mb-6"
-                        style={{ borderColor: COLORS.primary }}
-                    >
-                        <Text className="text-center text-lg font-semibold" style={{ color: COLORS.primary }}>
-                            {t('continueWithEmail')}
-                        </Text>
-                    </Pressable>
-
-                    <View className="flex-row justify-center mt-8">
-                        <Text className="text-sm" style={{ color: COLORS.gray[600] }}>
-                            {t('dontHaveAccount')}{' '}
-                        </Text>
-                        <Pressable onPress={() => router.push('/auth/register')}>
-                            <Text className="text-sm font-semibold" style={{ color: COLORS.primary }}>
-                                {t('register')}
-                            </Text>
-                        </Pressable>
-                    </View>
                 </ScrollView>
             </KeyboardAvoidingView>
         </PublicRoute>
