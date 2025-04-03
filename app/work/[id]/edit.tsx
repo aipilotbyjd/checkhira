@@ -401,7 +401,7 @@ export default function EditWork() {
             onPress={handleDelete}
             disabled={isDeleting}
             className="mb-4 rounded-2xl p-4"
-            style={{ backgroundColor: COLORS.danger }}>
+            style={{ backgroundColor: COLORS.error }}>
             <Text className="text-center text-lg font-semibold text-white">
               {isDeleting ? t('Deleting...') : t('deleteWork')}
             </Text>

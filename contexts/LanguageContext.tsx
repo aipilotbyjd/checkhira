@@ -54,20 +54,23 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
 
     useEffect(() => {
         const loadSavedLocale = async () => {
-            setLoading(true);
+            // Async operation without loading state synchronization
+            const savedLocale = await AsyncStorage.getItem('userLocale');
             try {
-                const savedLocale = await AsyncStorage.getItem('userLocale');
-                if (savedLocale) {
-                    setLocaleState(savedLocale);
-                } else {
-                    // Use device locale if available and supported, otherwise default to English
-                    const deviceLocale = Localization.locale.split('-')[0];
-                    if (translations[deviceLocale]) {
-                        setLocaleState(deviceLocale);
-                    }
+                const [savedLocale, deviceLocale] = await Promise.all([
+                    AsyncStorage.getItem('userLocale'),
+                    Localization.locale.split('-')[0]
+                ]);
+
+                const initialLocale = savedLocale ||
+                    (translations[deviceLocale] ? deviceLocale : 'en');
+
+                setLocaleState(initialLocale);
+                if (!savedLocale) {
+                    await AsyncStorage.setItem('userLocale', initialLocale);
                 }
             } catch (error) {
-                console.error('Failed to load locale:', error);
+                console.error('Locale loading error:', error);
             } finally {
                 setLoading(false);
             }
@@ -96,11 +99,11 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
     const isRTL = rtlLocales.includes(locale);
 
     // Memoize context value to prevent unnecessary re-renders
-    const contextValue = useMemo(() => ({ 
-        locale, 
-        setLocale, 
-        t, 
-        isRTL, 
+    const contextValue = useMemo(() => ({
+        locale,
+        setLocale,
+        t,
+        isRTL,
         availableLocales,
         loading
     }), [locale, t, isRTL, loading]);
@@ -110,4 +113,4 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
             {children}
         </LanguageContext.Provider>
     );
-}; 
+};

@@ -158,25 +158,23 @@ export default function RootLayout() {
   };
 
   return (
-    <SafeAreaProvider>
-      <ErrorBoundary>
-        <ThemeProvider>
-          <LanguageProvider>
-            <ToastProvider>
-              <AuthProvider>
-                <NotificationProvider>
-                  <SettingsProvider>
-                    <AnalyticsProvider>
-                      <AppRatingManager />
-                      <RootLayoutNav />
-                    </AnalyticsProvider>
-                  </SettingsProvider>
-                </NotificationProvider>
-              </AuthProvider>
-            </ToastProvider>
-          </LanguageProvider>
-        </ThemeProvider>
-      </ErrorBoundary>
-    </SafeAreaProvider>
+    <LanguageProvider>
+      <SafeAreaProvider>
+        <ErrorBoundary>
+          <ToastProvider>
+            <AuthProvider>
+              <NotificationProvider>
+                <SettingsProvider>
+                  <AnalyticsProvider>
+                    <AppRatingManager />
+                    <RootLayoutNav />
+                  </AnalyticsProvider>
+                </SettingsProvider>
+              </NotificationProvider>
+            </AuthProvider>
+          </ToastProvider>
+        </ErrorBoundary>
+      </SafeAreaProvider>
+    </LanguageProvider>
   );
 }
