@@ -8,10 +8,10 @@ export interface ProfileResponse {
   message: string;
 }
 
-const createFormData = (imageUri: string, body: Record<string, any> = {}) => {
+// Add export keyword here
+export const createFormData = (imageUri: string, body: Record<string, any> = {}) => {
   const formData = new FormData();
 
-  // Append image file if exists
   if (imageUri) {
     const filename = imageUri.split('/').pop() || 'profile.jpg';
     const match = /\.(\w+)$/.exec(filename);
@@ -24,26 +24,32 @@ const createFormData = (imageUri: string, body: Record<string, any> = {}) => {
     } as any);
   }
 
-  // Append other form fields
-  Object.keys(body).forEach((key) => {
-    formData.append(key, body[key]);
+  // Append all body fields including nested objects
+  Object.entries(body).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      formData.append(key, typeof value === 'object' ? JSON.stringify(value) : value);
+    }
   });
 
   return formData;
 };
 
 export const profileService = {
+  async updateProfile(data: FormData | Partial<UserProfile>): Promise<ProfileResponse> {
+    if (data instanceof FormData) {
+      return api.upload<ProfileResponse>(
+        '/profile',
+        data,
+        undefined,
+        {},  // Remove headers from here
+        'PUT'
+      );
+    }
+    return api.put<ProfileResponse, Partial<UserProfile>>('/profile', data);
+  },
   async getProfile(): Promise<ProfileResponse> {
     return api.get<ProfileResponse>('/profile', undefined, {
       cacheTime: 5 * 60 * 1000, // Cache for 5 minutes
     });
-  },
-
-  async updateProfile(data: FormData | Partial<UserProfile>): Promise<ProfileResponse> {
-    if (data instanceof FormData) {
-      return api.upload<ProfileResponse>('/profile', data, undefined, {}, 'PUT');
-    } else {
-      return api.put<ProfileResponse, Partial<UserProfile>>('/profile', data);
-    }
   },
 };

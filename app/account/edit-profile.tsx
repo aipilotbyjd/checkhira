@@ -16,6 +16,7 @@ import { UserProfile } from '../../types/user';
 import { useProfileOperations } from '../../hooks/useProfileOperations';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { createFormData } from '../../services/profileService';
 
 export default function EditProfile() {
   const router = useRouter();
@@ -106,31 +107,19 @@ export default function EditProfile() {
     }
 
     try {
-      const formDataToSend = new FormData();
+      const { tempImageUri, ...profileData } = formData;
+      const formDataToSend = createFormData(tempImageUri || '', {
+        ...profileData,
+        address: profileData.address?.trim() || '',
+      });
 
-      // Add all text fields
-      formDataToSend.append('first_name', formData.first_name.trim());
-      formDataToSend.append('last_name', formData.last_name.trim());
-      formDataToSend.append('email', formData.email.trim());
-      formDataToSend.append('phone', formData.phone.trim());
-      formDataToSend.append('address', formData.address?.trim() || '');
-
-      // Add image if there's a new one
-      if (formData.imageFile) {
-        formDataToSend.append('profile_image', formData.imageFile as any);
-      }
-
-      // Use the hook's updateProfile directly with FormData
       await updateProfile(formDataToSend);
-      // The hook handles navigation and user context updates
+      showToast('Profile updated successfully!', 'success');
     } catch (error: any) {
-      if (error.status === 422) {
-        const serverErrors = error.data?.errors || {};
-        setErrors(serverErrors);
-        showToast('Please correct the errors in the form', 'error');
-      } else {
-        showToast('Failed to update profile: ' + (error.message || 'Unknown error'), 'error');
+      if (error.data?.errors) {
+        setErrors(error.data.errors);
       }
+      showToast(error.message || 'Failed to update profile', 'error');
     }
   };
 
