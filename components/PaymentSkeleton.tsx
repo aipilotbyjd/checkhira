@@ -4,12 +4,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 
 export const PaymentSkeleton = () => {
   const router = useRouter();
   const actionSheetRef = useRef<ActionSheetRef>(null);
   const [currentFilter, setCurrentFilter] = useState('all');
+  const { t } = useLanguage();
 
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
@@ -21,7 +23,7 @@ export const PaymentSkeleton = () => {
         }}>
         <View className="flex-row items-center justify-between">
           <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-            Payments
+            {t('paymentsList')}
           </Text>
           <View className="flex-row space-x-3">
             <Pressable

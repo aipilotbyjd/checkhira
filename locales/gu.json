@@ -142,13 +142,15 @@
   "termsAcceptanceDesc": "તમે તમારી જાનકારી વિષે શું કરીએ છીએ",
   "termsUseLicense": "નિયમો અને શરતો સ્વીકારવા",
   "termsUseLicenseDesc": "તમે તમારી જાનકારી વિષે શું કરીએ છીએ",
-  "signInWithGoogle": "ગૉગલ સાઉન ઇન",
-  "googleSignInErrors": {
-    "IN_PROGRESS": "Operation already in progress",
-    "PLAY_SERVICES_NOT_AVAILABLE": "Google Play services required",
-    "SIGN_IN_CANCELLED": "Sign in cancelled",
-    "SIGN_IN_REQUIRED": "Please sign in again",
-    "INVALID_ACCOUNT": "Invalid Google account",
-    "UNKNOWN_ERROR": "Unknown error occurred"
-  }
+  "signInWithGoogle": "ગૂગલ સાઉન ઇન",
+  "googleSignInErrorsInProgress": "ગૂગલ સાઇન-ઇન પ્રગતિમાં છે",
+  "googleSignInErrorsPlayServicesNotAvailable": "ગૂગલ પ્લે સેવાઓ આવશ્યક છે",
+  "googleSignInErrorsSignInCancelled": "સાઇન ઇન રદ કરવામાં આવ્યું",
+  "googleSignInErrorsSignInRequired": "કૃપા કરીને ફરીથી સાઇન ઇન કરો",
+  "googleSignInErrorsInvalidAccount": "અમાન્ય ગૂગલ એકાઉન્ટ",
+  "googleSignInErrorsUnknownError": "અજ્ઞાત ભૂલ આવી",
+  "googleSignInErrorsNotRelatedToGoogleSignIn": "ગૂગલ સાઇન ઇન સાથે સંબંધિત ન હોય તેવી ભૂલ આવી.",
+  "loginSuccess": "સફળતાપૂર્વક લૉગિન થયા",
+  "googleSignInErrorsNoIdToken": "કોઈ ID ટોકન પ્રાપ્ત થયું નથી",
+  "googleSignInErrorsNoAccessToken": "કોઈ એક્સેસ ટોકન પ્રાપ્ત થયું નથી"
 }

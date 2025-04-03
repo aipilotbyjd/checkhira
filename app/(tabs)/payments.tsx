@@ -43,7 +43,7 @@ export default function PaymentsList() {
   useFocusEffect(
     useCallback(() => {
       loadPayments({ page: 1 });
-      return () => { };
+      getUnreadNotificationsCount();
     }, [currentFilter])
   );
 

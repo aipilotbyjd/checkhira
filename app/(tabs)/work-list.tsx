@@ -7,7 +7,7 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
 import { COLORS } from '../../constants/theme';
@@ -82,9 +82,12 @@ export default function WorkListScreen() {
     actionSheetRef.current?.hide();
   }, []);
 
-  useEffect(() => {
-    loadWork({ page: 1 });
-  }, [currentFilter]);
+  useFocusEffect(
+    useCallback(() => {
+      loadWork({ page: 1 });
+      getUnreadNotificationsCount();
+    }, [currentFilter])
+  );
 
   const handleLoadMore = useCallback(async () => {
     if (!hasMorePages || isLoadingMore) return;

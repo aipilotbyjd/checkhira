@@ -153,12 +153,14 @@
     "termsUseLicense": "नियमों और शर्तों का स्वीकार",
     "termsUseLicenseDesc": "यह एक सीमा है जो ऐप के नियमों और शर्तों के लिए है।",
     "signInWithGoogle": "Google के साथ साइन इन करें",
-    "googleSignInErrors": {
-        "IN_PROGRESS": "Operation already in progress",
-        "PLAY_SERVICES_NOT_AVAILABLE": "Google Play services required",
-        "SIGN_IN_CANCELLED": "Sign in cancelled",
-        "SIGN_IN_REQUIRED": "Please sign in again",
-        "INVALID_ACCOUNT": "Invalid Google account",
-        "UNKNOWN_ERROR": "Unknown error occurred"
-    }
+    "googleSignInErrorsInProgress": "Google साइन-इन प्रगति में है",
+    "googleSignInErrorsPlayServicesNotAvailable": "Google Play सेवाएं आवश्यक हैं",
+    "googleSignInErrorsSignInCancelled": "साइन इन रद्द किया गया",
+    "googleSignInErrorsSignInRequired": "कृपया फिर से साइन इन करें",
+    "googleSignInErrorsInvalidAccount": "अमान्य Google खाता",
+    "googleSignInErrorsUnknownError": "अज्ञात त्रुटि हुई",
+    "googleSignInErrorsNotRelatedToGoogleSignIn": "Google साइन इन से संबंधित नहीं कोई त्रुटि हुई।",
+    "loginSuccess": "सफलतापूर्वक लॉग इन हो गया",
+    "googleSignInErrorsNoIdToken": "कोई ID टोकन प्राप्त नहीं हुआ",
+    "googleSignInErrorsNoAccessToken": "कोई एक्सेस टोकन प्राप्त नहीं हुआ"
 }
