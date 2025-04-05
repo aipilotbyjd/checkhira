@@ -354,7 +354,7 @@ export default function Home() {
       {/* Quick Actions - Enhanced version */}
       <View className="mt-8 px-6">
         <Text className="mb-4 text-lg font-semibold" style={{ color: COLORS.secondary }}>
-          Quick Actions
+          {t('quickActions')}
         </Text>
         <View className="grid grid-cols-2 gap-4">
           <Pressable
@@ -363,7 +363,7 @@ export default function Home() {
             style={{ backgroundColor: COLORS.primary + '15' }}>
             <MaterialCommunityIcons name="pencil-plus" size={24} color={COLORS.primary} />
             <Text className="ml-3 flex-1 font-medium" style={{ color: COLORS.primary }}>
-              Log Work
+              {t('addWork')}
             </Text>
           </Pressable>
 
@@ -373,7 +373,7 @@ export default function Home() {
             style={{ backgroundColor: COLORS.primary + '15' }}>
             <MaterialCommunityIcons name="cash-plus" size={24} color={COLORS.primary} />
             <Text className="ml-3 flex-1 font-medium" style={{ color: COLORS.primary }}>
-              Request Payment
+              {t('addPayment')}
             </Text>
           </Pressable>
 
@@ -383,7 +383,7 @@ export default function Home() {
             style={{ backgroundColor: COLORS.primary + '15' }}>
             <MaterialCommunityIcons name="clipboard-list" size={24} color={COLORS.primary} />
             <Text className="ml-3 flex-1 font-medium" style={{ color: COLORS.primary }}>
-              View Work List
+              {t('viewWorkList')}
             </Text>
           </Pressable>
 
@@ -393,7 +393,7 @@ export default function Home() {
             style={{ backgroundColor: COLORS.primary + '15' }}>
             <MaterialCommunityIcons name="cash-register" size={24} color={COLORS.primary} />
             <Text className="ml-3 flex-1 font-medium" style={{ color: COLORS.primary }}>
-              View Payments List
+              {t('viewPaymentsList')}
             </Text>
           </Pressable>
         </View>
@@ -403,12 +403,26 @@ export default function Home() {
       <View className="mt-8 px-6 pb-8">
         <View className="mb-4 flex-row items-center justify-between">
           <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
-            Recent Activities
+            {t('recentActivities')}
           </Text>
         </View>
 
         {loading ? (
           <ActivityIndicator size="small" color={COLORS.primary} />
+        ) : recentActivities.length === 0 ? (
+          <View className="items-center justify-center py-8">
+            <MaterialCommunityIcons
+              name="clipboard-text-clock-outline"
+              size={48}
+              color={COLORS.gray[400]}
+            />
+            <Text
+              className="mt-4 text-base text-center"
+              style={{ color: COLORS.gray[400] }}
+            >
+              {t('noActivitiesFound')}
+            </Text>
+          </View>
         ) : (
           recentActivities.map((activity: Activity, index: number) => (
             <Pressable

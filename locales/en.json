@@ -57,7 +57,10 @@
   "alreadyHaveAccount": "Already have an account?",
   "yourRights": "Your Rights",
   "yourRightsDesc": "You have the right to access, update, or delete your personal information at any time. You can do this through your account settings or by contacting us directly.",
-  "workList": "Work List",
+  "home": "Home",
+  "worklist": "Work List",
+  "payments": "Payments",
+  "account": "Account",
   "today": "Today",
   "thisWeek": "This Week",
   "thisMonth": "This Month",
@@ -163,5 +166,8 @@
   "loginSuccess": "Successfully logged in",
   "googleSignInErrorsNoIdToken": "No ID token received",
   "Updating...": "Updating...",
-  "Deleting...": "Deleting..."
+  "Deleting...": "Deleting...",
+  "viewWorkList": "View Work List",
+  "quickActions": "Quick Actions",
+  "noActivitiesFound" : "No activities found"
 }

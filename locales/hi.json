@@ -59,7 +59,10 @@
     "editPayment": "भुगतान संपादित करें",
     "addWorkEntry": "कार्य प्रविष्टि जोड़ें",
     "editWorkEntry": "कार्य प्रविष्टि संपादित करें",
-    "workList": "कार्य सूची",
+    "home": "होम",
+    "worklist": "कार्य सूची",
+    "payments": "भुगतान",
+    "account": "खाता",
     "today": "आज",
     "thisWeek": "इस सप्ताह",
     "thisMonth": "इस महीने",
@@ -162,5 +165,8 @@
     "googleSignInErrorsNotRelatedToGoogleSignIn": "Google साइन इन से संबंधित नहीं कोई त्रुटि हुई।",
     "loginSuccess": "सफलतापूर्वक लॉग इन हो गया",
     "googleSignInErrorsNoIdToken": "कोई ID टोकन प्राप्त नहीं हुआ",
-    "googleSignInErrorsNoAccessToken": "कोई एक्सेस टोकन प्राप्त नहीं हुआ"
+    "googleSignInErrorsNoAccessToken": "कोई एक्सेस टोकन प्राप्त नहीं हुआ",
+    "viewWorkList": "कार्य सूची देखें",
+    "quickActions": "त्वरित क्रियाएँ",
+    "noActivitiesFound": "कोई गतिविधियाँ नहीं मिली"
 }

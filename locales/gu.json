@@ -57,7 +57,6 @@
   "alreadyHaveAccount": "પહેલેથી જ ખાતું છે?",
   "addWorkEntry": "કામની એન્ટ્રી ઉમેરો",
   "editWorkEntry": "કામની એન્ટ્રી સંપાદિત કરો",
-  "workList": "કામની સૂચિ",
   "today": "આજે",
   "thisWeek": "આ અઠવાડિયે",
   "thisMonth": "આ મહિને",
@@ -152,5 +151,12 @@
   "googleSignInErrorsNotRelatedToGoogleSignIn": "ગૂગલ સાઇન ઇન સાથે સંબંધિત ન હોય તેવી ભૂલ આવી.",
   "loginSuccess": "સફળતાપૂર્વક લૉગિન થયા",
   "googleSignInErrorsNoIdToken": "કોઈ ID ટોકન પ્રાપ્ત થયું નથી",
-  "googleSignInErrorsNoAccessToken": "કોઈ એક્સેસ ટોકન પ્રાપ્ત થયું નથી"
+  "googleSignInErrorsNoAccessToken": "કોઈ એક્સેસ ટોકન પ્રાપ્ત થયું નથી",
+  "viewWorkList": "કામની સૂચિ જુઓ",
+  "home": "હોમ",
+  "worklist": "કામની સૂચિ",
+  "payments": "ચુકવણી",
+  "account": "એકાઉન્ટ",
+  "quickActions": "ફટાફટ કાર્યવાહી",
+  "noActivitiesFound": "કોઈ પ્રવૃત્તિઓ મળી નથી"
 }

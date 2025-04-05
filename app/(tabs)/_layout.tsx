@@ -7,6 +7,7 @@ import { HeaderButton } from '../../components/HeaderButton';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useDimensions } from '../../hooks/useScreenDimensions';
 import { AuthGuard } from '../../components/AuthGuard';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const TAB_SCREENS = [
   {
@@ -39,6 +40,7 @@ export default function TabLayout() {
   const router = useRouter();
   const { getTabBarHeight, getHeaderHeight } = useDimensions();
   const { unreadCount } = useNotification();
+  const { t } = useLanguage();
 
   return (
     <AuthGuard>
@@ -93,7 +95,7 @@ export default function TabLayout() {
             key={screen.name}
             name={screen.name}
             options={{
-              title: screen.label,
+              title: t(screen.label as any),
               headerShown: screen.headerShown,
               tabBarIcon: ({ color, focused }) => (
                 <TabBarIcon name={screen.icon} color={color} size={SPACING.md * 1.6} />
