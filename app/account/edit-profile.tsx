@@ -83,29 +83,29 @@ export default function EditProfile() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      showToast('Please grant camera roll permissions to change profile picture.', 'error');
-      return;
-    }
+  // const pickImage = async () => {
+  //   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  //   if (status !== 'granted') {
+  //     showToast('Please grant camera roll permissions to change profile picture.', 'error');
+  //     return;
+  //   }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
+  //   const result = await ImagePicker.launchImageLibraryAsync({
+  //     mediaTypes: ['images'],
+  //     allowsEditing: true,
+  //     aspect: [1, 1],
+  //     quality: 0.5,
+  //   });
 
-    if (!result.canceled && result.assets?.[0]) {
-      setFormData((prev) => ({
-        ...prev,
-        profile_image: result.assets[0].uri || '',
-        tempImageUri: result.assets[0].uri || '',
-        imageFile: result.assets[0] as any,
-      }));
-    }
-  };
+  //   if (!result.canceled && result.assets?.[0]) {
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       profile_image: result.assets[0].uri || '',
+  //       tempImageUri: result.assets[0].uri || '',
+  //       imageFile: result.assets[0] as any,
+  //     }));
+  //   }
+  // };
 
   const handleUpdate = async () => {
     if (!validateForm()) {
@@ -114,10 +114,21 @@ export default function EditProfile() {
     }
 
     try {
-      const { tempImageUri, ...profileData } = formData;
-      const formDataToSend = createFormData(tempImageUri || '', {
-        ...profileData,
-        address: profileData.address?.trim() || '',
+      const { tempImageUri, imageFile, ...profileData } = formData; // Destructure to exclude tempImageUri and imageFile
+
+      // Create FormData and append image file if it exists
+      const formDataToSend = new FormData();
+      /*
+      if (imageFile) {
+        const response = await fetch(imageFile.uri);
+        const blob = await response.blob();
+        formDataToSend.append('profile_image', blob, imageFile.name || 'profile_image.jpeg');
+      }
+      */
+
+      // Append other profile data to FormData
+      (Object.keys(profileData) as Array<keyof Omit<UserProfile, 'tempImageUri' | 'imageFile'>>).forEach((key) => {
+        formDataToSend.append(key, profileData[key] as string);
       });
 
       await updateProfile(formDataToSend);
@@ -134,7 +145,7 @@ export default function EditProfile() {
     <ScrollView className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
       <View className="p-6">
         {/* Profile Image Section */}
-        <View className="mb-6 items-center">
+        {/* <View className="mb-6 items-center">
           <Pressable onPress={pickImage} className="relative">
             <View className="h-24 w-24 rounded-full bg-gray-200">
               <Image
@@ -153,7 +164,7 @@ export default function EditProfile() {
               <MaterialCommunityIcons name="camera" size={20} color="white" />
             </View>
           </Pressable>
-        </View>
+        </View> */}
 
         {/* Form Fields */}
         <View className="space-y-4">
