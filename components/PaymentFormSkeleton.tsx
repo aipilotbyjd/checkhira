@@ -18,11 +18,11 @@ export const PaymentFormSkeleton = () => {
         <View className="mt-6 space-y-4">
           <View>
             <View className="mb-2 h-4 w-20 rounded bg-gray-200" />
-            <View className="h-12 rounded-xl bg-gray-200" />
+            <View className="mb-2 h-12 rounded-xl bg-gray-200" />
           </View>
           <View>
             <View className="mb-2 h-4 w-20 rounded bg-gray-200" />
-            <View className="h-12 rounded-xl bg-gray-200" />
+            <View className="mb-2 h-12 rounded-xl bg-gray-200" />
           </View>
         </View>
 
@@ -30,7 +30,7 @@ export const PaymentFormSkeleton = () => {
         <View className="mt-6 space-y-4">
           <View>
             <View className="mb-3 h-4 w-32 rounded bg-gray-200" />
-            <View className="flex-row flex-wrap gap-2">
+            <View className="mb-3 flex-row flex-wrap gap-2">
               {[...Array(6)].map((_, i) => (
                 <View key={i} className="h-10 w-1/5 min-w-[100px] rounded-full bg-gray-200" />
               ))}
@@ -40,8 +40,8 @@ export const PaymentFormSkeleton = () => {
           {/* Amount Field Skeleton */}
           <View>
             <View className="mb-2 h-4 w-20 rounded bg-gray-200" />
-            <View className="h-12 rounded-xl bg-gray-200" />
-            <View className="mt-2 h-3 w-40 rounded bg-gray-200" />
+            <View className="mb-2 h-12 rounded-xl bg-gray-200" />
+            <View className="mb-2 mt-2 h-3 w-40 rounded bg-gray-200" />
           </View>
 
           {/* Notes Field Skeleton */}

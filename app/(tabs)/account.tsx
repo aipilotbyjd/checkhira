@@ -75,6 +75,11 @@ export default function Account() {
       href: '/account/edit-profile',
     },
     {
+      title: t('defaultPrices'),
+      icon: 'diamond-stone',
+      href: '/account/default-prices',
+    },
+    {
       title: t('termsAndConditions'),
       icon: 'file-document',
       href: '/account/terms',
@@ -98,11 +103,6 @@ export default function Account() {
       title: t('aboutApp'),
       icon: 'information',
       href: '/account/about',
-    },
-    {
-      title: t('defaultPrices'),
-      icon: 'diamond-stone',
-      href: '/account/default-prices',
     },
   ];
 
@@ -178,7 +178,7 @@ export default function Account() {
           {/* Menu Items - Improved for better mobile display */}
           <View className="mt-6 px-1">
             {menuItems.map((item, index) => (
-              <Link key={index} href={item.href} asChild>
+              <Link key={index} href={item.href as any} asChild>
                 <Pressable
                   className="mb-3 flex-row items-center justify-between rounded-xl border p-3"
                   style={{
