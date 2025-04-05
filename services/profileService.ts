@@ -42,14 +42,12 @@ export const profileService = {
         data,
         undefined,
         {},  // Headers are handled internally
-        'PUT' // Ensure the method is correct
+        'POST' // Ensure the method is correct
       );
     }
     return api.put<ProfileResponse, Partial<UserProfile>>('/profile', data);
   },
   async getProfile(): Promise<ProfileResponse> {
-    return api.get<ProfileResponse>('/profile', undefined, {
-      cacheTime: 1000, // Cache for 5 minutes
-    });
+    return api.get<ProfileResponse>('/profile');
   },
 };

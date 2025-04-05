@@ -17,14 +17,15 @@ export const useProfileOperations = () => {
     throw new Error(errorMessage);
   };
 
-  const getProfile = async () => {
+  const getProfile = async (): Promise<UserProfile | undefined> => { // Adjust return type
     setIsLoading(true);
     setError(null);
     try {
       const response = await profileService.getProfile();
-      return response.data;
+      return response.data as UserProfile;
     } catch (err) {
       handleApiError(err, 'Failed to fetch profile');
+      return undefined; // Ensure a return value in the catch block
     } finally {
       setIsLoading(false);
     }

@@ -21,7 +21,7 @@ import { createFormData } from '../../services/profileService';
 export default function EditProfile() {
   const router = useRouter();
   const { showToast } = useToast();
-  const { updateProfile, isLoading } = useProfileOperations();
+  const { updateProfile, getProfile, isLoading } = useProfileOperations(); // Add getProfile
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<UserProfile>({
     first_name: '',
@@ -35,19 +35,26 @@ export default function EditProfile() {
 
   useEffect(() => {
     const loadUser = async () => {
-      if (user) {
-        setFormData({
-          first_name: user.first_name || '',
-          last_name: user.last_name || '',
-          email: user.email || '',
-          phone: user.phone || '',
-          address: user.address || '',
-          profile_image: user.profile_image || '',
-        });
+      try {
+        const profileData = await getProfile(); // profileData might be undefined
+        if (profileData) { // Check if profileData is not undefined
+          setFormData({
+            first_name: profileData.first_name || '',
+            last_name: profileData.last_name || '',
+            email: profileData.email || '',
+            phone: profileData.phone || '',
+            address: profileData.address || '',
+            profile_image: profileData.profile_image || '',
+          });
+        } else {
+          showToast('Failed to load profile data', 'error');
+        }
+      } catch (error) {
+        showToast('Failed to load profile data', 'error');
       }
     };
     loadUser();
-  }, []);
+  }, []); // Ensure this runs on component mount
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
