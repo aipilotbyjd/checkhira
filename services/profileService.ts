@@ -36,16 +36,16 @@ export const createFormData = (imageUri: string, body: Record<string, any> = {})
 
 export const profileService = {
   async updateProfile(data: FormData | Partial<UserProfile>): Promise<ProfileResponse> {
-    if (data instanceof FormData) {
-      return api.upload<ProfileResponse>(
-        '/profile', // Ensure this endpoint is correct
-        data,
-        undefined,
-        {},  // Headers are handled internally
-        'POST' // Ensure the method is correct
-      );
-    }
-    return api.put<ProfileResponse, Partial<UserProfile>>('/profile', data);
+    // if (data instanceof FormData) {
+    //   return api.upload<ProfileResponse>(
+    //     '/profile', // Ensure this endpoint is correct
+    //     data,
+    //     undefined,
+    //     {},  // Headers are handled internally
+    //     'POST' // Ensure the method is correct
+    //   );
+    // }
+    return api.post<ProfileResponse>('/profile', data);
   },
   async getProfile(): Promise<ProfileResponse> {
     return api.get<ProfileResponse>('/profile');
