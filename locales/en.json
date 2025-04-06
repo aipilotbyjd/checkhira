@@ -169,5 +169,6 @@
   "Deleting...": "Deleting...",
   "viewWorkList": "View Work List",
   "quickActions": "Quick Actions",
-  "noActivitiesFound" : "No activities found"
+  "noActivitiesFound" : "No activities found",
+  "New": "New"
 }

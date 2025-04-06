@@ -16,6 +16,7 @@ import type { Notification } from '../../services/notificationService';
 import { NotificationSkeleton } from '../../components/NotificationSkeleton';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 // Key prefix for storing local read status
 const LOCAL_READ_STATUS_KEY = 'notification_read_status_';
@@ -27,6 +28,8 @@ export default function NotificationsScreen() {
   const [localReadStatus, setLocalReadStatus] = useState<Record<string, boolean>>({});
   const { markAsRead, getNotifications, isLoading, isLoadingMore, currentPage, hasMorePages } =
     useNotificationOperations();
+
+  const { t } = useLanguage();
 
   // Initialize animation maps with default values for all notifications
   const fadeAnims = useRef<Map<string, Animated.Value>>(new Map());
@@ -229,7 +232,7 @@ export default function NotificationsScreen() {
                   className="ml-2 rounded-full px-2 py-1"
                   style={{ backgroundColor: COLORS.blue[50] }}>
                   <Text className="text-xs font-medium" style={{ color: COLORS.primary }}>
-                    New
+                    {t('New')}
                   </Text>
                 </View>
               )}

@@ -168,5 +168,6 @@
     "googleSignInErrorsNoAccessToken": "कोई एक्सेस टोकन प्राप्त नहीं हुआ",
     "viewWorkList": "कार्य सूची देखें",
     "quickActions": "त्वरित क्रियाएँ",
-    "noActivitiesFound": "कोई गतिविधियाँ नहीं मिली"
+    "noActivitiesFound": "कोई गतिविधियाँ नहीं मिली",
+    "New": "नया"
 }
