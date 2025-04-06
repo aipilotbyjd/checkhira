@@ -23,7 +23,7 @@ export default function AddPayment() {
   const [paymentSources, setPaymentSources] = useState<PaymentSource[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
 
   const [payment, setPayment] = useState<Payment>({
     id: Date.now(),
@@ -224,7 +224,7 @@ export default function AddPayment() {
                       style={{
                         color: payment.source_id === source.id ? COLORS.black : COLORS.secondary,
                       }}>
-                      {source.name}
+                      {source[`name_${locale}`] || source.name}
                     </Text>
                   </Pressable>
                 ))}

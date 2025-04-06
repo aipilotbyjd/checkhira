@@ -9,6 +9,9 @@ export interface Payment {
     source?: {
         id: number;
         name: string;
+        name_en?: string;
+        name_hi?: string;
+        name_gu?: string;
         icon: string;
     };
     created_at?: string;
@@ -18,6 +21,9 @@ export interface Payment {
 export interface PaymentSource {
     id: number;
     name: string;
+    name_en?: string;
+    name_hi?: string;
+    name_gu?: string;
     icon: string;
 }
 
