@@ -2,6 +2,8 @@ import { api, handleResponse } from './api';
 
 export interface Notification {
   id: string;
+  receiver_id: string;
+  sender_id: string;
   title: string;
   description: string;
   created_at: string;

@@ -15,11 +15,16 @@ import { useNotificationOperations } from '../../hooks/useNotificationOperations
 import type { Notification } from '../../services/notificationService';
 import { NotificationSkeleton } from '../../components/NotificationSkeleton';
 import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Key prefix for storing local read status
+const LOCAL_READ_STATUS_KEY = 'notification_read_status_';
 
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [localReadStatus, setLocalReadStatus] = useState<Record<string, boolean>>({});
   const { markAsRead, getNotifications, isLoading, isLoadingMore, currentPage, hasMorePages } =
     useNotificationOperations();
 
@@ -27,9 +32,54 @@ export default function NotificationsScreen() {
   const fadeAnims = useRef<Map<string, Animated.Value>>(new Map());
   const slideAnims = useRef<Map<string, Animated.Value>>(new Map());
 
+  // Load local read status from AsyncStorage
+  const loadLocalReadStatus = async () => {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      const localStatusKeys = keys.filter(key => key.startsWith(LOCAL_READ_STATUS_KEY));
+
+      if (localStatusKeys.length > 0) {
+        const values = await AsyncStorage.multiGet(localStatusKeys);
+        const statusMap: Record<string, boolean> = {};
+
+        values.forEach(([key, value]) => {
+          const notificationId = key.replace(LOCAL_READ_STATUS_KEY, '');
+          statusMap[notificationId] = value === 'true';
+        });
+
+        setLocalReadStatus(statusMap);
+      }
+    } catch (error) {
+      console.error('Error loading local read status:', error);
+    }
+  };
+
+  // Save read status to AsyncStorage for notifications with null receiver_id
+  const saveLocalReadStatus = async (notificationId: string, isRead: boolean) => {
+    try {
+      await AsyncStorage.setItem(`${LOCAL_READ_STATUS_KEY}${notificationId}`, String(isRead));
+      setLocalReadStatus(prev => ({
+        ...prev,
+        [notificationId]: isRead
+      }));
+    } catch (error) {
+      console.error('Error saving local read status:', error);
+    }
+  };
+
+  // Check if notification is read (either from API or local storage)
+  const isNotificationRead = (notification: Notification) => {
+    // If it has a local status, use that
+    if (notification.receiver_id === null && localReadStatus[notification.id] !== undefined) {
+      return localReadStatus[notification.id];
+    }
+    // Otherwise use the server status
+    return notification.is_read === 'true';
+  };
+
   useFocusEffect(
     useCallback(() => {
-      loadNotifications();
+      loadLocalReadStatus().then(() => loadNotifications());
       return () => {
         // Clear animation maps on unmount
         fadeAnims.current.clear();
@@ -89,16 +139,34 @@ export default function NotificationsScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    await loadLocalReadStatus();
     await loadNotifications(1);
     setRefreshing(false);
   }, []);
 
   const handleToggleRead = async (notification: Notification) => {
     setIsUpdating(notification.id);
-    const success = await markAsRead(notification.id, !notification.is_read ? 'true' : 'false');
+
+    // Check if notification has null receiver_id
+    if (notification.receiver_id === null) {
+      // Handle locally using AsyncStorage
+      const newReadStatus = !isNotificationRead(notification);
+      await saveLocalReadStatus(notification.id, newReadStatus);
+
+      // Update UI
+      setNotifications((current) =>
+        current.map((n) => (n.id === notification.id ? { ...n } : n))
+      );
+      setIsUpdating(null);
+      return;
+    }
+
+    // Otherwise use the backend API
+    const currentReadStatus = notification.is_read === 'true';
+    const success = await markAsRead(notification.id, !currentReadStatus ? 'true' : 'false');
     if (success) {
       setNotifications((current) =>
-        current.map((n) => (n.id === notification.id ? { ...n, is_read: !n.is_read as any } : n))
+        current.map((n) => (n.id === notification.id ? { ...n, is_read: !currentReadStatus ? 'true' : 'false' } : n))
       );
     }
     setIsUpdating(null);
@@ -107,6 +175,7 @@ export default function NotificationsScreen() {
   const renderNotification = ({ item }: { item: Notification }) => {
     const fadeAnim = fadeAnims.current.get(item.id) || new Animated.Value(0);
     const slideAnim = slideAnims.current.get(item.id) || new Animated.Value(50);
+    const isRead = isNotificationRead(item);
 
     return (
       <Animated.View
@@ -129,7 +198,7 @@ export default function NotificationsScreen() {
           <View
             className="h-1 w-full"
             style={{
-              backgroundColor: item.is_read ? COLORS.gray[200] : COLORS.primary,
+              backgroundColor: isRead ? COLORS.gray[200] : COLORS.primary,
             }}
           />
 
@@ -140,12 +209,12 @@ export default function NotificationsScreen() {
                 <View
                   className="mr-3 rounded-full p-2"
                   style={{
-                    backgroundColor: item.is_read ? COLORS.gray[50] : COLORS.blue[50],
+                    backgroundColor: isRead ? COLORS.gray[50] : COLORS.blue[50],
                   }}>
                   <Ionicons
-                    name={item.is_read ? 'checkmark-circle' : 'notifications'}
+                    name={isRead ? 'checkmark-circle' : 'notifications'}
                     size={20}
-                    color={item.is_read ? COLORS.gray[400] : COLORS.primary}
+                    color={isRead ? COLORS.gray[400] : COLORS.primary}
                   />
                 </View>
                 <Text
@@ -155,7 +224,7 @@ export default function NotificationsScreen() {
                   {item.title}
                 </Text>
               </View>
-              {!item.is_read && (
+              {!isRead && (
                 <View
                   className="ml-2 rounded-full px-2 py-1"
                   style={{ backgroundColor: COLORS.blue[50] }}>
@@ -190,14 +259,14 @@ export default function NotificationsScreen() {
               ) : (
                 <View className="flex-row items-center">
                   <Ionicons
-                    name={item.is_read ? 'checkmark-circle' : 'checkmark-circle-outline'}
+                    name={isRead ? 'checkmark-circle' : 'checkmark-circle-outline'}
                     size={14}
-                    color={item.is_read ? COLORS.success : COLORS.gray[400]}
+                    color={isRead ? COLORS.success : COLORS.gray[400]}
                   />
                   <Text
                     className="ml-1 text-xs"
-                    style={{ color: item.is_read ? COLORS.success : COLORS.gray[400] }}>
-                    {item.is_read ? 'Mark as unread' : 'Mark as read'}
+                    style={{ color: isRead ? COLORS.success : COLORS.gray[400] }}>
+                    {isRead ? 'Mark as unread' : 'Mark as read'}
                   </Text>
                 </View>
               )}
