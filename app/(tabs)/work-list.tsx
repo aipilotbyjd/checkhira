@@ -126,7 +126,7 @@ export default function WorkListScreen() {
           }}>
           <View className="flex-row items-center justify-between">
             <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-              {t('workList')}
+              {t('worklist')}
             </Text>
             <View className="flex-row space-x-3">
               <Pressable
@@ -174,7 +174,7 @@ export default function WorkListScreen() {
         }}>
         <View className="flex-row items-center justify-between">
           <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-            {t('workList')}
+            {t('worklist')}
           </Text>
           <View className="flex-row space-x-3">
             <Pressable

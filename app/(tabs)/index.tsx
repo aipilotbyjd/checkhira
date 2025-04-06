@@ -266,7 +266,7 @@ export default function Home() {
       {/* Payment Dashboard */}
       <View className="mt-6 px-6">
         <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
-          Payment Dashboard
+          {t('paymentDashboard')}
         </Text>
         <View className="mt-4 flex-row flex-wrap justify-between">
           {/* Today's Payment Stats */}
@@ -276,7 +276,7 @@ export default function Home() {
             <View className="flex-row items-center justify-between">
               <MaterialCommunityIcons name="calendar-today" size={24} color={COLORS.primary} />
               <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
-                Today
+                {t('today')}
               </Text>
             </View>
             <View className="mt-3">
@@ -284,7 +284,7 @@ export default function Home() {
                 ₹{Number(stats.today?.total_amount || '0.00').toFixed(2)}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                Payments: {stats.today?.payments || 0}
+                {t('payments')}: {stats.today?.payments || 0}
               </Text>
             </View>
           </View>
@@ -296,7 +296,7 @@ export default function Home() {
             <View className="flex-row items-center justify-between">
               <MaterialCommunityIcons name="calendar-week" size={24} color={COLORS.success} />
               <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
-                This Week
+                {t('thisWeek')}
               </Text>
             </View>
             <View className="mt-3">
@@ -304,7 +304,7 @@ export default function Home() {
                 ₹{Number(stats.weekly?.total_amount || '0.00').toFixed(2)}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                Payments: {stats.weekly?.payments || 0}
+                {t('payments')}: {stats.weekly?.payments || 0}
               </Text>
             </View>
           </View>
@@ -316,7 +316,7 @@ export default function Home() {
             <View className="flex-row items-center justify-between">
               <MaterialCommunityIcons name="calendar-month" size={24} color="#FF6B6B" />
               <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
-                This Month
+                {t('thisMonth')}
               </Text>
             </View>
             <View className="mt-3">
@@ -324,7 +324,7 @@ export default function Home() {
                 ₹{Number(stats.monthly?.total_amount || '0.00').toFixed(2)}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                Payments: {stats.monthly?.payments || 0}
+                {t('payments')}: {stats.monthly?.payments || 0}
               </Text>
             </View>
           </View>
@@ -336,7 +336,7 @@ export default function Home() {
             <View className="flex-row items-center justify-between">
               <MaterialCommunityIcons name="chart-box" size={24} color="#4ECDC4" />
               <Text className="text-xs font-medium" style={{ color: COLORS.gray[400] }}>
-                Total
+                {t('total')}
               </Text>
             </View>
             <View className="mt-3">
@@ -344,7 +344,7 @@ export default function Home() {
                 ₹{Number(stats.total_amount || '0.00').toFixed(2)}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                Payments: {stats.total_payments || 0}
+                {t('payments')}: {stats.total_payments || 0}
               </Text>
             </View>
           </View>
