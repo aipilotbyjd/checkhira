@@ -128,6 +128,11 @@ export default function AddPayment() {
     }
   };
 
+  const getLocalizedName = (source: PaymentSource, currentLocale: string): string => {
+    const key = `name_${currentLocale}` as keyof PaymentSource;
+    return (source[key] as string) || source.name;
+  };
+
   const renderPaymentSourcesSkeleton = () => (
     <View className="flex-row flex-wrap gap-2">
       {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -224,7 +229,7 @@ export default function AddPayment() {
                       style={{
                         color: payment.source_id === source.id ? COLORS.black : COLORS.secondary,
                       }}>
-                      {source[`name_${locale}`] || source.name}
+                      {getLocalizedName(source, locale)}
                     </Text>
                   </Pressable>
                 ))}
