@@ -10,6 +10,7 @@ export interface Notification {
   is_read: string;
   link: string;
   link_text: string;
+  _localReadStatus?: boolean;
 }
 
 export const notificationService = {

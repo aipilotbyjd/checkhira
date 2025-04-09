@@ -71,17 +71,25 @@ export default function NotificationsScreen() {
   };
 
   // Check if notification is read (either from API or local storage)
+  // Update isNotificationRead to check for the _localReadStatus property
   const isNotificationRead = (notification: Notification) => {
-    // If it has a local status, use that
+    // First check if we have a _localReadStatus property (added by our useEffect)
+    if (notification._localReadStatus !== undefined) {
+      return notification._localReadStatus;
+    }
+
+    // Then check if it has a local status in our state
     if (notification.receiver_id === null && localReadStatus[notification.id] !== undefined) {
       return localReadStatus[notification.id];
     }
+
     // Otherwise use the server status
     return notification.is_read === 'true';
   };
 
   useFocusEffect(
     useCallback(() => {
+      // First load local read status, then load notifications
       loadLocalReadStatus().then(() => loadNotifications());
       return () => {
         // Clear animation maps on unmount
@@ -90,6 +98,29 @@ export default function NotificationsScreen() {
       };
     }, [])
   );
+
+  // Add a useEffect to ensure local read status is applied to notifications when they change
+  useEffect(() => {
+    if (notifications.length > 0 && Object.keys(localReadStatus).length > 0) {
+      // Apply local read status to notifications that have null receiver_id
+      const updatedNotifications = notifications.map(notification => {
+        if (notification.receiver_id === null && localReadStatus[notification.id] !== undefined) {
+          // Create a new notification object with the local read status
+          return {
+            ...notification,
+            // This ensures the UI reflects the locally stored read status
+            _localReadStatus: localReadStatus[notification.id]
+          };
+        }
+        return notification;
+      });
+
+      // Only update if there are changes
+      if (JSON.stringify(updatedNotifications) !== JSON.stringify(notifications)) {
+        setNotifications(updatedNotifications);
+      }
+    }
+  }, [localReadStatus, notifications]);
 
   const loadNotifications = async (page: number = 1) => {
     const { notifications: newNotifications } = await getNotifications(page);
