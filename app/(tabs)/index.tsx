@@ -11,6 +11,7 @@ import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { formatIndianNumber } from '../../utils/numberFormatter';
 import { useState, useEffect, useCallback } from 'react';
 import { notificationService } from '../../services/notificationService';
 import { statsService } from '../../services/statsService';
@@ -183,7 +184,7 @@ export default function Home() {
             </View>
             <View className="mt-3">
               <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-                ₹{Number(stats.today?.work_amount || '0.00').toFixed(2)}
+                {formatIndianNumber(Number(stats.today?.work_amount || 0))}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
                 {t('works')}: {stats.today?.works || 0}
@@ -203,7 +204,7 @@ export default function Home() {
             </View>
             <View className="mt-3">
               <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-                ₹{Number(stats.weekly?.work_amount || '0.00').toFixed(2)}
+                {formatIndianNumber(Number(stats.weekly?.work_amount || 0))}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
                 {t('works')}: {stats.weekly?.works || 0}
@@ -223,7 +224,7 @@ export default function Home() {
             </View>
             <View className="mt-3">
               <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-                ₹{Number(stats.monthly?.work_amount || '0.00').toFixed(2)}
+                {formatIndianNumber(Number(stats.monthly?.work_amount || 0))}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
                 {t('works')}: {stats.monthly?.works || 0}
@@ -243,7 +244,7 @@ export default function Home() {
             </View>
             <View className="mt-3">
               <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-                ₹{Number(stats.total_work_amount || '0.00').toFixed(2)}
+                {formatIndianNumber(Number(stats.total_work_amount || 0))}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
                 {t('works')}: {stats.total_works || 0}
