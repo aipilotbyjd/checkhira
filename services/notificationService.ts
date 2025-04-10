@@ -44,16 +44,11 @@ export const notificationService = {
   },
 
   async getUnreadNotificationsCount() {
-    try {
-      const response = await fetch(`${api.baseUrl}/notifications/unread/count`, {
-        method: 'GET',
-        headers: await api.getHeaders(),
-      });
-      return handleResponse<{ data: { data: any } }>(response);
-    } catch (error) {
-      console.error('Error fetching unread count:', error);
-      throw new ApiError('Failed to fetch notifications count');
-    }
+    const response = await fetch(`${api.baseUrl}/notifications/unread/count`, {
+      method: 'GET',
+      headers: await api.getHeaders(),
+    });
+    return handleResponse<{ data: { data: any } }>(response);
   },
 
   async getRecentActivities() {
