@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api, ApiError } from '../services/axiosClient';
 import { useToast } from '../contexts/ToastContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Work } from '../types/work';
 import type { WorkEntryPayload } from '../types/work';
 
@@ -24,6 +25,39 @@ interface SingleWorkResponse {
   message: string;
 }
 
+const offlineSync = {
+  pendingActions: [],
+  savePendingAction: async (action) => {
+    this.pendingActions.push(action);
+    await AsyncStorage.setItem('pendingActions', JSON.stringify(this.pendingActions));
+  },
+  syncWithServer: async () => {
+    const pendingActions = JSON.parse(await AsyncStorage.getItem('pendingActions') || '[]');
+    for (const action of pendingActions) {
+      try {
+        switch (action.action) {
+          case 'create':
+            await api.post(`/works`, action.data);
+            break;
+          case 'update':
+            await api.put(`/works/${action.id}`, action.data);
+            break;
+          case 'delete':
+            await api.delete(`/works/${action.id}`);
+            break;
+        }
+        //Remove successful action from pending list
+        this.pendingActions = this.pendingActions.filter(item => item.id !== action.id);
+        await AsyncStorage.setItem('pendingActions', JSON.stringify(this.pendingActions));
+      } catch (error) {
+        console.error("Sync failed", error);
+        // Handle sync errors (e.g., retry mechanism)
+      }
+    }
+  }
+};
+
+
 export const useWorkOperations = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,10 +66,28 @@ export const useWorkOperations = () => {
   const createWork = async (workData: WorkEntryPayload) => {
     setIsLoading(true);
     setError(null);
-
     try {
-      const response = await api.post<SingleWorkResponse>('/works', workData);
-      return response;
+      const tempId = `temp_${Date.now()}`;
+      const workWithId = { ...workData, id: tempId, created_at: new Date().toISOString() };
+
+      // Save locally first
+      let localWorks = await AsyncStorage.getItem('works') || '[]';
+      const works = JSON.parse(localWorks);
+      works.unshift(workWithId);
+      await AsyncStorage.setItem('works', JSON.stringify(works));
+
+      // Add to pending sync
+      await offlineSync.savePendingAction({
+        id: tempId,
+        type: 'work',
+        action: 'create',
+        data: workData,
+        timestamp: Date.now()
+      });
+
+      // Try immediate sync
+      await offlineSync.syncWithServer();
+      return workWithId;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to create work entry';
       setError(errorMessage);
@@ -49,10 +101,17 @@ export const useWorkOperations = () => {
   const updateWork = async (id: number, workData: WorkEntryPayload) => {
     setIsLoading(true);
     setError(null);
-
     try {
-      const response = await api.put<SingleWorkResponse>(`/works/${id}`, workData);
-      return response;
+      //Similar logic as createWork, but with update action
+      await offlineSync.savePendingAction({
+        id: id,
+        type: 'work',
+        action: 'update',
+        data: workData,
+        timestamp: Date.now()
+      });
+      await offlineSync.syncWithServer();
+      return await api.put<SingleWorkResponse>(`/works/${id}`, workData);
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to update work entry';
       setError(errorMessage);
@@ -67,8 +126,16 @@ export const useWorkOperations = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.delete<SingleWorkResponse>(`/works/${id}`);
-      return response;
+      //Similar logic as createWork, but with delete action
+      await offlineSync.savePendingAction({
+        id: id,
+        type: 'work',
+        action: 'delete',
+        data: {},
+        timestamp: Date.now()
+      });
+      await offlineSync.syncWithServer();
+      return await api.delete<SingleWorkResponse>(`/works/${id}`);
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to delete work entry';
       setError(errorMessage);
