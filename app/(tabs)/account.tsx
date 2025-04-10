@@ -38,15 +38,6 @@ export default function Account() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      router.replace('/(tabs)');
-    } catch (error) {
-      showToast('Failed to logout. Please try again.', 'error');
-    }
-  };
-
   useEffect(() => {
     refreshUnreadCount
   }, []);
