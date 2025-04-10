@@ -22,46 +22,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [unreadCount, setUnreadCount] = useState(0);
   const { showToast } = useToast();
 
-  // Modified initial load useEffect
-  useEffect(() => {
-    const loadUnreadCount = async () => {
-      try {
-        // 1. First check AsyncStorage
-        const [storedCount, localKeys] = await Promise.all([
-          AsyncStorage.getItem(UNREAD_COUNT_STORAGE_KEY),
-          AsyncStorage.getAllKeys()
-        ]);
-
-        // Get local unread count from notification read status keys
-        const localStatusKeys = localKeys.filter(key => key.startsWith(LOCAL_READ_STATUS_KEY));
-        const localValues = await AsyncStorage.multiGet(localStatusKeys);
-        const localUnreadCount = localValues.filter(([_, value]) => value === 'false').length;
-
-        if (storedCount !== null) {
-          // Combine API count with local unread status
-          const { data } = await notificationService.getUnreadNotificationsCount();
-          const serverCount = data?.data || 0;
-          const combinedCount = serverCount + localUnreadCount;
-
-          setUnreadCount(combinedCount);
-          await AsyncStorage.setItem(UNREAD_COUNT_STORAGE_KEY, combinedCount.toString());
-        } else {
-          // Initial load with combined value
-          const { data } = await notificationService.getUnreadNotificationsCount();
-          const serverCount = data?.data || 0;
-          const combinedCount = serverCount + localUnreadCount;
-
-          setUnreadCount(combinedCount);
-          await AsyncStorage.setItem(UNREAD_COUNT_STORAGE_KEY, combinedCount.toString());
-        }
-      } catch (error) {
-        console.error('Error loading unread count:', error);
-      }
-    };
-
-    loadUnreadCount();
-  }, []);
-
   // Update AsyncStorage whenever unreadCount changes
   useEffect(() => {
     const saveUnreadCount = async () => {
