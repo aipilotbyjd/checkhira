@@ -34,10 +34,17 @@ export const NetworkProvider = ({ children }: { children: React.ReactNode }) => 
   }, []);
 
   const syncData = async () => {
+    if (isSyncing) return;
+    
     setIsSyncing(true);
     try {
-      await offlineSync.syncWithServer();
+      const syncSuccess = await offlineSync.syncWithServer();
+      if (syncSuccess) {
+        await offlineSync.clearSyncedData();
+      }
       setLastSyncTime(new Date());
+    } catch (error) {
+      console.error('Sync failed:', error);
     } finally {
       setIsSyncing(false);
     }
