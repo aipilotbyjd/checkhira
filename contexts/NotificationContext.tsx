@@ -6,7 +6,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Separate keys for notification read status and unread count
 const LOCAL_READ_STATUS_KEY = 'notification_read_status_';
-const UNREAD_COUNT_STORAGE_KEY = 'notification_unread_count';
 
 type NotificationContextType = {
   unreadCount: number;
@@ -21,19 +20,6 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const { showToast } = useToast();
-
-  // Update AsyncStorage whenever unreadCount changes
-  useEffect(() => {
-    const saveUnreadCount = async () => {
-      try {
-        await AsyncStorage.setItem(UNREAD_COUNT_STORAGE_KEY, unreadCount.toString());
-      } catch (error) {
-        console.error('Error saving unread count to storage:', error);
-      }
-    };
-
-    saveUnreadCount();
-  }, [unreadCount]);
 
   // Modified refreshUnreadCount function with proper dependencies
   const refreshUnreadCount = useCallback(async () => {
@@ -60,32 +46,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const finalCount = Math.max(0, Number(serverCount) - Number(localReadCount));
 
       setUnreadCount(finalCount);
-      await AsyncStorage.setItem(UNREAD_COUNT_STORAGE_KEY, finalCount.toString());
-
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to get unread count';
       showToast(errorMessage, 'error');
     }
   }, [showToast, setUnreadCount]); // Added setUnreadCount to dependencies
 
-  // Add a function to update local unread count without API call
-  const updateLocalUnreadCount = useCallback(async (change: number) => {
-    const newCount = Math.max(0, unreadCount + change);
-    setUnreadCount(newCount);
-    await AsyncStorage.setItem(UNREAD_COUNT_STORAGE_KEY, newCount.toString());
-  }, [unreadCount, setUnreadCount]);
-
   const markAsRead = async (id: string, is_read: string) => {
     try {
       await notificationService.markAsRead(id, is_read);
-
-      // Update unread count locally
-      if (is_read === 'true') {
-        await updateLocalUnreadCount(-1); // Decrease by 1
-      } else {
-        await updateLocalUnreadCount(1); // Increase by 1
-      }
-
       return true;
     } catch (err) {
       const errorMessage =
@@ -98,11 +67,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const markAllAsRead = async () => {
     try {
       await notificationService.markAllAsRead();
-
-      // Set unread count to 0 locally
       setUnreadCount(0);
-      await AsyncStorage.setItem(UNREAD_COUNT_STORAGE_KEY, '0');
-
       return true;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to mark all as read';
