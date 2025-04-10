@@ -34,8 +34,15 @@ export const useWorkOperations = () => {
     setError(null);
 
     try {
-      const response = await api.post<SingleWorkResponse>('/works', workData);
-      return response;
+      // Store locally first
+      const operationId = await syncService.addPendingOperation('work', 'create', workData);
+      
+      // Also store the work data itself for immediate access
+      const tempId = `temp-${operationId}`;
+      const tempWork = { ...workData, id: tempId, pending: true };
+      await AsyncStorage.setItem(`work-${tempId}`, JSON.stringify(tempWork));
+      
+      return { data: { data: tempWork } };
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to create work entry';
       setError(errorMessage);

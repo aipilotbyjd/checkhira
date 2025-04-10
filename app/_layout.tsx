@@ -17,6 +17,7 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LanguageProvider, useLanguage } from '../contexts/LanguageContext';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { NetworkProvider } from '../contexts/NetworkContext'; // Assuming this context exists
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -166,8 +167,12 @@ export default function RootLayout() {
               <NotificationProvider>
                 <SettingsProvider>
                   <AnalyticsProvider>
-                    <AppRatingManager />
-                    <RootLayoutNav />
+                    <ThemeProvider>
+                      <NetworkProvider> {/* Added NetworkProvider */}
+                        <AppRatingManager />
+                        <RootLayoutNav />
+                      </NetworkProvider>
+                    </ThemeProvider>
                   </AnalyticsProvider>
                 </SettingsProvider>
               </NotificationProvider>
