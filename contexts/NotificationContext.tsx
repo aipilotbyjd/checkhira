@@ -86,23 +86,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       // Get server count for user-specific notifications
       const serverCount = serverResponse?.data?.data || 0;
 
-      // Count local unread notifications (receiver_id=null)
+      // Get local read statuses
       const localStatusKeys = localKeys
-        .filter(key => key.startsWith(LOCAL_READ_STATUS_KEY))
-        .map(key => key.replace(LOCAL_READ_STATUS_KEY, ''));
+        .filter(key => key.startsWith(LOCAL_READ_STATUS_KEY));
 
-      const localValues = await AsyncStorage.multiGet(
-        localStatusKeys.map(key => `${LOCAL_READ_STATUS_KEY}${key}`)
-      );
+      const localValues = await AsyncStorage.multiGet(localStatusKeys);
+      
+      // Count notifications marked as read locally
+      const localReadCount = localValues
+        .filter(([_, value]) => value === 'true').length;
 
-      const localUnreadCount = localValues
-        .filter(([_, value]) => value === 'false').length;
-
-      // Combine counts from both sources
-      const combinedCount = serverCount + localUnreadCount;
-
-      setUnreadCount(combinedCount);
-      await AsyncStorage.setItem(UNREAD_COUNT_STORAGE_KEY, combinedCount.toString());
+      // Subtract locally read notifications from server count
+      const finalCount = Math.max(0, serverCount - localReadCount);
+      
+      setUnreadCount(finalCount);
+      await AsyncStorage.setItem(UNREAD_COUNT_STORAGE_KEY, finalCount.toString());
 
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to get unread count';
