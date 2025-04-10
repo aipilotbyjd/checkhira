@@ -18,15 +18,8 @@ export const usePaymentOperations = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Store locally first
-      const operationId = await syncService.addPendingOperation('payment', 'create', paymentData);
-      
-      // Store payment data for immediate access
-      const tempId = `temp-${operationId}`;
-      const tempPayment = { ...paymentData, id: tempId, pending: true };
-      await AsyncStorage.setItem(`payment-${tempId}`, JSON.stringify(tempPayment));
-      
-      return { data: tempPayment };
+      const response = await api.post<{ data: Payment }>('/payments', paymentData);
+      return response.data;
     } catch (err) {
       return handleApiError(err, 'Failed to create payment');
     } finally {
