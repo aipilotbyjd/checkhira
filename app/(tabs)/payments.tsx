@@ -107,21 +107,8 @@ export default function PaymentsList() {
     return Number(total);
   }, [total]);
 
-  const getUnreadNotificationsCount = async () => {
-    try {
-      const response = await executeGetNotifications(() =>
-        api.get('/notifications/unread/count')
-      );
-      if (response?.data) {
-        setUnreadCount(response.data);
-      }
-    } catch (error) {
-      // Error already handled by useApi
-    }
-  };
-
   useEffect(() => {
-    getUnreadNotificationsCount();
+    refreshUnreadCount();
   }, []);
 
   if (isLoading && currentPage === 1 && isLoadingSub) {

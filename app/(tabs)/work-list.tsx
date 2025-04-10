@@ -95,24 +95,8 @@ export default function WorkListScreen() {
     await loadWork({ page: currentPage + 1 });
   }, [currentPage, hasMorePages, isLoadingMore, loadWork]);
 
-  const getUnreadNotificationsCount = async () => {
-    try {
-      const response = await executeGetNotifications(() =>
-        api.get('/notifications/unread/count')
-      );
-      if (response?.data) {
-        setUnreadCount(response.data);
-      }
-    } catch (error) {
-      // Error already handled by useApi
-    }
-  };
-
   useEffect(() => {
-    const init = async () => {
-      await getUnreadNotificationsCount();
-    };
-    init();
+    refreshUnreadCount();
   }, []);
 
   if (isLoading && currentPage === 1) {
