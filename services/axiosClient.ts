@@ -26,7 +26,8 @@ export interface ApiRequestConfig extends AxiosRequestConfig {
 
 // Simple in-memory cache implementation
 class SimpleCache {
-    private cache: Map<string, { data: any; timestamp: number }> = new Map();
+    private cache: Map<string, { data: any; timestamp: number; etag?: string }> = new Map();
+    private maxSize = 100;
 
     get(key: string, maxAge: number): any | undefined {
         const item = this.cache.get(key);
@@ -38,7 +39,15 @@ class SimpleCache {
             return undefined;
         }
 
-        return item.data;
+        return { data: item.data, etag: item.etag };
+    }
+
+    set(key: string, data: any, etag?: string): void {
+        if (this.cache.size >= this.maxSize) {
+            const oldestKey = Array.from(this.cache.keys())[0];
+            this.cache.delete(oldestKey);
+        }
+        this.cache.set(key, { data, timestamp: Date.now(), etag });
     }
 
     set(key: string, data: any): void {

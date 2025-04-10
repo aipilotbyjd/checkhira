@@ -43,7 +43,12 @@ export function useApi<T = any>(options: UseApiOptions = {}) {
         setError(null);
 
         try {
+            const abortController = new AbortController();
+            const timeoutId = setTimeout(() => abortController.abort(), 30000);
+
             const result = await apiCall();
+            clearTimeout(timeoutId);
+            
             setData(result as unknown as T);
 
             if (showSuccessToast) {
@@ -52,7 +57,11 @@ export function useApi<T = any>(options: UseApiOptions = {}) {
 
             return result;
         } catch (err) {
-            handleError(err);
+            if (err.name === 'AbortError') {
+                handleError(new Error('Request timeout'));
+            } else {
+                handleError(err);
+            }
             return null;
         } finally {
             setIsLoading(false);
