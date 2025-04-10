@@ -44,7 +44,7 @@ export default function Home() {
   });
   const [user, setUser] = useState<any | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const { setUnreadCount, refreshUnreadCount } = useNotification();
+  const { refreshUnreadCount } = useNotification();
   const { t } = useLanguage();
 
   const fetchActivities = async () => {
@@ -87,19 +87,9 @@ export default function Home() {
     }
   };
 
-  const getNotifications = async () => {
-    try {
-      const response = await notificationService.getUnreadNotificationsCount();
-      setUnreadCount(response.data as any);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
-
   useEffect(() => {
     const init = async () => {
       await fetchStats();
-      await getNotifications();
     };
     init();
   }, []);

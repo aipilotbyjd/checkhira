@@ -18,6 +18,7 @@ import { api } from '../../services/axiosClient';
 import { useApi } from '../../hooks/useApi';
 import { Work } from '../../types/work';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useNotification } from '../../contexts/NotificationContext';
 
 export default function WorkListScreen() {
   const router = useRouter();
@@ -32,17 +33,12 @@ export default function WorkListScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [currentFilter, setCurrentFilter] = useState('all');
   const [todayTotal, setTodayTotal] = useState(0);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { refreshUnreadCount } = useNotification();
 
   // Use the modern API hook pattern
   const { execute: executeGetWorks, isLoading } = useApi({
     showErrorToast: true,
     defaultErrorMessage: t('failedToLoadWorkEntries')
-  });
-
-  const { execute: executeGetNotifications } = useApi({
-    showErrorToast: true,
-    defaultErrorMessage: t('failedToGetUnreadNotificationsCount')
   });
 
   const loadWork = useCallback(async ({ page = 1, isRefresh = false }) => {
@@ -85,7 +81,6 @@ export default function WorkListScreen() {
   useFocusEffect(
     useCallback(() => {
       loadWork({ page: 1 });
-      getUnreadNotificationsCount();
     }, [currentFilter])
   );
 

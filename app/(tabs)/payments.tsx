@@ -25,7 +25,7 @@ export default function PaymentsList() {
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   const [isLoadingSub, setIsLoadingSub] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const { setUnreadCount } = useNotification();
+  const { refreshUnreadCount } = useNotification();
   const { showToast } = useToast();
   const { t } = useLanguage();
 
@@ -35,15 +35,9 @@ export default function PaymentsList() {
     defaultErrorMessage: t('failedToLoadPayments')
   });
 
-  const { execute: executeGetNotifications } = useApi({
-    showErrorToast: true,
-    defaultErrorMessage: 'Failed to get unread notifications count. Please try again.'
-  });
-
   useFocusEffect(
     useCallback(() => {
       loadPayments({ page: 1 });
-      getUnreadNotificationsCount();
     }, [currentFilter])
   );
 
@@ -94,7 +88,6 @@ export default function PaymentsList() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     setCurrentPage(1);
-    await getUnreadNotificationsCount();
     await loadPayments({ page: 1 });
   }, [currentFilter]);
 
