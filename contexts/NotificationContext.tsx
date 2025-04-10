@@ -84,21 +84,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       ]);
 
       // Get server count for user-specific notifications
-      const serverCount = serverResponse?.data?.data || 0;
+      const serverCount = serverResponse?.data || 0;
 
       // Get local read statuses
       const localStatusKeys = localKeys
         .filter(key => key.startsWith(LOCAL_READ_STATUS_KEY));
 
       const localValues = await AsyncStorage.multiGet(localStatusKeys);
-      
+
       // Count notifications marked as read locally
       const localReadCount = localValues
         .filter(([_, value]) => value === 'true').length;
 
       // Subtract locally read notifications from server count
-      const finalCount = Math.max(0, serverCount - localReadCount);
-      
+      const finalCount = Math.max(0, Number(serverCount) - Number(localReadCount));
+
       setUnreadCount(finalCount);
       await AsyncStorage.setItem(UNREAD_COUNT_STORAGE_KEY, finalCount.toString());
 
