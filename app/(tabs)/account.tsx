@@ -15,7 +15,7 @@ export default function Account() {
   const router = useRouter();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const { showToast } = useToast();
-  const { setUnreadCount } = useNotification();
+  const { refreshUnreadCount } = useNotification();
   const { isAuthenticated, logout } = useAuth();
   const { getProfile, updateProfile } = useProfileOperations();
   const { t, loading } = useLanguage();
@@ -47,21 +47,15 @@ export default function Account() {
     }
   };
 
-  const getUnreadNotificationsCount = async () => {
-    try {
-      const response = await notificationService.getUnreadNotificationsCount();
-      setUnreadCount(response.data as any);
-    } catch (error) {
-      showToast('Failed to get unread notifications count', 'error');
-    }
-  };
+  useEffect(() => {
+    refreshUnreadCount
+  }, []);
 
   useEffect(() => {
     const init = async () => {
       if (isAuthenticated) {
         await Promise.all([
           refreshUser(),
-          getUnreadNotificationsCount()
         ]);
       }
     };
