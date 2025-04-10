@@ -179,7 +179,8 @@ export default function NotificationsScreen() {
   }, []);
 
   const handleToggleRead = async (notification: Notification) => {
-    setIsUpdating(notification.id);
+    try {
+      setIsUpdating(notification.id);
 
     // Check if notification has null receiver_id
     if (notification.receiver_id === null) {
