@@ -48,7 +48,7 @@ export const notificationService = {
       method: 'GET',
       headers: await api.getHeaders(),
     });
-    return handleResponse<{ data: { data: any } }>(response);
+    return handleResponse<{ data: any }>(response);
   },
 
   async getRecentActivities() {
