@@ -20,16 +20,6 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useNetwork } from '../contexts/NetworkContext';
 import { OfflineScreen } from '../components/OfflineScreen';
 
-export function RootLayout() {
-  const { isOnline } = useNetwork();
-  
-  if (!isOnline) {
-    return <OfflineScreen />;
-  }
-  
-  return <Stack />;
-}
-
 export const unstable_settings = {
   initialRouteName: '(tabs)',
 };
@@ -66,6 +56,11 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const { t } = useLanguage();
+  const { isOnline } = useNetwork();
+  
+  if (!isOnline) {
+    return <OfflineScreen />;
+  }
 
   useEffect(() => {
     const initializeOneSignal = async () => {
