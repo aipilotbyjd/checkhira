@@ -12,25 +12,25 @@ import { useLanguage } from '../../contexts/LanguageContext';
 const TAB_SCREENS = [
   {
     name: 'index',
-    label: 'Home',
+    label: 'home',
     icon: 'home',
     headerShown: true,
   },
   {
     name: 'work-list',
-    label: 'Work List',
+    label: 'worklist',
     icon: 'list-unordered',
     headerShown: true,
   },
   {
     name: 'payments',
-    label: 'Payments',
+    label: 'payments',
     icon: 'credit-card',
     headerShown: true,
   },
   {
     name: 'account',
-    label: 'Account',
+    label: 'account',
     icon: 'person',
     headerShown: true,
   },
