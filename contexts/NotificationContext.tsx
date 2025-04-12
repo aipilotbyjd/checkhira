@@ -23,6 +23,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   // Modified refreshUnreadCount function with proper dependencies
   const refreshUnreadCount = useCallback(async () => {
+    if (!isAuthenticated) {
+      setUnreadCount(0);
+      return;
+    }
+    
     try {
       const [serverResponse, localKeys] = await Promise.all([
         notificationService.getUnreadNotificationsCount(),
@@ -50,7 +55,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to get unread count';
       showToast(errorMessage, 'error');
     }
-  }, [showToast, setUnreadCount]); // Added setUnreadCount to dependencies
+  }, [showToast, setUnreadCount, isAuthenticated]);
 
   const markAsRead = async (id: string, is_read: string) => {
     try {
