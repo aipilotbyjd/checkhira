@@ -169,6 +169,9 @@
   "Deleting...": "Deleting...",
   "viewWorkList": "View Work List",
   "quickActions": "Quick Actions",
-  "noActivitiesFound" : "No activities found",
+  "noActivitiesFound": "No activities found",
+  "youWorkedOn": "You worked on",
+  "youReceivedPayment": "You received payment of",
+  "from": "from",
   "New": "New"
 }
