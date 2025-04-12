@@ -175,9 +175,33 @@ export default function Account() {
           {/* Menu Items - Improved for better mobile display */}
           <View className="mt-6 px-1">
             {menuItems.map((item, index) => (
-              <Link key={index} href={item.href as any} asChild>
+              item.href ? (
+                <Link key={index} href={item.href as any} asChild>
+                  <Pressable
+                    className="mb-3 flex-row items-center justify-between rounded-xl border p-3"
+                    style={{
+                      borderColor: COLORS.gray[200],
+                      backgroundColor: COLORS.background.primary,
+                    }}>
+                    <View className="flex-row items-center flex-1">
+                      <View className="p-2 rounded-lg" style={{ backgroundColor: COLORS.primary + '15' }}>
+                        <MaterialCommunityIcons name={item.icon as any} size={22} color={COLORS.primary} />
+                      </View>
+                      <Text
+                        className="ml-3 text-base font-medium flex-1"
+                        style={{ color: COLORS.secondary }}
+                        numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                    </View>
+                    <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.gray[400]} />
+                  </Pressable>
+                </Link>
+              ) : (
                 <Pressable
+                  key={index}
                   className="mb-3 flex-row items-center justify-between rounded-xl border p-3"
+                  onPress={item.onPress}
                   style={{
                     borderColor: COLORS.gray[200],
                     backgroundColor: COLORS.background.primary,
@@ -195,7 +219,7 @@ export default function Account() {
                   </View>
                   <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.gray[400]} />
                 </Pressable>
-              </Link>
+              )
             ))}
           </View>
 
