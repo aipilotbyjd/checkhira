@@ -89,6 +89,18 @@ export default function Account() {
       icon: 'information',
       href: '/account/about',
     },
+    {
+      title: t('rateApp'),
+      icon: 'star',
+      onPress: async () => {
+        await ratingService.promptForRating({
+          enjoyingApp: t('enjoyingApp'),
+          rateExperience: t('rateExperience'),
+          notNow: t('notNow'),
+          rateNow: t('rateNow')
+        });
+      },
+    },
   ];
 
   return (
