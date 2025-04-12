@@ -30,23 +30,11 @@ class RatingService {
     const hasRated = await storage.getString(RATING_CONFIG.STORAGE_KEYS.HAS_RATED);
     if (hasRated === 'true') return false;
 
-    const [lastPrompt, usageCount, positiveActions, timeInApp] = await Promise.all([
-      storage.getString(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT),
-      storage.getNumber(RATING_CONFIG.STORAGE_KEYS.USAGE_COUNT),
-      storage.getNumber(RATING_CONFIG.STORAGE_KEYS.POSITIVE_ACTIONS),
-      storage.getNumber(RATING_CONFIG.STORAGE_KEYS.TIME_IN_APP),
-    ]);
+    const lastPrompt = await storage.getString(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT);
+    if (!lastPrompt) return true; // Show rating prompt if never shown before
 
-    const daysSinceLastPrompt = lastPrompt
-      ? (Date.now() - parseInt(lastPrompt)) / (24 * 60 * 60 * 1000)
-      : Infinity;
-
-    return (
-      usageCount >= RATING_CONFIG.MIN_USAGE_COUNT &&
-      daysSinceLastPrompt >= RATING_CONFIG.DAYS_BETWEEN_PROMPTS &&
-      positiveActions >= RATING_CONFIG.POSITIVE_ACTIONS_REQUIRED &&
-      timeInApp >= RATING_CONFIG.MIN_TIME_IN_APP
-    );
+    const daysSinceLastPrompt = (Date.now() - parseInt(lastPrompt)) / (24 * 60 * 60 * 1000);
+    return daysSinceLastPrompt >= RATING_CONFIG.DAYS_BETWEEN_PROMPTS;
   }
 
   async promptForRating(translations?: RatingTranslations): Promise<void> {
