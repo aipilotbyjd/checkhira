@@ -1,8 +1,9 @@
 import { Alert, Platform, Linking } from 'react-native';
 import * as StoreReview from 'expo-store-review';
+import { storage } from '../utils/storage';
 import { RATING_CONFIG } from '../config/ratingConfig';
-import { storage } from '../utils/appRating';
 
+// Remove the storage implementation from here
 interface RatingTranslations {
   enjoyingApp: string;
   rateExperience: string;
@@ -38,6 +39,7 @@ class RatingService {
   }
 
   async promptForRating(translations?: RatingTranslations): Promise<void> {
+    console.log('RatingService.promptForRating called');
     const shouldPrompt = await this.shouldPromptRating();
     if (!shouldPrompt) return;
 
