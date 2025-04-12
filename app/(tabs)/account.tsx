@@ -5,11 +5,11 @@ import { COLORS } from '../../constants/theme';
 import { SuccessModal } from '../../components/SuccessModal';
 import { useEffect, useState } from 'react';
 import { useToast } from '../../contexts/ToastContext';
-import { notificationService } from '../../services/notificationService';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useProfileOperations } from '../../hooks/useProfileOperations';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { ratingService } from '../../services/ratingService';
 
 export default function Account() {
   const router = useRouter();
