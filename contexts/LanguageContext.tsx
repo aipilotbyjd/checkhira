@@ -12,7 +12,7 @@ type PartialTranslations = Partial<typeof en>;
 interface LanguageContextType {
     locale: string;
     setLocale: (locale: string) => Promise<void>;
-    t: (key: TranslationKey) => string;
+    t: (key: TranslationKey, variables?: Record<string, any>) => string;
     isRTL: boolean;
     availableLocales: { code: string; name: string }[];
     loading: boolean;
@@ -82,9 +82,16 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
     };
 
     const t = useMemo(() => {
-        return (key: TranslationKey) => {
+        return (key: TranslationKey, variables?: Record<string, any>) => {
             const currentTranslations = translations[locale] || translations.en;
-            return (currentTranslations[key] as string) || translations.en[key] || key;
+            let translation = (currentTranslations[key] as string) || translations.en[key] || key;
+            
+            if (variables) {
+                Object.entries(variables).forEach(([key, value]) => {
+                    translation = translation.replace(`{{${key}}}`, String(value));
+                });
+            }
+            return translation;
         };
     }, [locale]);
 
