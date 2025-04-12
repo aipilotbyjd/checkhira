@@ -247,7 +247,7 @@ export default function Home() {
                 {formatIndianNumber(Number(stats.total_work_amount || 0))}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
-                {t('works')}: {stats.total_works || 0}
+                {t('works')}: {formatIndianNumber(Number(stats.total_works || 0))}
               </Text>
             </View>
           </View>
@@ -272,7 +272,7 @@ export default function Home() {
             </View>
             <View className="mt-3">
               <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-                ₹{Number(stats.today?.total_amount || '0.00').toFixed(2)}
+                {formatIndianNumber(Number(Number(stats.today?.total_amount || '0.00').toFixed(2)))}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
                 {t('payments')}: {stats.today?.payments || 0}
@@ -292,7 +292,7 @@ export default function Home() {
             </View>
             <View className="mt-3">
               <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-                ₹{Number(stats.weekly?.total_amount || '0.00').toFixed(2)}
+                {formatIndianNumber(Number(Number(stats.weekly?.total_amount || '0.00').toFixed(2)))}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
                 {t('payments')}: {stats.weekly?.payments || 0}
@@ -312,7 +312,7 @@ export default function Home() {
             </View>
             <View className="mt-3">
               <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-                ₹{Number(stats.monthly?.total_amount || '0.00').toFixed(2)}
+                {formatIndianNumber(Number(Number(stats.monthly?.total_amount || '0.00').toFixed(2)))}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
                 {t('payments')}: {stats.monthly?.payments || 0}
@@ -332,7 +332,7 @@ export default function Home() {
             </View>
             <View className="mt-3">
               <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-                ₹{Number(stats.total_amount || '0.00').toFixed(2)}
+                {formatIndianNumber(Number(Number(stats.total_amount || '0.00').toFixed(2)))}
               </Text>
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
                 {t('payments')}: {stats.total_payments || 0}
