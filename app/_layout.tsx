@@ -107,31 +107,35 @@ export default function RootLayout() {
     try {
       const update = await Updates.checkForUpdateAsync();
       if (update.isAvailable) {
-        Alert.alert(
-          'Update Available',
-          'A new version of the app is available. Would you like to update now?',
-          [
-            {
-              text: 'Later',
-              style: 'cancel',
-            },
-            {
-              text: 'Update',
-              onPress: async () => {
-                try {
-                  await Updates.fetchUpdateAsync();
-                  await Updates.reloadAsync();
-                } catch (error) {
-                  console.error('Failed to fetch or reload update:', error);
-                  Alert.alert(
-                    'Update Failed',
-                    'There was a problem updating the app. Please try again later.'
-                  );
-                }
+        try {
+          await Updates.fetchUpdateAsync();
+          Alert.alert(
+            'Update Ready',
+            'A new update has been downloaded. Restart now to apply it?',
+            [
+              {
+                text: 'Later',
+                style: 'cancel',
               },
-            },
-          ]
-        );
+              {
+                text: 'Restart',
+                onPress: async () => {
+                  try {
+                    await Updates.reloadAsync();
+                  } catch (error) {
+                    console.error('Failed to reload app:', error);
+                    Alert.alert(
+                      'Restart Failed',
+                      'Please manually restart the app to apply the update.'
+                    );
+                  }
+                },
+              },
+            ]
+          );
+        } catch (error) {
+          console.error('Failed to fetch update:', error);
+        }
       }
     } catch (error) {
       console.error('Failed to check for updates:', error);

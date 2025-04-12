@@ -99,7 +99,7 @@
     "updates": {
       "url": "https://u.expo.dev/bdc9fac3-4aa5-4a0d-b73a-65a15e901bf4",
       "enabled": true,
-      "fallbackToCacheTimeout": 0,
+      "fallbackToCacheTimeout": 30000,
       "checkAutomatically": "ON_LOAD",
       "useClassicUpdates": true
     }
