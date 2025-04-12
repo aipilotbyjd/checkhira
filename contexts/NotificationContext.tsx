@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 import { notificationService } from '../services/notificationService';
 import { useToast } from './ToastContext';
 import { ApiError } from '../services/api';
@@ -20,6 +21,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const { showToast } = useToast();
+  const { isAuthenticated } = useAuth();
 
   // Modified refreshUnreadCount function with proper dependencies
   const refreshUnreadCount = useCallback(async () => {
