@@ -159,8 +159,7 @@
   "account": "એકાઉન્ટ",
   "quickActions": "ફટાફટ કાર્યવાહી",
   "noActivitiesFound": "કોઈ પ્રવૃત્તિઓ મળી નથી",
-  "youWorkedOn": "તમે કામ કર્યું",
-  "youReceivedPayment": "તમને ચુકવણી મળી",
-  "from": "તરફથી",
+  "youWorkedOnTitle": "તમે {{title}} પર કામ કર્યું",
+  "youReceivedPaymentFrom": "તમને {{from}} તરફથી {{amount}}ની ચુકવણી મળી",
   "New": "નવું"
 }

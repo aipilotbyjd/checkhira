@@ -58,8 +58,8 @@ export default function Home() {
         type: activity.type,
         description:
           activity.type === 'work'
-            ? `${t('youWorkedOn')} ${activity.title}`
-            : `${t('youReceivedPayment')} ${activity.amount} ${t('from')} ${activity.from}`,
+            ? t('youWorkedOnTitle', { title: activity.title })
+            : t('youReceivedPaymentFrom', { amount: activity.amount, from: activity.from }),
         amount: `₹${activity.amount}`,
         time: new Date(activity.created_at),
         icon: activity.type === 'work' ? 'clock-check-outline' : 'cash-multiple',

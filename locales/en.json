@@ -170,8 +170,7 @@
   "viewWorkList": "View Work List",
   "quickActions": "Quick Actions",
   "noActivitiesFound": "No activities found",
-  "youWorkedOn": "You worked on",
-  "youReceivedPayment": "You received payment of",
-  "from": "from",
+  "youWorkedOnTitle": "You worked for {{title}}",
+  "youReceivedPaymentFrom": "You received payment of {{amount}} from {{from}}",
   "New": "New"
 }

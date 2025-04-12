@@ -169,8 +169,7 @@
     "viewWorkList": "कार्य सूची देखें",
     "quickActions": "त्वरित क्रियाएँ",
     "noActivitiesFound": "कोई गतिविधियाँ नहीं मिली",
-    "youWorkedOn": "आपने काम किया",
-    "youReceivedPayment": "आपको भुगतान मिला",
-    "from": "से",
+    "youWorkedOnTitle": "आपने {{title}} पर काम किया",
+    "youReceivedPaymentFrom": "आपको {{from}} से {{amount}} का भुगतान मिला",
     "New": "नया"
 }
