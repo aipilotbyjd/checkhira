@@ -172,5 +172,7 @@
   "noActivitiesFound": "No activities found",
   "youWorkedOnTitle": "You worked for {{title}}",
   "youReceivedPaymentFrom": "You received payment of {{amount}} from {{from}}",
-  "New": "New"
+  "New": "New",
+  "noInternet": "No Internet Connection",
+  "checkConnection": "Please check your internet connection and try again"
 }

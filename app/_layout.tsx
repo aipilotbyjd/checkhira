@@ -17,6 +17,18 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LanguageProvider, useLanguage } from '../contexts/LanguageContext';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { useNetwork } from '../contexts/NetworkContext';
+import { OfflineScreen } from '../components/OfflineScreen';
+
+export function RootLayout() {
+  const { isOnline } = useNetwork();
+  
+  if (!isOnline) {
+    return <OfflineScreen />;
+  }
+  
+  return <Stack />;
+}
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',

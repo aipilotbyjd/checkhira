@@ -161,5 +161,7 @@
   "noActivitiesFound": "કોઈ પ્રવૃત્તિઓ મળી નથી",
   "youWorkedOnTitle": "તમે {{title}} પર કામ કર્યું",
   "youReceivedPaymentFrom": "તમને {{from}} તરફથી {{amount}}ની ચુકવણી મળી",
-  "New": "નવું"
+  "New": "નવું",
+  "noInternet": "ઇન્ટરનેટ કનેક્શન નથી",
+  "checkConnection": "કૃપા કરી તમારું ઇન્ટરનેટ કનેક્શન તપાસો અને ફરી પ્રયાસ કરો"
 }

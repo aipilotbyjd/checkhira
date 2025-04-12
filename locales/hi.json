@@ -171,5 +171,7 @@
     "noActivitiesFound": "कोई गतिविधियाँ नहीं मिली",
     "youWorkedOnTitle": "आपने {{title}} पर काम किया",
     "youReceivedPaymentFrom": "आपको {{from}} से {{amount}} का भुगतान मिला",
-    "New": "नया"
+    "New": "नया",
+    "noInternet": "इंटरनेट कनेक्शन नहीं है",
+    "checkConnection": "कृपया अपना इंटरनेट कनेक्शन जांचें और पुनः प्रयास करें"
 }
