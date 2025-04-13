@@ -172,6 +172,7 @@ export default function RootLayout() {
     <LanguageProvider>
       <SafeAreaProvider>
         <ErrorBoundary>
+          <RatingProvider>
           <ToastProvider>
             <AuthProvider>
               <NotificationProvider>
@@ -184,6 +185,7 @@ export default function RootLayout() {
               </NotificationProvider>
             </AuthProvider>
           </ToastProvider>
+          </RatingProvider>
         </ErrorBoundary>
       </SafeAreaProvider>
     </LanguageProvider>

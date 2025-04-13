@@ -69,18 +69,13 @@ class RatingService {
       // Use provided translations or fallback to defaults
       const t = translations || defaultTranslations;
 
-      const [showDialog, setShowDialog] = useState(true);
-
-      return (
-        <RatingDialog 
-          visible={showDialog}
-          translations={t}
-          onClose={() => {
-            setShowDialog(false);
-            storage.setValue(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT, Date.now());
-          }}
-          onRate={async () => {
-            setShowDialog(false);
+      const { showRatingDialog } = useRating();
+      showRatingDialog({
+        ...t,
+        onClose: () => {
+          storage.setValue(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT, Date.now());
+        },
+        onRate: async () => {
             try {
                 // Check if StoreReview is available
                 if (await StoreReview.hasAction()) {
