@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 10,
   },
   dialog: {
     backgroundColor: 'white',
