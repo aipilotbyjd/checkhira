@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image, Pressable, Alert, ScrollView } from 'react-native';
+import { View, Text, Share, Platform, Image, Pressable, Alert, ScrollView } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
@@ -10,6 +10,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useProfileOperations } from '../../hooks/useProfileOperations';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ratingService } from '../../services/ratingService';
+import * as Linking from 'expo-linking';
+import Constants from 'expo-constants';
 
 export default function Account() {
   const router = useRouter();
@@ -83,11 +85,9 @@ export default function Account() {
             ios: `https://apps.apple.com/app/id${Constants.expoConfig?.extra?.appStoreId}`,
             android: 'https://play.google.com/store/apps/details?id=com.jaydeepdhrangiya.checkhira'
           });
-          
+
           await Share.share({
             message: `${t('shareMessage')} ${storeUrl}`,
-            title: t('shareTitle'),
-            url: storeUrl
           });
         } catch (error) {
           console.error('Error sharing app:', error);
