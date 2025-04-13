@@ -61,18 +61,17 @@ class RatingService {
       return new Promise<void>((resolve) => {
         const handleRate = async () => {
           try {
+            const storeUrl = Platform.select({
+              ios: `https://apps.apple.com/app/id${process.env.EXPO_PUBLIC_APP_STORE_ID}`,
+              android: 'https://play.google.com/store/apps/details?id=com.jaydeepdhrangiya.checkhira',
+            });
+
             if (await StoreReview.hasAction()) {
               await StoreReview.requestReview();
-            } else {
-              const storeUrl = Platform.select({
-                ios: 'https://apps.apple.com/app/YOUR_ACTUAL_APP_ID',
-                android: 'https://play.google.com/store/apps/details?id=com.jaydeepdhrangiya.checkhira',
-              });
-
-              if (storeUrl && (await Linking.canOpenURL(storeUrl))) {
-                await Linking.openURL(storeUrl);
-              }
+            } else if (storeUrl && await Linking.canOpenURL(storeUrl)) {
+              await Linking.openURL(storeUrl);
             }
+            
             await storage.setValue(RATING_CONFIG.STORAGE_KEYS.HAS_RATED, 'true');
           } catch (error) {
             console.error('Error requesting review:', error);
@@ -81,16 +80,18 @@ class RatingService {
           resolve();
         };
 
-        // Use the context to show the dialog
-        if (global.showRatingDialog) {
+        if (typeof global.showRatingDialog === 'function') {
           global.showRatingDialog({
             translations: t,
-            onClose: () => {
-              storage.setValue(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT, Date.now().toString());
+            onClose: async () => {
+              await storage.setValue(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT, Date.now().toString());
               resolve();
             },
             onRate: handleRate
           });
+        } else {
+          console.error('Rating dialog not initialized');
+          resolve();
         }
       });
     } catch (error) {

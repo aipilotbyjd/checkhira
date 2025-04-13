@@ -18,14 +18,28 @@ export const RatingProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [translations, setTranslations] = useState<any>(null);
 
   const showRatingDialog = (props: any) => {
-    setTranslations(props.translations);
+    setTranslations({
+      ...props.translations,
+      onClose: () => {
+        hideRatingDialog();
+        props.onClose?.();
+      },
+      onRate: async () => {
+        hideRatingDialog();
+        await props.onRate?.();
+      }
+    });
     setIsVisible(true);
-    global.showRatingDialog = showRatingDialog;
   };
 
   const hideRatingDialog = () => {
     setIsVisible(false);
   };
+
+  // Set global handler on mount
+  useEffect(() => {
+    global.showRatingDialog = showRatingDialog;
+  }, []);
 
   return (
     <RatingContext.Provider value={{ showRatingDialog, hideRatingDialog }}>
