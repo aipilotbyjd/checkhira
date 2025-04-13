@@ -67,12 +67,29 @@ export default function Account() {
     {
       title: t('termsAndConditions'),
       icon: 'file-document',
-      href: '/account/terms',
+      onPress: () => Linking.openURL('https://checkhira.com/terms'),
     },
     {
       title: t('privacyPolicy'),
       icon: 'shield-lock',
-      href: '/account/privacy',
+      onPress: () => Linking.openURL('https://checkhira.com/privacy'),
+    },
+    {
+      title: t('shareApp'),
+      icon: 'share-variant',
+      onPress: async () => {
+        try {
+          await Share.share({
+            message: t('shareMessage'),
+            url: Platform.select({
+              ios: 'https://apps.apple.com/app/id[YOUR_APP_ID]',
+              android: 'https://play.google.com/store/apps/details?id=com.jaydeepdhrangiya.checkhira'
+            })
+          });
+        } catch (error) {
+          console.error('Error sharing app:', error);
+        }
+      },
     },
     {
       title: t('languageSettings'),
