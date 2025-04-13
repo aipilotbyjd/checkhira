@@ -9,13 +9,18 @@ interface RatingContextType {
 
 const RatingContext = createContext<RatingContextType>({} as RatingContextType);
 
+declare global {
+  var showRatingDialog: (props: any) => void;
+}
+
 export function RatingProvider({ children }: { children: React.ReactNode }) {
   const [isVisible, setIsVisible] = useState(false);
   const [translations, setTranslations] = useState<any>(null);
 
-  const showRatingDialog = (newTranslations: any) => {
-    setTranslations(newTranslations);
+  const showRatingDialog = (props: any) => {
+    setTranslations(props.translations);
     setIsVisible(true);
+    global.showRatingDialog = showRatingDialog;
   };
 
   const hideRatingDialog = () => {

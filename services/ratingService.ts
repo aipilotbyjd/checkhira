@@ -1,10 +1,9 @@
-import { Alert, Platform, Linking, useState } from 'react-native';
+
+import { Alert, Platform, Linking } from 'react-native';
 import * as StoreReview from 'expo-store-review';
 import { storage } from '../utils/storage';
 import { RATING_CONFIG } from '../config/ratingConfig';
-import { RatingDialog } from '../components/RatingDialog';
 
-// Remove the storage implementation from here
 interface RatingTranslations {
   enjoyingApp: string;
   rateExperience: string;
@@ -34,13 +33,6 @@ class RatingService {
       storage.getNumber(RATING_CONFIG.STORAGE_KEYS.USAGE_COUNT)
     ]);
 
-    // Debugging logs
-    console.log('Rating check:',
-      `Has rated: ${hasRated},`,
-      `Usage count: ${usageCount},`,
-      `Min required: ${RATING_CONFIG.MIN_USAGE_COUNT}`
-    );
-
     if (hasRated === 'true') return false;
     if (usageCount < RATING_CONFIG.MIN_USAGE_COUNT) return false;
 
@@ -53,10 +45,7 @@ class RatingService {
 
   async promptForRating(translations?: RatingTranslations): Promise<void> {
     try {
-      console.log('Attempting to show rating prompt...');
       const shouldPrompt = await this.shouldPromptRating();
-      console.log('Should prompt rating:', shouldPrompt);
-
       if (!shouldPrompt) return;
 
       const defaultTranslations: RatingTranslations = {
@@ -69,39 +58,41 @@ class RatingService {
       // Use provided translations or fallback to defaults
       const t = translations || defaultTranslations;
 
-      const { showRatingDialog } = useRating();
-      showRatingDialog({
-        ...t,
-        onClose: () => {
-          storage.setValue(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT, Date.now());
-        },
-        onRate: async () => {
-            try {
-                // Check if StoreReview is available
-                if (await StoreReview.hasAction()) {
-                  // Request in-app review
-                  await StoreReview.requestReview();
-                } else {
-                  // Fallback to store URLs
-                  const storeUrl = Platform.select({
-                    ios: 'https://apps.apple.com/app/YOUR_ACTUAL_APP_ID', // REPLACE WITH ACTUAL APP ID
-                    android: 'https://play.google.com/store/apps/details?id=com.jaydeepdhrangiya.checkhira',
-                  });
+      return new Promise<void>((resolve) => {
+        const handleRate = async () => {
+          try {
+            if (await StoreReview.hasAction()) {
+              await StoreReview.requestReview();
+            } else {
+              const storeUrl = Platform.select({
+                ios: 'https://apps.apple.com/app/YOUR_ACTUAL_APP_ID',
+                android: 'https://play.google.com/store/apps/details?id=com.jaydeepdhrangiya.checkhira',
+              });
 
-                  if (storeUrl && (await Linking.canOpenURL(storeUrl))) {
-                    await Linking.openURL(storeUrl);
-                  }
-                }
-                // Mark as rated only after successful review
-                await storage.setValue(RATING_CONFIG.STORAGE_KEYS.HAS_RATED, 'true');
-              } catch (error) {
-                console.error('Error requesting review:', error);
-                Alert.alert('Error', 'Failed to open app store');
+              if (storeUrl && (await Linking.canOpenURL(storeUrl))) {
+                await Linking.openURL(storeUrl);
               }
             }
+            await storage.setValue(RATING_CONFIG.STORAGE_KEYS.HAS_RATED, 'true');
+          } catch (error) {
+            console.error('Error requesting review:', error);
+            Alert.alert('Error', 'Failed to open app store');
           }
-        />
-      );
+          resolve();
+        };
+
+        // Use the context to show the dialog
+        if (global.showRatingDialog) {
+          global.showRatingDialog({
+            translations: t,
+            onClose: () => {
+              storage.setValue(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT, Date.now().toString());
+              resolve();
+            },
+            onRate: handleRate
+          });
+        }
+      });
     } catch (error) {
       console.error('Error in rating prompt:', error);
     }
