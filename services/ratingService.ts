@@ -1,7 +1,8 @@
-import { Alert, Platform, Linking } from 'react-native';
+import { Alert, Platform, Linking, useState } from 'react-native';
 import * as StoreReview from 'expo-store-review';
 import { storage } from '../utils/storage';
 import { RATING_CONFIG } from '../config/ratingConfig';
+import { RatingDialog } from '../components/RatingDialog';
 
 // Remove the storage implementation from here
 interface RatingTranslations {
@@ -68,19 +69,19 @@ class RatingService {
       // Use provided translations or fallback to defaults
       const t = translations || defaultTranslations;
 
-      Alert.alert(
-        t.enjoyingApp,
-        t.rateExperience,
-        [
-          {
-            text: t.notNow,
-            style: 'cancel',
-            onPress: () => storage.setValue(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT, Date.now()),
-          },
-          {
-            text: t.rateNow,
-            onPress: async () => {
-              try {
+      const [showDialog, setShowDialog] = useState(true);
+
+      return (
+        <RatingDialog 
+          visible={showDialog}
+          translations={t}
+          onClose={() => {
+            setShowDialog(false);
+            storage.setValue(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT, Date.now());
+          }}
+          onRate={async () => {
+            setShowDialog(false);
+            try {
                 // Check if StoreReview is available
                 if (await StoreReview.hasAction()) {
                   // Request in-app review
@@ -102,9 +103,9 @@ class RatingService {
                 console.error('Error requesting review:', error);
                 Alert.alert('Error', 'Failed to open app store');
               }
-            },
-          },
-        ]
+            }
+          }
+        />
       );
     } catch (error) {
       console.error('Error in rating prompt:', error);
