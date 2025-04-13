@@ -44,8 +44,6 @@ function RootLayoutNav() {
       <Stack.Screen name="work/[id]/edit" options={{ title: t('editWorkEntry') }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       <Stack.Screen name="account/edit-profile" options={{ title: t('editProfile') }} />
-      <Stack.Screen name="account/terms" options={{ title: t('termsAndConditions') }} />
-      <Stack.Screen name="account/privacy" options={{ title: t('privacyPolicy') }} />
       <Stack.Screen name="account/language" options={{ title: t('languageSettings') }} />
       <Stack.Screen name="account/theme" options={{ title: t('themeSettings') }} />
       <Stack.Screen name="account/about" options={{ title: t('aboutApp') }} />
