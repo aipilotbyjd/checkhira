@@ -1,9 +1,9 @@
 
 export const RATING_CONFIG = {
-  MIN_USAGE_COUNT: 2, // Reduced from 5
-  DAYS_BETWEEN_PROMPTS: 7, // Reduced from 30
-  MIN_TIME_IN_APP: 30, // Reduced from 60 seconds
-  POSITIVE_ACTIONS_REQUIRED: 1, // Reduced from 3
+  MIN_USAGE_COUNT: 1,
+  DAYS_BETWEEN_PROMPTS: 0,
+  MIN_TIME_IN_APP: 0,
+  POSITIVE_ACTIONS_REQUIRED: 0,
   STORAGE_KEYS: {
     LAST_PROMPT: 'lastRatingPrompt',
     USAGE_COUNT: 'appUsageCount',

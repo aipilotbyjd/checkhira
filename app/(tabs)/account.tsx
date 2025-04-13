@@ -93,12 +93,21 @@ export default function Account() {
       title: t('rateApp'),
       icon: 'star',
       onPress: async () => {
-        await ratingService.promptForRating({
-          enjoyingApp: t('enjoyingApp'),
-          rateExperience: t('rateExperience'),
-          notNow: t('notNow'),
-          rateNow: t('rateNow')
-        });
+        // Add null check for ratingService
+        if (!ratingService) return;
+
+        try {
+          // First increment usage before prompting
+          await ratingService.incrementAppUsage();
+          await ratingService.promptForRating({
+            enjoyingApp: t('enjoyingApp'),
+            rateExperience: t('rateExperience'),
+            notNow: t('notNow'),
+            rateNow: t('rateNow')
+          });
+        } catch (error) {
+          console.error('Error showing rating prompt:', error);
+        }
       },
     },
   ];
