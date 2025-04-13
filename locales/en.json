@@ -178,5 +178,7 @@
   "youReceivedPaymentFrom": "You received payment of {{amount}} from {{from}}",
   "New": "New",
   "noInternet": "No Internet Connection",
-  "checkConnection": "Please check your internet connection and try again"
+  "checkConnection": "Please check your internet connection and try again",
+  "feedback": "Feedback",
+  "feedbackDesc": "We value your feedback. Please share your thoughts and suggestions with us."
 }
