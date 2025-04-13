@@ -4,6 +4,15 @@ import { useToast } from '../contexts/ToastContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Work } from '../types/work';
 import type { WorkEntryPayload } from '../types/work';
+import * as Notifications from 'expo-notifications';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 
 interface WorkResponse {
@@ -57,6 +66,18 @@ const offlineSync = {
   }
 };
 
+const LocalNotificationService = {
+  scheduleWorkNotification: async (work: Work) => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Work Created',
+        body: `Work "${work.title}" created.`,
+      },
+      trigger: null, // Trigger immediately
+    });
+  },
+};
+
 
 export const useWorkOperations = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -87,6 +108,7 @@ export const useWorkOperations = () => {
 
       // Try immediate sync
       await offlineSync.syncWithServer();
+      await LocalNotificationService.scheduleWorkNotification(workWithId);
       return workWithId;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to create work entry';

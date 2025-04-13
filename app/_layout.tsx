@@ -19,6 +19,7 @@ import { useNetwork } from '../contexts/NetworkContext';
 import { OfflineScreen } from '../components/OfflineScreen';
 import { RatingProvider } from '../contexts/RatingContext';
 import { useEffect } from 'react';
+import LocalNotificationService from '../services/localNotificationService';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -165,6 +166,10 @@ export default function RootLayout() {
 
     return null;
   };
+
+  useEffect(() => {
+    LocalNotificationService.initialize();
+  }, []);
 
   return (
     <LanguageProvider>
