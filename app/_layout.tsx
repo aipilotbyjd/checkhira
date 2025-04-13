@@ -19,6 +19,7 @@ import { LanguageProvider, useLanguage } from '../contexts/LanguageContext';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useNetwork } from '../contexts/NetworkContext';
 import { OfflineScreen } from '../components/OfflineScreen';
+import { RatingProvider } from '../contexts/RatingContext';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
