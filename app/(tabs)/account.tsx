@@ -39,7 +39,7 @@ export default function Account() {
   };
 
   useEffect(() => {
-    refreshUnreadCount
+    refreshUnreadCount(); // Add parentheses to actually call the function
   }, []);
 
   useEffect(() => {
@@ -93,11 +93,9 @@ export default function Account() {
       title: t('rateApp'),
       icon: 'star',
       onPress: async () => {
-        // Add null check for ratingService
         if (!ratingService) return;
-
         try {
-          // First increment usage before prompting
+          await ratingService.resetRatingFlags(); // Temporary testing line
           await ratingService.incrementAppUsage();
           await ratingService.promptForRating({
             enjoyingApp: t('enjoyingApp'),

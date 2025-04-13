@@ -106,6 +106,11 @@ class RatingService {
       console.error('Error in rating prompt:', error);
     }
   }
+
+  async resetRatingFlags(): Promise<void> {
+    await storage.setValue(RATING_CONFIG.STORAGE_KEYS.HAS_RATED, 'false');
+    await storage.setValue(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT, '0');
+  }
 }
 
 export const ratingService = new RatingService();
