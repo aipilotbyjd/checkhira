@@ -13,7 +13,7 @@ declare global {
   var showRatingDialog: (props: any) => void;
 }
 
-export function RatingProvider({ children }: { children: React.ReactNode }) {
+export const RatingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [translations, setTranslations] = useState<any>(null);
 
