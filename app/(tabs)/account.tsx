@@ -82,7 +82,6 @@ export default function Account() {
       onPress: async () => {
         if (!ratingService) return;
         try {
-          await ratingService.resetRatingFlags(); // Temporary testing line
           await ratingService.incrementAppUsage();
           await ratingService.promptForRating({
             enjoyingApp: t('enjoyingApp'),
