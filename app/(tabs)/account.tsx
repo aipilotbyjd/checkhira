@@ -67,14 +67,33 @@ export default function Account() {
       href: '/account/default-prices',
     },
     {
-      title: t('termsAndConditions'),
-      icon: 'file-document',
-      onPress: () => Linking.openURL('https://checkhira.com/terms'),
+      title: t('languageSettings'),
+      icon: 'translate',
+      href: '/account/language',
     },
+    // {
+    //   title: t('themeSettings'),
+    //   icon: 'theme-light-dark',
+    //   href: '/account/theme',
+    // },
     {
-      title: t('privacyPolicy'),
-      icon: 'shield-lock',
-      onPress: () => Linking.openURL('https://checkhira.com/privacy'),
+      title: t('rateApp'),
+      icon: 'star',
+      onPress: async () => {
+        if (!ratingService) return;
+        try {
+          await ratingService.resetRatingFlags(); // Temporary testing line
+          await ratingService.incrementAppUsage();
+          await ratingService.promptForRating({
+            enjoyingApp: t('enjoyingApp'),
+            rateExperience: t('rateExperience'),
+            notNow: t('notNow'),
+            rateNow: t('rateNow')
+          });
+        } catch (error) {
+          console.error('Error showing rating prompt:', error);
+        }
+      },
     },
     {
       title: t('shareApp'),
@@ -95,38 +114,19 @@ export default function Account() {
       },
     },
     {
-      title: t('languageSettings'),
-      icon: 'translate',
-      href: '/account/language',
+      title: t('termsAndConditions'),
+      icon: 'file-document',
+      onPress: () => Linking.openURL('https://checkhira.com/terms'),
     },
-    // {
-    //   title: t('themeSettings'),
-    //   icon: 'theme-light-dark',
-    //   href: '/account/theme',
-    // },
+    {
+      title: t('privacyPolicy'),
+      icon: 'shield-lock',
+      onPress: () => Linking.openURL('https://checkhira.com/privacy'),
+    },
     {
       title: t('aboutApp'),
       icon: 'information',
       href: '/account/about',
-    },
-    {
-      title: t('rateApp'),
-      icon: 'star',
-      onPress: async () => {
-        if (!ratingService) return;
-        try {
-          await ratingService.resetRatingFlags(); // Temporary testing line
-          await ratingService.incrementAppUsage();
-          await ratingService.promptForRating({
-            enjoyingApp: t('enjoyingApp'),
-            rateExperience: t('rateExperience'),
-            notNow: t('notNow'),
-            rateNow: t('rateNow')
-          });
-        } catch (error) {
-          console.error('Error showing rating prompt:', error);
-        }
-      },
     },
   ];
 
