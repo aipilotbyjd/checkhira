@@ -79,12 +79,15 @@ export default function Account() {
       icon: 'share-variant',
       onPress: async () => {
         try {
+          const storeUrl = Platform.select({
+            ios: `https://apps.apple.com/app/id${Constants.expoConfig?.extra?.appStoreId}`,
+            android: 'https://play.google.com/store/apps/details?id=com.jaydeepdhrangiya.checkhira'
+          });
+          
           await Share.share({
-            message: t('shareMessage'),
-            url: Platform.select({
-              ios: 'https://apps.apple.com/app/id[YOUR_APP_ID]',
-              android: 'https://play.google.com/store/apps/details?id=com.jaydeepdhrangiya.checkhira'
-            })
+            message: `${t('shareMessage')} ${storeUrl}`,
+            title: t('shareTitle'),
+            url: storeUrl
           });
         } catch (error) {
           console.error('Error sharing app:', error);
