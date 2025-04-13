@@ -3,7 +3,7 @@ import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api, ApiError } from '../services/axiosClient';
 import { Payment, PaymentPayload, PaymentSource } from '../types/payment';
-import LocalNotificationService from '../services/localNotificationService';
+import { useNotification } from '../contexts/NotificationContext';
 
 // New service for offline synchronization
 const offlineSync = {

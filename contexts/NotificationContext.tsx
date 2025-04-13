@@ -4,6 +4,7 @@ import { notificationService } from '../services/notificationService';
 import { useToast } from './ToastContext';
 import { ApiError } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import LocalNotificationService from '../services/localNotificationService';
 
 // Separate keys for notification read status and unread count
 const LOCAL_READ_STATUS_KEY = 'notification_read_status_';
@@ -14,6 +15,7 @@ type NotificationContextType = {
   refreshUnreadCount: () => Promise<void>;
   markAsRead: (id: string, is_read: string) => Promise<boolean>;
   markAllAsRead: () => Promise<boolean>;
+  sendLocalNotification: (title: string, body: string, data?: any) => Promise<void>;
 };
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -97,6 +99,22 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     return () => clearInterval(intervalId);
   }, [refreshUnreadCount]);
 
+  const sendLocalNotification = async (title: string, body: string, data?: any) => {
+    try {
+      await LocalNotificationService.initialize();
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data
+        },
+        trigger: null // Send immediately
+      });
+    } catch (error) {
+      console.error('Error sending notification:', error);
+    }
+  };
+
   return (
     <NotificationContext.Provider
       value={{
@@ -105,6 +123,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         refreshUnreadCount,
         markAsRead,
         markAllAsRead,
+        sendLocalNotification,
       }}>
       {children}
     </NotificationContext.Provider>

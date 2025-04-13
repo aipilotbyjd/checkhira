@@ -108,7 +108,12 @@ export const useWorkOperations = () => {
 
       // Try immediate sync
       await offlineSync.syncWithServer();
-      await LocalNotificationService.scheduleWorkNotification(workWithId);
+      const { sendLocalNotification } = useNotification();
+      await sendLocalNotification(
+        'Work Created',
+        `New work added with ${workWithId.diamond_count} diamonds`,
+        { type: 'work', id: workWithId.id }
+      );
       return workWithId;
     } catch (err) {
       const errorMessage = err instanceof ApiError ? err.message : 'Failed to create work entry';
