@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState } from 'react';
 import { RatingDialog } from '../components/RatingDialog';
+import { useEffect } from'react';
 
 interface RatingContextType {
   showRatingDialog: (translations: any) => void;

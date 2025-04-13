@@ -6,7 +6,6 @@ import { SettingsProvider } from '../contexts/SettingsContext';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { LogLevel, OneSignal } from 'react-native-onesignal';
 import { AuthProvider } from '../contexts/AuthContext';
-import { useEffect } from 'react';
 import { environment } from '~/config/environment';
 import * as Updates from 'expo-updates';
 import { Alert } from 'react-native';
@@ -19,6 +18,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useNetwork } from '../contexts/NetworkContext';
 import { OfflineScreen } from '../components/OfflineScreen';
 import { RatingProvider } from '../contexts/RatingContext';
+import { useEffect } from 'react';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -57,7 +57,7 @@ function RootLayoutNav() {
 export default function RootLayout() {
   const { t } = useLanguage();
   const { isOnline } = useNetwork();
-  
+
   if (!isOnline) {
     return <OfflineScreen />;
   }
@@ -172,22 +172,20 @@ export default function RootLayout() {
     <LanguageProvider>
       <SafeAreaProvider>
         <ErrorBoundary>
-          <ThemeProvider>
-            <RatingProvider>
-              <ToastProvider>
-            <AuthProvider>
-              <NotificationProvider>
-                <SettingsProvider>
-                  <AnalyticsProvider>
-                    <AppRatingManager />
-                    <RootLayoutNav />
-                  </AnalyticsProvider>
-                </SettingsProvider>
-              </NotificationProvider>
-            </AuthProvider>
-          </ToastProvider>
-            </RatingProvider>
-          </ThemeProvider>
+          <RatingProvider>
+            <ToastProvider>
+              <AuthProvider>
+                <NotificationProvider>
+                  <SettingsProvider>
+                    <AnalyticsProvider>
+                      <AppRatingManager />
+                      <RootLayoutNav />
+                    </AnalyticsProvider>
+                  </SettingsProvider>
+                </NotificationProvider>
+              </AuthProvider>
+            </ToastProvider>
+          </RatingProvider>
         </ErrorBoundary>
       </SafeAreaProvider>
     </LanguageProvider>
