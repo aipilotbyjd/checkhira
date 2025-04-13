@@ -81,22 +81,26 @@ class RatingService {
             text: t.rateNow,
             onPress: async () => {
               try {
+                // Check if StoreReview is available
                 if (await StoreReview.hasAction()) {
+                  // Request in-app review
                   await StoreReview.requestReview();
-                  await storage.setValue(RATING_CONFIG.STORAGE_KEYS.HAS_RATED, 'true');
                 } else {
+                  // Fallback to store URLs
                   const storeUrl = Platform.select({
-                    ios: 'https://apps.apple.com/app/id1234567890', // Replace with your actual App Store ID
-                    android: 'market://details?id=com.jaydeepdhrangiya.checkhira',
+                    ios: 'https://apps.apple.com/app/YOUR_ACTUAL_APP_ID', // REPLACE WITH ACTUAL APP ID
+                    android: 'https://play.google.com/store/apps/details?id=com.jaydeepdhrangiya.checkhira',
                   });
 
-                  if (storeUrl) {
+                  if (storeUrl && (await Linking.canOpenURL(storeUrl))) {
                     await Linking.openURL(storeUrl);
-                    await storage.setValue(RATING_CONFIG.STORAGE_KEYS.HAS_RATED, 'true');
                   }
                 }
+                // Mark as rated only after successful review
+                await storage.setValue(RATING_CONFIG.STORAGE_KEYS.HAS_RATED, 'true');
               } catch (error) {
                 console.error('Error requesting review:', error);
+                Alert.alert('Error', 'Failed to open app store');
               }
             },
           },
