@@ -180,5 +180,16 @@
   "noInternet": "No Internet Connection",
   "checkConnection": "Please check your internet connection and try again",
   "feedback": "Feedback",
-  "feedbackDesc": "We value your feedback. Please share your thoughts and suggestions with us."
+  "feedbackDesc": "We value your feedback. Please share your thoughts and suggestions with us.",
+  "syncStatus": "Sync Status",
+  "offline": "Offline",
+  "syncing": "Syncing",
+  "pendingChanges": "Pending Changes",
+  "allChangesSynced": "All Changes Synced",
+  "neverSynced": "Never synced",
+  "lastSynced": "Last synced {{time}}",
+  "lastSyncUnknown": "Last sync time unknown",
+  "syncNow": "Sync Now",
+  "pendingChangesSyncInfo": "You have changes that haven't been synchronized with the server yet. They will automatically sync when you're online.",
+  "allSyncedInfo": "All your changes are synchronized with the server. Any new changes will be saved locally and synced automatically when you're online."
 }

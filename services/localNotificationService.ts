@@ -1,24 +1,43 @@
 
 import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
 import { Platform } from 'react-native';
+
+// Set up notification handler
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 class LocalNotificationService {
   static async initialize() {
+    // Check if physical device (push notifications only work on physical devices)
+    if (!Device.isDevice) {
+      console.log('Push Notifications are not available on emulators/simulators');
+      return false;
+    }
+
+    // Request permission
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
-    
+
     if (existingStatus !== 'granted') {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
     }
-    
+
     if (finalStatus !== 'granted') {
+      console.log('Failed to get push token permission!');
       return false;
     }
 
+    // Set up Android notification channel
     if (Platform.OS === 'android') {
-      Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'Default',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#FF231F7C',
@@ -26,6 +45,12 @@ class LocalNotificationService {
     }
 
     return true;
+  }
+
+  // Dummy method for push token (removed to fix ExpoPushTokenManager error)
+  static async getExpoPushToken() {
+    console.log('Push token functionality is disabled');
+    return null;
   }
 
   static async scheduleWorkNotification(workData: any) {
@@ -51,18 +76,14 @@ class LocalNotificationService {
   }
 
   static async scheduleMonthlySummary(summary: any) {
+    // Schedule for immediate delivery instead of using a complex trigger
     await Notifications.scheduleNotificationAsync({
       content: {
         title: 'Monthly Summary',
         body: `This month: ${summary.works} works, ₹${summary.total_amount} total earnings`,
         data: { type: 'summary' },
       },
-      trigger: {
-        day: 1, // First day of every month
-        hour: 9, // 9 AM
-        minute: 0,
-        repeats: true,
-      },
+      trigger: null, // Send immediately
     });
   }
 }

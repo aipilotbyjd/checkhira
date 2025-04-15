@@ -1,10 +1,11 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { notificationService } from '../services/notificationService';
 import { useToast } from './ToastContext';
 import { ApiError } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LocalNotificationService from '../services/localNotificationService';
+import * as Notifications from 'expo-notifications';
 
 // Separate keys for notification read status and unread count
 const LOCAL_READ_STATUS_KEY = 'notification_read_status_';
@@ -15,7 +16,8 @@ type NotificationContextType = {
   refreshUnreadCount: () => Promise<void>;
   markAsRead: (id: string, is_read: string) => Promise<boolean>;
   markAllAsRead: () => Promise<boolean>;
-  sendLocalNotification: (title: string, body: string, data?: any) => Promise<void>;
+  sendLocalNotification: (title: string, body: string, data?: any) => Promise<string | null>;
+  getLastNotificationResponse: () => any;
 };
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -25,13 +27,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const { showToast } = useToast();
   const { isAuthenticated } = useAuth();
 
+  // References for notification handling
+  const notificationListener = useRef<any>();
+  const responseListener = useRef<any>();
+  const lastNotificationResponse = useRef<any>();
+
   // Modified refreshUnreadCount function with proper dependencies
   const refreshUnreadCount = useCallback(async () => {
     if (!isAuthenticated) {
       setUnreadCount(0);
       return;
     }
-    
+
     try {
       const [serverResponse, localKeys] = await Promise.all([
         notificationService.getUnreadNotificationsCount(),
@@ -99,20 +106,70 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     return () => clearInterval(intervalId);
   }, [refreshUnreadCount]);
 
+  // Set up notification listeners
+  useEffect(() => {
+    // Initialize notifications
+    LocalNotificationService.initialize();
+
+    // Push token functionality removed to fix ExpoPushTokenManager error
+
+    // This listener is fired whenever a notification is received while the app is foregrounded
+    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      const data = notification.request.content.data;
+      console.log('Notification received in foreground:', data);
+      // You can update app state based on the notification data
+    });
+
+    // This listener is fired whenever a user taps on or interacts with a notification
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      const data = response.notification.request.content.data;
+      console.log('Notification response received:', data);
+      lastNotificationResponse.current = response;
+
+      // Handle notification tap based on data
+      // For example, navigate to a specific screen
+      // if (data.type === 'work' && data.id) {
+      //   navigation.navigate('work/' + data.id);
+      // }
+    });
+
+    // Clean up listeners on unmount
+    return () => {
+      Notifications.removeNotificationSubscription(notificationListener.current);
+      Notifications.removeNotificationSubscription(responseListener.current);
+    };
+  }, [isAuthenticated]);
+
   const sendLocalNotification = async (title: string, body: string, data?: any) => {
     try {
+      // Make sure notifications are initialized
       await LocalNotificationService.initialize();
-      await Notifications.scheduleNotificationAsync({
+
+      // Schedule the notification
+      const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title,
           body,
-          data
+          data,
+          sound: true, // Use default sound
+          priority: Notifications.AndroidNotificationPriority.HIGH,
+          color: '#4630EB',
+          vibrate: [0, 250, 250, 250],
         },
-        trigger: null // Send immediately
+        trigger: null, // Send immediately
       });
+
+      console.log('Scheduled notification:', notificationId);
+      return notificationId;
     } catch (error) {
       console.error('Error sending notification:', error);
+      return null;
     }
+  };
+
+  // Get the last notification response (for handling notification taps)
+  const getLastNotificationResponse = () => {
+    return lastNotificationResponse.current;
   };
 
   return (
@@ -124,6 +181,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         markAsRead,
         markAllAsRead,
         sendLocalNotification,
+        getLastNotificationResponse,
       }}>
       {children}
     </NotificationContext.Provider>

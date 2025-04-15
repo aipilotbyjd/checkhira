@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Platform, Image, View, StyleSheet } from 'react-native';
+import { Platform, Image, View, StyleSheet, Pressable, Modal, Text } from 'react-native';
 import { COLORS, SPACING, SIZES, FONTS, SHADOWS } from '../../constants/theme';
 import { TabBarIcon } from '../../components/TabBarIcon';
 import { useRouter } from 'expo-router';
@@ -8,6 +8,9 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { useDimensions } from '../../hooks/useScreenDimensions';
 import { AuthGuard } from '../../components/AuthGuard';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { SyncStatusIndicator } from '../../components/SyncStatusIndicator';
+import { useNetwork } from '../../contexts/NetworkContext';
+import { useState } from 'react';
 
 const TAB_SCREENS = [
   {
@@ -41,6 +44,8 @@ export default function TabLayout() {
   const { getTabBarHeight, getHeaderHeight } = useDimensions();
   const { unreadCount } = useNotification();
   const { t } = useLanguage();
+  const { hasPendingChanges } = useNetwork();
+  const [showSyncModal, setShowSyncModal] = useState(false);
 
   return (
     <AuthGuard>
@@ -79,11 +84,16 @@ export default function TabLayout() {
           ),
           headerRight: () => (
             <View style={[styles.headerRight, { height: getHeaderHeight() }]}>
-              <HeaderButton
-                iconName="notifications-outline"
-                onPress={() => router.push('/notifications')}
-                badgeCount={unreadCount}
-              />
+              <View style={styles.headerButtonsContainer}>
+                <SyncStatusIndicator
+                  onPress={() => setShowSyncModal(true)}
+                />
+                <HeaderButton
+                  iconName="notifications-outline"
+                  onPress={() => router.push('/notifications')}
+                  badgeCount={unreadCount}
+                />
+              </View>
             </View>
           ),
           safeAreaInsets: {
@@ -110,6 +120,41 @@ export default function TabLayout() {
           />
         ))}
       </Tabs>
+
+      {/* Sync Status Modal */}
+      <Modal
+        visible={showSyncModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowSyncModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowSyncModal(false)}
+        >
+          <View
+            style={styles.modalContent}
+            onStartShouldSetResponder={() => true}
+            onTouchEnd={(e) => e.stopPropagation()}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('syncStatus')}</Text>
+              <Pressable onPress={() => setShowSyncModal(false)}>
+                <TabBarIcon name="x" color={COLORS.gray[500]} size={24} />
+              </Pressable>
+            </View>
+
+            <SyncStatusIndicator showDetails={true} />
+
+            <Text style={styles.syncInfoText}>
+              {hasPendingChanges
+                ? t('pendingChangesSyncInfo')
+                : t('allSyncedInfo')
+              }
+            </Text>
+          </View>
+        </Pressable>
+      </Modal>
     </AuthGuard>
   );
 }
@@ -125,6 +170,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  headerButtonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
   headerLogo: {
     minWidth: 100,
     maxWidth: 150,
@@ -138,5 +188,34 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     fontSize: SIZES.tabLabel,
     marginBottom: Platform.OS === 'ios' ? 0 : SPACING.xs,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: SPACING.lg,
+    minHeight: 300,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  modalTitle: {
+    fontSize: SIZES.xl,
+    fontFamily: FONTS.bold,
+    color: COLORS.secondary,
+  },
+  syncInfoText: {
+    marginTop: SPACING.lg,
+    fontSize: SIZES.md,
+    color: COLORS.gray[600],
+    lineHeight: 22,
   },
 });

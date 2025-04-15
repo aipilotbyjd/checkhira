@@ -15,15 +15,26 @@ import { AnalyticsProvider } from '../contexts/AnalyticsContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LanguageProvider, useLanguage } from '../contexts/LanguageContext';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { useNetwork } from '../contexts/NetworkContext';
+import { NetworkProvider, useNetwork } from '../contexts/NetworkContext';
 import { OfflineScreen } from '../components/OfflineScreen';
 import { RatingProvider } from '../contexts/RatingContext';
 import { useEffect } from 'react';
-import LocalNotificationService from '../services/localNotificationService';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
 };
+
+// Wrapper component to use network context
+function NetworkAwareLayout({ children }: { children: React.ReactNode }) {
+  const { isOnline } = useNetwork();
+
+  // Show offline screen when not connected
+  if (!isOnline) {
+    return <OfflineScreen />;
+  }
+
+  return <>{children}</>;
+}
 
 function RootLayoutNav() {
   const { t } = useLanguage();
@@ -54,12 +65,7 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
-  const { t } = useLanguage();
-  const { isOnline } = useNetwork();
-
-  if (!isOnline) {
-    return <OfflineScreen />;
-  }
+  // t is used in other parts of the component
 
   useEffect(() => {
     const initializeOneSignal = async () => {
@@ -75,7 +81,7 @@ export default function RootLayout() {
             OneSignal.Debug.setLogLevel(LogLevel.Verbose);
           }
 
-          await OneSignal.initialize(oneSignalAppId);
+          OneSignal.initialize(oneSignalAppId);
           const permission = await OneSignal.Notifications.requestPermission(true);
 
           // Log permission status only in development
@@ -167,9 +173,7 @@ export default function RootLayout() {
     return null;
   };
 
-  useEffect(() => {
-    LocalNotificationService.initialize();
-  }, []);
+  // Notification initialization is now handled in NotificationContext
 
   return (
     <LanguageProvider>
@@ -180,10 +184,14 @@ export default function RootLayout() {
               <AuthProvider>
                 <NotificationProvider>
                   <SettingsProvider>
-                    <AnalyticsProvider>
-                      <AppRatingManager />
-                      <RootLayoutNav />
-                    </AnalyticsProvider>
+                    <NetworkProvider>
+                      <NetworkAwareLayout>
+                        <AnalyticsProvider>
+                          <AppRatingManager />
+                          <RootLayoutNav />
+                        </AnalyticsProvider>
+                      </NetworkAwareLayout>
+                    </NetworkProvider>
                   </SettingsProvider>
                 </NotificationProvider>
               </AuthProvider>

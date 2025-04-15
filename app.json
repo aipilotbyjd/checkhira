@@ -5,6 +5,13 @@
     "version": "1.0.0",
     "scheme": "checkhira",
     "newArchEnabled": true,
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#ffffff",
+      "androidMode": "default",
+      "androidCollapsedTitle": "${title}",
+      "iosDisplayInForeground": true
+    },
     "web": {
       "bundler": "metro",
       "output": "static",
@@ -40,6 +47,14 @@
         }
       ],
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff",
+          "sounds": ["./assets/notification-sound.wav"]
+        }
+      ],
+      [
         "onesignal-expo-plugin",
         {
           "mode": "production"
@@ -68,7 +83,10 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jaydeepdhrangiya.checkhira"
+      "bundleIdentifier": "com.jaydeepdhrangiya.checkhira",
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -76,7 +94,14 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.jaydeepdhrangiya.checkhira",
-      "permissions": ["android.permission.RECORD_AUDIO"]
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "useNextNotificationsApi": true
     },
     "extra": {
       "router": {

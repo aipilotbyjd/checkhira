@@ -3,6 +3,7 @@ import { Link, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { SuccessModal } from '../../components/SuccessModal';
+import { TestNotification } from '../../components/TestNotification';
 import { useEffect, useState } from 'react';
 import { useToast } from '../../contexts/ToastContext';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -254,6 +255,9 @@ export default function Account() {
               )
             ))}
           </View>
+
+          {/* Test Notification Component */}
+          <TestNotification />
 
           <View className="mt-8 mb-4">
             <Pressable
