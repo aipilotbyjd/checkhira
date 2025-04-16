@@ -27,7 +27,7 @@ export interface WorkResponse {
 }
 
 export interface Work {
-  id: number;
+  id: number | string;
   name: string;
   date: string;
   user_id: number;
@@ -36,6 +36,7 @@ export interface Work {
   updated_at: string;
   deleted_at: null | string;
   work_items: WorkItem[];
+  total?: number; // Add total property for offline data
 }
 
 export interface WorkItem {

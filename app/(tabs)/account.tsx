@@ -256,9 +256,6 @@ export default function Account() {
             ))}
           </View>
 
-          {/* Test Notification Component */}
-          <TestNotification />
-
           <View className="mt-8 mb-4">
             <Pressable
               onPress={() => {

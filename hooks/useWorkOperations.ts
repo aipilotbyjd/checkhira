@@ -1,20 +1,11 @@
 import { useState, useCallback } from 'react';
 import { api, ApiError } from '../services/axiosClient';
 import { useToast } from '../contexts/ToastContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Work } from '../types/work';
 import type { WorkEntryPayload } from '../types/work';
-import * as Notifications from 'expo-notifications';
 import { offlineSync } from '../services/offlineSync';
 import { useNotification } from '../contexts/NotificationContext';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
 
 
 interface WorkResponse {
@@ -35,10 +26,6 @@ interface SingleWorkResponse {
   data: Work;
   message: string;
 }
-
-// Local notification service is now imported from NotificationContext
-
-
 
 export const useWorkOperations = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -85,7 +72,7 @@ export const useWorkOperations = () => {
     setError(null);
     try {
       // Queue the update action
-      const syncId = await offlineSync.queueAction({
+      await offlineSync.queueAction({
         id: id.toString(),
         type: 'work',
         action: 'update',
@@ -115,7 +102,7 @@ export const useWorkOperations = () => {
     setError(null);
     try {
       // Queue the delete action
-      const syncId = await offlineSync.queueAction({
+      await offlineSync.queueAction({
         id: id.toString(),
         type: 'work',
         action: 'delete',
@@ -162,8 +149,8 @@ export const useWorkOperations = () => {
     setError(null);
     try {
       // Get offline data first
-      const offlineData = await offlineSync.getOfflineDataByType('work');
-      const offlineWorks = Object.values(offlineData);
+      const offlineData = await offlineSync.getOfflineDataByType<Work>('work');
+      const offlineWorks = Object.values(offlineData) as Work[];
 
       // Try to get online data
       try {
@@ -175,12 +162,12 @@ export const useWorkOperations = () => {
 
           // Replace online works with offline versions if they exist
           const mergedWorks = onlineWorks.map(onlineWork => {
-            const offlineWork = offlineData[onlineWork.id];
+            const offlineWork = offlineData[onlineWork.id as unknown as string];
             return offlineWork || onlineWork;
           });
 
           // Add any temp works (with temp_ ids) that don't exist online yet
-          const tempWorks = offlineWorks.filter(work =>
+          const tempWorks = offlineWorks.filter((work: Work) =>
             typeof work.id === 'string' && work.id.startsWith('temp_')
           );
 
@@ -209,7 +196,10 @@ export const useWorkOperations = () => {
               last_page: 1,
               data: offlineWorks
             },
-            total: offlineWorks.reduce((sum, work) => sum + (work.total || 0), 0)
+            total: offlineWorks.reduce((sum: number, work: Work) => {
+              const workTotal = typeof work.total === 'number' ? work.total : 0;
+              return sum + workTotal;
+            }, 0)
           },
           message: 'Offline data'
         };
