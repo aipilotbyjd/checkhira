@@ -100,8 +100,7 @@
         "android.permission.VIBRATE",
         "android.permission.SCHEDULE_EXACT_ALARM",
         "android.permission.POST_NOTIFICATIONS"
-      ],
-      "useNextNotificationsApi": true
+      ]
     },
     "extra": {
       "router": {
@@ -125,8 +124,7 @@
       "url": "https://u.expo.dev/bdc9fac3-4aa5-4a0d-b73a-65a15e901bf4",
       "enabled": true,
       "fallbackToCacheTimeout": 30000,
-      "checkAutomatically": "ON_LOAD",
-      "useClassicUpdates": true
+      "checkAutomatically": "ON_LOAD"
     }
   }
 }
