@@ -4,7 +4,6 @@ import { useToast } from '../contexts/ToastContext';
 import type { Work } from '../types/work';
 import type { WorkEntryPayload } from '../types/work';
 import { offlineSync } from '../services/offlineSync';
-import { useNotification } from '../contexts/NotificationContext';
 
 
 
@@ -32,7 +31,7 @@ export const useWorkOperations = () => {
   const [error, setError] = useState<string | null>(null);
   const { showToast } = useToast();
 
-  const { sendLocalNotification } = useNotification();
+  // Local notification functionality removed
 
   const createWork = useCallback(async (workData: WorkEntryPayload) => {
     setIsLoading(true);
@@ -49,12 +48,6 @@ export const useWorkOperations = () => {
         data: workData
       });
 
-      // Send notification
-      await sendLocalNotification(
-        'Work Created',
-        `New work entry saved${workData.name ? `: ${workData.name}` : ''}`,
-        { type: 'work', id: tempId, syncId }
-      );
 
       return workWithId;
     } catch (err) {
@@ -65,7 +58,7 @@ export const useWorkOperations = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [setIsLoading, setError, showToast, sendLocalNotification]);
+  }, [setIsLoading, setError, showToast]);
 
   const updateWork = useCallback(async (id: number | string, workData: WorkEntryPayload) => {
     setIsLoading(true);

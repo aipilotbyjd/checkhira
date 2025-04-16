@@ -50,7 +50,6 @@ export default function Home() {
 
   const fetchActivities = async () => {
     try {
-      console.log('fetching activities again');
       const response = await notificationService.getRecentActivities();
       // console.log(response.data);
       const activities = response.data.map((activity: any) => ({
@@ -74,7 +73,6 @@ export default function Home() {
   };
 
   useEffect(() => {
-    console.log('fetching activities');
     fetchActivities();
   }, []);
 

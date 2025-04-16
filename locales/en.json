@@ -90,6 +90,8 @@
   "totalPrice": "Total Price",
   "addItem": "Add Item",
   "deleteItem": "Delete Item",
+  "delete": "Delete",
+  "confirmDelete": "Confirm Delete",
   "deleteConfirmation": "Are you sure you want to delete this?",
   "deleteWorkConfirmation": "Are you sure you want to delete this work entry?",
   "enterName": "Enter name",

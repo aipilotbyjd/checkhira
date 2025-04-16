@@ -1,17 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
-import { useNotification } from '../contexts/NotificationContext';
+import { useToast } from '../contexts/ToastContext';
 import { COLORS, SPACING } from '../constants/theme';
 
 export const TestNotification = () => {
-  const { sendLocalNotification } = useNotification();
+  const { showToast } = useToast();
 
-  const sendTestNotification = async () => {
-    await sendLocalNotification(
-      'Test Notification',
-      'This is a test notification to verify that notifications are working properly.',
-      { type: 'test', timestamp: Date.now() }
-    );
+  const sendTestNotification = () => {
+    // Instead of sending a local notification, show a toast message
+    showToast('Test notification functionality has been disabled', 'info');
+    console.log('Test notification:', { type: 'test', timestamp: Date.now() });
   };
 
   return (

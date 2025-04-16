@@ -43,7 +43,7 @@ export default function EditWork() {
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteWorkModal, setShowDeleteWorkModal] = useState(false);
   const [showDeleteEntryModal, setShowDeleteEntryModal] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<WorkEntry | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -178,28 +178,17 @@ export default function EditWork() {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      t('deleteWork'),
-      t('deleteWorkConfirmation'),
-      [
-        {
-          text: t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('deleteWork'),
-          onPress: async () => {
-            setIsDeleting(true);
-            const result = await deleteWork(Number(id));
-            if (result) {
-              router.back();
-            }
-            setIsDeleting(false);
-          },
-          style: 'destructive',
-        },
-      ]
-    );
+    setShowDeleteWorkModal(true);
+  };
+
+  const confirmDelete = async () => {
+    setIsDeleting(true);
+    setShowDeleteWorkModal(false);
+    const result = await deleteWork(Number(id));
+    if (result) {
+      router.back();
+    }
+    setIsDeleting(false);
   };
 
   if (isLoadingData || isApiLoading || isDeleteLoading) {
@@ -409,7 +398,7 @@ export default function EditWork() {
         </View>
       </View>
 
-      {/* Delete Entry/Work Confirmation Modal */}
+      {/* Delete Entry Confirmation Modal */}
       <DeleteConfirmationModal
         visible={showDeleteEntryModal}
         onClose={() => {
@@ -426,12 +415,22 @@ export default function EditWork() {
             setEntryToDelete(null);
           }
         }}
+        title={t('confirmDelete')}
         message={
           entryToDelete
             ? t('deleteConfirmation') + ` ${formData.entries.findIndex((e) => e.id === entryToDelete.id) + 1
             } (Type ${entryToDelete.type})?`
-            : t('deleteWorkConfirmation')
+            : ''
         }
+      />
+
+      {/* Delete Work Confirmation Modal */}
+      <DeleteConfirmationModal
+        visible={showDeleteWorkModal}
+        onClose={() => setShowDeleteWorkModal(false)}
+        onConfirm={confirmDelete}
+        title={t('deleteWork')}
+        message={t('deleteWorkConfirmation')}
       />
     </View>
   );

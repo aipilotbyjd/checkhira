@@ -70,9 +70,7 @@ export default function RootLayout() {
   useEffect(() => {
     const initializeOneSignal = async () => {
       const isDevMode = !environment.production;
-      console.log('isDevMode', isDevMode);
       const oneSignalAppId = environment.oneSignalAppId;
-      console.log('oneSignalAppId', oneSignalAppId);
 
       if (!isDevMode && oneSignalAppId) {
         try {

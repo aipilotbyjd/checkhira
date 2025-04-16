@@ -1,10 +1,9 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { notificationService } from '../services/notificationService';
 import { useToast } from './ToastContext';
 import { ApiError } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import LocalNotificationService from '../services/localNotificationService';
 
 // Separate keys for notification read status and unread count
 const LOCAL_READ_STATUS_KEY = 'notification_read_status_';
@@ -15,8 +14,6 @@ type NotificationContextType = {
   refreshUnreadCount: () => Promise<void>;
   markAsRead: (id: string, is_read: string) => Promise<boolean>;
   markAllAsRead: () => Promise<boolean>;
-  sendLocalNotification: (title: string, body: string, data?: any) => Promise<string | null>;
-  getLastNotificationResponse: () => any;
 };
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -26,10 +23,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const { showToast } = useToast();
   const { isAuthenticated } = useAuth();
 
-  // References for notification handling
-  const notificationListener = useRef<any>();
-  const responseListener = useRef<any>();
-  const lastNotificationResponse = useRef<any>();
 
   // Modified refreshUnreadCount function with proper dependencies
   const refreshUnreadCount = useCallback(async () => {
@@ -105,41 +98,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     return () => clearInterval(intervalId);
   }, [refreshUnreadCount]);
 
-  // Set up notification listeners
-  useEffect(() => {
-    // Initialize notifications
-    LocalNotificationService.initialize();
-
-    // Push token functionality removed to fix ExpoPushTokenManager error
-    console.log('Notification listeners disabled to fix ExpoPushTokenManager error');
-
-    // Clean up listeners on unmount
-    return () => {
-      console.log('Notification context cleanup');
-    };
-  }, [isAuthenticated]);
-
-  const sendLocalNotification = async (title: string, body: string, data?: any) => {
-    try {
-      // Make sure notifications are initialized
-      await LocalNotificationService.initialize();
-
-      // Log notification instead of scheduling it
-      console.log('Would send notification:', { title, body, data });
-
-      // Return a dummy notification ID
-      const dummyId = 'dummy-' + Date.now();
-      return dummyId;
-    } catch (error) {
-      console.error('Error sending notification:', error);
-      return null;
-    }
-  };
-
-  // Get the last notification response (for handling notification taps)
-  const getLastNotificationResponse = () => {
-    return lastNotificationResponse.current;
-  };
 
   return (
     <NotificationContext.Provider
@@ -149,8 +107,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         refreshUnreadCount,
         markAsRead,
         markAllAsRead,
-        sendLocalNotification,
-        getLastNotificationResponse,
       }}>
       {children}
     </NotificationContext.Provider>

@@ -1,6 +1,7 @@
 import { Text, View, Pressable, Modal } from 'react-native';
 import { Octicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/theme';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface DeleteConfirmationModalProps {
   visible: boolean;
@@ -14,16 +15,17 @@ export function DeleteConfirmationModal({
   visible,
   onClose,
   onConfirm,
-  title = 'Confirm Delete',
+  title,
   message,
 }: DeleteConfirmationModalProps) {
+  const { t } = useLanguage();
   return (
     <Modal transparent visible={visible} animationType="fade">
       <View className="flex-1 items-center justify-center bg-black/50">
         <View className="mx-4 w-[90%] rounded-2xl bg-white p-6">
           <View className="mb-4 flex-row items-center justify-between">
             <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
-              {title}
+              {title || t('confirmDelete')}
             </Text>
             <Pressable onPress={onClose}>
               <Octicons name="x" size={20} color={COLORS.gray[400]} />
@@ -40,14 +42,14 @@ export function DeleteConfirmationModal({
               className="mx-1 flex-1 rounded-xl border p-3"
               style={{ borderColor: COLORS.gray[200] }}>
               <Text className="text-center font-semibold" style={{ color: COLORS.gray[600] }}>
-                Cancel
+                {t('cancel')}
               </Text>
             </Pressable>
             <Pressable
               onPress={onConfirm}
               className="mx-1 flex-1 rounded-xl p-3"
               style={{ backgroundColor: COLORS.error }}>
-              <Text className="text-center font-semibold text-white">Delete</Text>
+              <Text className="text-center font-semibold text-white">{t('delete') || 'Delete'}</Text>
             </Pressable>
           </View>
         </View>
