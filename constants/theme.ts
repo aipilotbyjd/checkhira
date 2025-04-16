@@ -104,6 +104,10 @@ export const SIZES = {
   caption: SCREEN_SIZES.sm > 375 ? 14 : 12,
   small: SCREEN_SIZES.sm > 375 ? 12 : 10,
 
+  // Additional typography sizes
+  md: SCREEN_SIZES.sm > 375 ? 16 : 14, // Same as body size
+  xl: SCREEN_SIZES.sm > 375 ? 20 : 18, // Same as h3 size
+
   // UI Elements
   tabIcon: SCREEN_SIZES.sm > 375 ? 24 : 20,
   tabLabel: SCREEN_SIZES.sm > 375 ? 12 : 10,
