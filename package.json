@@ -9,10 +9,19 @@
     "build:dev": "eas build --profile development",
     "build:preview": "eas build --profile preview",
     "build:prod": "eas build --profile production",
+    "build:production": "node scripts/build-production.js",
     "prebuild": "expo prebuild",
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
     "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "update:check": "npx expo-doctor",
+    "update:fix": "npx expo-doctor --fix",
+    "deps:check": "node scripts/check-dependencies.js",
+    "deps:update": "npm update",
+    "release:patch": "node scripts/release.js patch",
+    "release:minor": "node scripts/release.js minor",
+    "release:major": "node scripts/release.js major",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",

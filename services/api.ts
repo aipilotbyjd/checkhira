@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { environment } from '../config/environment';
 
 export class ApiError extends Error {
@@ -24,15 +25,15 @@ export const api = {
   baseUrl: environment.apiUrl,
 
   async getToken(): Promise<string | null> {
-    return await AsyncStorage.getItem('token');
+    return await SecureStore.getItemAsync('token');
   },
 
   async setToken(token: string): Promise<void> {
-    await AsyncStorage.setItem('token', token);
+    await SecureStore.setItemAsync('token', token);
   },
 
   async removeToken(): Promise<void> {
-    await AsyncStorage.removeItem('token');
+    await SecureStore.deleteItemAsync('token');
   },
 
   async getHeaders() {

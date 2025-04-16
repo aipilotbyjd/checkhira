@@ -10,6 +10,9 @@
       "android": {
         "buildType": "apk"
       },
+      "env": {
+        "NODE_ENV": "development"
+      },
       "channel": "development"
     },
     "preview": {
@@ -17,17 +20,37 @@
       "android": {
         "buildType": "apk"
       },
+      "env": {
+        "NODE_ENV": "staging"
+      },
       "channel": "preview"
     },
     "production": {
       "autoIncrement": true,
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle",
+        "gradleCommand": ":app:bundleRelease"
+      },
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "env": {
+        "NODE_ENV": "production"
       },
       "channel": "production"
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "track": "production",
+        "releaseStatus": "completed"
+      },
+      "ios": {
+        "appleId": "your-apple-id@example.com",
+        "ascAppId": "1234567890",
+        "appleTeamId": "ABCDEF1234"
+      }
+    }
   }
 }

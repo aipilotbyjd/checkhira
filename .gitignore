@@ -1,24 +1,55 @@
+# Dependencies
 node_modules/
+
+# Expo
 .expo/
 dist/
+web-build/
+expo-env.d.ts
+
+# Native
+ios/
+android/
+
+# Debug
 npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Certificates and keys
 *.jks
 *.p8
 *.p12
 *.key
+*.pem
 *.mobileprovision
 *.orig.*
-web-build/
-# expo router
-expo-env.d.ts
-
-
-
-ios
-android
+certs/production-cert.pem
 
 # macOS
 .DS_Store
 
-# Temporary files created by Metro to check the health of the file watcher
+# Temporary files
 .metro-health-check*
+
+# Logs
+logs
+*.log
+
+# Testing
+coverage/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build artifacts
+build/
+.gradle/

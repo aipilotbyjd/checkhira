@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent } from 'axios';
 import axiosRetry from 'axios-retry';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { environment } from '../config/environment';
 
 // Define error class with rich error information
@@ -48,10 +49,6 @@ class SimpleCache {
             this.cache.delete(oldestKey);
         }
         this.cache.set(key, { data, timestamp: Date.now(), etag });
-    }
-
-    set(key: string, data: any): void {
-        this.cache.set(key, { data, timestamp: Date.now() });
     }
 
     delete(key: string): void {
@@ -156,15 +153,15 @@ export class ApiClient {
 
     // Token management methods
     async getToken(): Promise<string | null> {
-        return await AsyncStorage.getItem(this.tokenKey);
+        return await SecureStore.getItemAsync(this.tokenKey);
     }
 
     async setToken(token: string): Promise<void> {
-        await AsyncStorage.setItem(this.tokenKey, token);
+        await SecureStore.setItemAsync(this.tokenKey, token);
     }
 
     async removeToken(): Promise<void> {
-        await AsyncStorage.removeItem(this.tokenKey);
+        await SecureStore.deleteItemAsync(this.tokenKey);
     }
 
     // Clear cache

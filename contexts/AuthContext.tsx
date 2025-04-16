@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const [storedUser, token] = await Promise.all([
         AsyncStorage.getItem('user'),
-        AsyncStorage.getItem('token'),
+        SecureStore.getItemAsync('token'),
       ]);
 
       if (token) {
@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     setIsAuthenticated(false);
     await AsyncStorage.removeItem('user');
-    await AsyncStorage.removeItem('token');
+    await SecureStore.deleteItemAsync('token');
     await api.removeToken();
   };
 
@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { user, token } = response.data;
 
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      await AsyncStorage.setItem('token', token);
+      await SecureStore.setItemAsync('token', token);
       setUser(user);
       setIsAuthenticated(true);
       return response;
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { user, token } = response.data;
 
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      await AsyncStorage.setItem('token', token);
+      await SecureStore.setItemAsync('token', token);
       setUser(user);
       setIsAuthenticated(true);
       return response;
@@ -120,7 +120,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { user, token } = response.data;
 
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      await AsyncStorage.setItem('token', token);
+      await SecureStore.setItemAsync('token', token);
       setUser(user);
       setIsAuthenticated(true);
       return response;

@@ -1,4 +1,6 @@
 import Constants from 'expo-constants';
+import { productionEnvironment } from './production';
+import { developmentEnvironment } from './development';
 
 export interface Environment {
   apiUrl: string;
@@ -12,14 +14,31 @@ export interface Environment {
   supportEmail: string;
 }
 
+// Determine which environment to use based on NODE_ENV
+const getEnvironmentConfig = (): Environment => {
+  const nodeEnv = process.env.NODE_ENV || 'development';
+
+  switch (nodeEnv) {
+    case 'production':
+      return productionEnvironment;
+    case 'staging':
+      // You can add a staging environment configuration if needed
+      return productionEnvironment;
+    case 'development':
+    default:
+      return developmentEnvironment;
+  }
+};
+
+// Get the base environment configuration
+const baseEnvironment = getEnvironmentConfig();
+
+// Override with values from Constants if available
 export const environment: Environment = {
-  apiUrl: Constants.expoConfig?.extra?.apiUrl || 'https://api.hirabook.icu/api/v1',
-  nodeEnv: process.env.NODE_ENV || 'development',
-  oneSignalAppId: Constants.expoConfig?.extra?.oneSignalAppId,
-  production: process.env.NODE_ENV === 'production',
-  appVersion: Constants.expoConfig?.version || '1.0.0',
-  appName: Constants.expoConfig?.name || 'Checkhira',
-  appStoreId: '1234567890', // Replace with your actual App Store ID
-  playStoreId: 'com.jaydeepdhrangiya.checkhira',
-  supportEmail: 'support@checkhira.com',
+  ...baseEnvironment,
+  // Override with actual values from the app config
+  apiUrl: Constants.expoConfig?.extra?.apiUrl || baseEnvironment.apiUrl,
+  oneSignalAppId: Constants.expoConfig?.extra?.oneSignalAppId || baseEnvironment.oneSignalAppId,
+  appVersion: Constants.expoConfig?.version || baseEnvironment.appVersion,
+  appName: Constants.expoConfig?.name || baseEnvironment.appName,
 };
