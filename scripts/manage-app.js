@@ -1,11 +1,11 @@
 /**
  * App Management Script
- * 
+ *
  * This script provides a command-line interface for managing the app,
  * including building, deploying, and maintaining it.
- * 
+ *
  * Usage: node scripts/manage-app.js [command]
- * 
+ *
  * Commands:
  * - build:dev: Build the app for development
  * - build:preview: Build the app for preview
@@ -120,9 +120,14 @@ const buildCommands = [
 // Update commands
 const updateCommands = [
   {
-    name: 'Check for Updates',
-    description: 'Check for Expo compatibility issues',
+    name: 'Check for Updates (Online)',
+    description: 'Check for Expo compatibility issues (requires internet)',
     command: 'npm run update:check',
+  },
+  {
+    name: 'Check for Updates (Offline)',
+    description: 'Basic compatibility check without internet connection',
+    command: 'npm run update:check:offline',
   },
   {
     name: 'Fix Updates',
@@ -275,6 +280,9 @@ async function main() {
       case 'update:check':
         runCommand('npm run update:check');
         break;
+      case 'update:check:offline':
+        runCommand('npm run update:check:offline');
+        break;
       case 'update:fix':
         runCommand('npm run update:fix');
         break;
@@ -333,7 +341,8 @@ function showHelp() {
   console.log(`  build:dev       Build the app for development`);
   console.log(`  build:preview   Build the app for preview`);
   console.log(`  build:prod      Build the app for production`);
-  console.log(`  update:check    Check for updates`);
+  console.log(`  update:check    Check for updates (online)`);
+  console.log(`  update:check:offline  Check for updates (offline)`);
   console.log(`  update:fix      Fix updates`);
   console.log(`  deps:check      Check dependencies`);
   console.log(`  deps:update     Update dependencies`);
