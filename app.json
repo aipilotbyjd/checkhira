@@ -6,13 +6,6 @@
     "owner": "jaydeepdhrangiya",
     "scheme": "checkhira",
     "newArchEnabled": true,
-    "notification": {
-      "icon": "./assets/notification-icon.png",
-      "color": "#ffffff",
-      "androidMode": "default",
-      "androidCollapsedTitle": "${title}",
-      "iosDisplayInForeground": true
-    },
     "web": {
       "bundler": "metro",
       "output": "static",
