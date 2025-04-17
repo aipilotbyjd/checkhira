@@ -1,7 +1,8 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
+import { View, Text, Button, StyleSheet, Platform } from 'react-native';
 import { COLORS } from '../constants/theme';
 import * as Updates from 'expo-updates';
+import { environment } from '../config/environment';
 
 interface Props {
     children: ReactNode;
@@ -24,8 +25,52 @@ export class ErrorBoundary extends Component<Props, State> {
 
     componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error('ErrorBoundary caught an error', error, errorInfo);
-        // Here you would log to your error reporting service
-        // Example: Sentry.captureException(error);
+
+        // Log additional context information
+        const errorContext = {
+            timestamp: new Date().toISOString(),
+            platform: Platform.OS,
+            platformVersion: Platform.Version,
+            appVersion: environment.appVersion,
+            componentStack: errorInfo.componentStack,
+        };
+
+        console.error('Error context:', errorContext);
+
+        // In production, you would send this to your error reporting service
+        // Example for a real implementation:
+        // if (environment.production) {
+        //     Sentry.captureException(error, {
+        //         extra: errorContext
+        //     });
+        // }
+
+        // For now, we'll just log to console in production
+        if (environment.production) {
+            // You could implement a simple logging service that sends errors to your backend
+            this.logErrorToServer(error, errorContext);
+        }
+    }
+
+    // Method to send errors to your backend
+    private logErrorToServer(error: Error, context: any) {
+        // This is a simple implementation that could be expanded
+        try {
+            fetch(`${environment.apiUrl}/log-error`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name,
+                    context,
+                }),
+            }).catch(e => console.error('Failed to send error to server:', e));
+        } catch (e) {
+            console.error('Failed to log error to server:', e);
+        }
     }
 
     handleRestart = async () => {
@@ -40,16 +85,27 @@ export class ErrorBoundary extends Component<Props, State> {
         if (this.state.hasError) {
             return (
                 <View style={styles.container}>
+                    <View style={styles.iconContainer}>
+                        <Text style={styles.iconText}>!</Text>
+                    </View>
                     <Text style={styles.title}>Oops, Something Went Wrong</Text>
                     <Text style={styles.message}>
-                        The app ran into a problem. Please try restarting the app.
+                        The app ran into a problem. We've logged this issue and will work to fix it.
                     </Text>
-                    <View style={styles.errorBox}>
-                        <Text style={styles.errorText}>
-                            {this.state.error?.toString() || 'Unknown error occurred'}
-                        </Text>
+                    {!environment.production && (
+                        <View style={styles.errorBox}>
+                            <Text style={styles.errorText}>
+                                {this.state.error?.toString() || 'Unknown error occurred'}
+                            </Text>
+                        </View>
+                    )}
+                    <View style={styles.buttonContainer}>
+                        <Button
+                            title="Restart App"
+                            onPress={this.handleRestart}
+                            color={COLORS.primary}
+                        />
                     </View>
-                    <Button title="Restart App" onPress={this.handleRestart} color={COLORS.primary} />
                 </View>
             );
         }
@@ -66,27 +122,47 @@ const styles = StyleSheet.create({
         padding: 20,
         backgroundColor: COLORS.background.primary,
     },
-    title: {
-        fontSize: 20,
+    iconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: COLORS.error + '20',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 24,
+    },
+    iconText: {
+        fontSize: 50,
         fontWeight: 'bold',
-        marginBottom: 10,
+        color: COLORS.error,
+    },
+    title: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        marginBottom: 12,
         color: COLORS.secondary,
+        textAlign: 'center',
     },
     message: {
         fontSize: 16,
         textAlign: 'center',
-        marginBottom: 20,
+        marginBottom: 24,
         color: COLORS.gray[600],
+        lineHeight: 22,
     },
     errorBox: {
         padding: 15,
         borderRadius: 10,
         backgroundColor: COLORS.error + '15',
-        marginBottom: 20,
+        marginBottom: 24,
         width: '100%',
     },
     errorText: {
         color: COLORS.error,
         fontSize: 14,
     },
-}); 
+    buttonContainer: {
+        width: '100%',
+        marginTop: 8,
+    },
+});

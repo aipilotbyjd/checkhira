@@ -28,19 +28,30 @@ class RatingService {
   }
 
   private async shouldPromptRating(): Promise<boolean> {
-    const [hasRated, usageCount] = await Promise.all([
-      storage.getString(RATING_CONFIG.STORAGE_KEYS.HAS_RATED),
-      storage.getNumber(RATING_CONFIG.STORAGE_KEYS.USAGE_COUNT)
-    ]);
-
+    // Check if user has already rated the app
+    const hasRated = await storage.getString(RATING_CONFIG.STORAGE_KEYS.HAS_RATED);
     if (hasRated === 'true') return false;
+
+    // Check usage count requirement
+    const usageCount = await storage.getNumber(RATING_CONFIG.STORAGE_KEYS.USAGE_COUNT);
     if (usageCount < RATING_CONFIG.MIN_USAGE_COUNT) return false;
 
-    const lastPrompt = await storage.getString(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT);
-    if (!lastPrompt) return true;
+    // Check positive actions requirement
+    const positiveActions = await storage.getNumber(RATING_CONFIG.STORAGE_KEYS.POSITIVE_ACTIONS);
+    if (positiveActions < RATING_CONFIG.POSITIVE_ACTIONS_REQUIRED) return false;
 
-    const daysSinceLastPrompt = (Date.now() - parseInt(lastPrompt)) / (24 * 60 * 60 * 1000);
-    return daysSinceLastPrompt >= RATING_CONFIG.DAYS_BETWEEN_PROMPTS;
+    // Check time spent in app requirement
+    const timeInApp = await storage.getNumber(RATING_CONFIG.STORAGE_KEYS.TIME_IN_APP);
+    if (timeInApp < RATING_CONFIG.MIN_TIME_IN_APP) return false;
+
+    // Check if enough time has passed since last prompt
+    const lastPrompt = await storage.getString(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT);
+    if (lastPrompt) {
+      const daysSinceLastPrompt = (Date.now() - parseInt(lastPrompt)) / (24 * 60 * 60 * 1000);
+      if (daysSinceLastPrompt < RATING_CONFIG.DAYS_BETWEEN_PROMPTS) return false;
+    }
+
+    return true;
   }
 
   async promptForRating(translations?: RatingTranslations): Promise<void> {
@@ -71,7 +82,7 @@ class RatingService {
             } else if (storeUrl && await Linking.canOpenURL(storeUrl)) {
               await Linking.openURL(storeUrl);
             }
-            
+
             await storage.setValue(RATING_CONFIG.STORAGE_KEYS.HAS_RATED, 'true');
           } catch (error) {
             console.error('Error requesting review:', error);

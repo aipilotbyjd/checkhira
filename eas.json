@@ -8,7 +8,8 @@
       "developmentClient": true,
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
       },
       "env": {
         "NODE_ENV": "development"
@@ -18,7 +19,11 @@
     "preview": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
+      },
+      "ios": {
+        "simulator": true
       },
       "env": {
         "NODE_ENV": "staging"
@@ -32,24 +37,32 @@
         "gradleCommand": ":app:bundleRelease"
       },
       "ios": {
-        "resourceClass": "m-medium"
+        "resourceClass": "m-medium",
+        "distribution": "store"
       },
       "env": {
         "NODE_ENV": "production"
       },
-      "channel": "production"
+      "channel": "production",
+      "cache": {
+        "key": "production-{{ os }}-v1"
+      }
     }
   },
   "submit": {
     "production": {
       "android": {
         "track": "production",
-        "releaseStatus": "completed"
+        "releaseStatus": "completed",
+        "changesNotSentForReview": false
       },
       "ios": {
         "appleId": "your-apple-id@example.com",
         "ascAppId": "1234567890",
-        "appleTeamId": "ABCDEF1234"
+        "appleTeamId": "ABCDEF1234",
+        "complianceInfo": {
+          "usesIdfa": false
+        }
       }
     }
   }

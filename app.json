@@ -1,11 +1,12 @@
 {
   "expo": {
-    "name": "checkhira",
+    "name": "CheckHira",
     "slug": "checkhira",
     "version": "1.0.0",
     "owner": "jaydeepdhrangiya",
     "scheme": "checkhira",
     "newArchEnabled": true,
+    "jsEngine": "hermes",
     "web": {
       "bundler": "metro",
       "output": "static",
@@ -124,6 +125,13 @@
         "alg": "rsa-v1_5-sha256",
         "keyid": "key-v1"
       }
+    },
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#ffffff",
+      "androidMode": "default",
+      "androidCollapsedTitle": "#{unread_notifications} new notifications",
+      "iosDisplayInForeground": true
     }
   }
 }
