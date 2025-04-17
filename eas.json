@@ -59,10 +59,7 @@
       "ios": {
         "appleId": "your-apple-id@example.com",
         "ascAppId": "1234567890",
-        "appleTeamId": "ABCDEF1234",
-        "complianceInfo": {
-          "usesIdfa": false
-        }
+        "appleTeamId": "ABCDEF1234"
       }
     }
   }
