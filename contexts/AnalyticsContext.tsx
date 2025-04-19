@@ -24,13 +24,25 @@ class AnalyticsService {
 
         try {
             // Get device information
-            this.deviceInfo = {
-                deviceName: Device.deviceName || 'Unknown',
-                deviceType: Device.deviceType,
-                osName: Platform.OS,
-                osVersion: Platform.Version,
-                appVersion: environment.appVersion,
-            };
+            try {
+                this.deviceInfo = {
+                    deviceName: Device.deviceName || 'Unknown',
+                    deviceType: Device.deviceType || 'Unknown',
+                    osName: Platform.OS,
+                    osVersion: Platform.Version,
+                    appVersion: environment.appVersion,
+                };
+            } catch (error) {
+                // Fallback if Device module is not available
+                console.warn('Device module not available, using fallback device info');
+                this.deviceInfo = {
+                    deviceName: 'Unknown',
+                    deviceType: 'Unknown',
+                    osName: Platform.OS,
+                    osVersion: Platform.Version,
+                    appVersion: environment.appVersion,
+                };
+            }
 
             // Start a new session
             await this.startNewSession();
