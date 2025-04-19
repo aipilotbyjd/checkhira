@@ -151,6 +151,50 @@ The app is configured to use Expo Updates for over-the-air updates:
 
 This allows you to push updates without requiring a new app store submission.
 
+### Code Signing for Updates
+
+The app uses code signing to secure over-the-air updates. This ensures that only authorized updates are installed on users' devices.
+
+#### Managing Code Signing
+
+The app includes scripts to manage code signing:
+
+```bash
+# Interactive setup menu
+npm run codesign:setup
+
+# Configure for local development
+npm run codesign:local
+
+# Configure for EAS builds
+npm run codesign:eas
+
+# Generate new certificates
+npm run codesign:generate
+```
+
+#### Code Signing Workflow
+
+1. **Local Development**:
+   - Run `npm run codesign:local` to enable code signing for local testing
+   - Test updates locally with `expo start --dev-client`
+
+2. **EAS Builds**:
+   - Run `npm run codesign:eas` before building with EAS
+   - This prevents certificate path errors during the build process
+
+3. **Publishing Updates**:
+   - After building and releasing your app, you can publish updates
+   - Make sure code signing is properly configured
+   - Run `eas update --channel production`
+
+#### Certificate Management
+
+- Certificates are stored in `certs/production/`
+- Private keys are stored in `keys/production/`
+- These files should be kept secure and not committed to version control
+- Back up these files securely - if lost, you won't be able to publish updates
+
 ## Troubleshooting
 
 ### Common Build Errors

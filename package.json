@@ -23,7 +23,11 @@
     "release:minor": "node scripts/release.js minor",
     "release:major": "node scripts/release.js major",
     "manage": "node scripts/manage-app.js",
-    "test": "echo \"No tests specified\" && exit 0"
+    "test": "echo \"No tests specified\" && exit 0",
+    "codesign:setup": "node scripts/setup-code-signing.js",
+    "codesign:local": "node scripts/setup-code-signing.js local",
+    "codesign:eas": "node scripts/setup-code-signing.js eas",
+    "codesign:generate": "node scripts/setup-code-signing.js generate"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",

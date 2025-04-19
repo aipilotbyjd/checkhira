@@ -76,6 +76,23 @@ The app uses EAS (Expo Application Services) for building and deploying:
 - Preview: `npm run build:preview`
 - Production: `npm run build:prod`
 
+## Code Signing for Updates
+
+The app uses code signing for Expo Updates to ensure security. The following scripts are available to manage code signing:
+
+- `npm run codesign:setup` - Interactive menu for code signing setup
+- `npm run codesign:generate` - Generate new code signing certificates
+- `npm run codesign:local` - Configure app.json for local development with code signing
+- `npm run codesign:eas` - Configure app.json for EAS builds (disables code signing)
+
+### Important Notes
+
+- Code signing certificates are stored in `certs/production/`
+- Private keys are stored in `keys/production/`
+- These files should not be committed to version control
+- Before building with EAS, run `npm run codesign:eas` to avoid certificate path errors
+- For local development with updates, run `npm run codesign:local`
+
 ## Project Structure
 
 ```
