@@ -4,15 +4,8 @@ module.exports = function (api) {
   // Define plugins array
   const plugins = [
     'react-native-reanimated/plugin',
-    // Add support for environment variables
-    ['module:react-native-dotenv', {
-      moduleName: '@env',
-      path: '.env',
-      blacklist: null,
-      whitelist: null,
-      safe: true,
-      allowUndefined: true,
-    }],
+    // Environment variables are now handled by Expo's built-in support
+    // using EXPO_PUBLIC_ prefix in .env files
   ];
 
   return {
