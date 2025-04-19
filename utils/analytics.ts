@@ -15,6 +15,7 @@ class AnalyticsService {
             await Analytics.logEvent(eventName, params);
 
             // Log in development mode for debugging
+            console.log(`Analytics Event: ${eventName}`, params);
             if (!environment.production) {
                 console.log(`Analytics Event: ${eventName}`, params);
             }

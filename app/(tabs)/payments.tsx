@@ -98,6 +98,7 @@ export default function PaymentsList() {
     if (!hasMorePages || isLoadingMore || isLoadingSub) return;
 
     // Log analytics event for loading more payments
+    console.log('Loading more payments...');
     analyticsService.logEvent('load_more_payments', { page: currentPage + 1 });
     await loadPayments({ page: currentPage + 1 });
   }, [currentPage, hasMorePages, isLoadingMore, isLoadingSub]);
