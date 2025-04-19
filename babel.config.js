@@ -4,8 +4,7 @@ module.exports = function (api) {
   // Define plugins array
   const plugins = [
     'react-native-reanimated/plugin',
-    // Environment variables are now handled by Expo's built-in support
-    // using EXPO_PUBLIC_ prefix in .env files
+    'transform-remove-console'
   ];
 
   return {

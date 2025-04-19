@@ -4,19 +4,15 @@ import {
   Text,
   TextInput,
   Pressable,
-  Image,
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import { UserProfile } from '../../types/user';
 import { useProfileOperations } from '../../hooks/useProfileOperations';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { createFormData } from '../../services/profileService';
 import { ProfileSkeleton } from '../../components/ProfileSkeleton';
 
 export default function EditProfile() {

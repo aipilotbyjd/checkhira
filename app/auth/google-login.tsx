@@ -6,7 +6,6 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    ActivityIndicator,
     Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -15,15 +14,17 @@ import { PublicRoute } from '../../components/PublicRoute';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
     GoogleSignin,
     isSuccessResponse,
     isErrorWithCode,
     statusCodes,
 } from '@react-native-google-signin/google-signin';
+import { useAnalytics } from '../../hooks/useAnalytics';
+import { analyticsService } from '../../utils/analytics';
 
 export default function GoogleLogin() {
+    useAnalytics('GoogleLoginScreen');
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const { t } = useLanguage();
@@ -34,7 +35,7 @@ export default function GoogleLogin() {
         try {
             setIsLoading(true);
             GoogleSignin.signOut();
-            
+
             await GoogleSignin.hasPlayServices();
             const userInfo = await GoogleSignin.signIn();
 
@@ -46,17 +47,26 @@ export default function GoogleLogin() {
                         showToast(t('loginSuccess'), 'success');
                         router.replace('/(tabs)');
                     } else {
+                        // Log analytics event for failed Google Sign-In (no token)
+                        analyticsService.logEvent('google_signin_failed', { reason: 'no_id_token' });
                         showToast(t('googleSignInErrorsNoIdToken') || 'No ID token received', 'error');
                     }
-                } catch (error) {
+                } catch (error: any) {
+                    // Log analytics event for failed Google -In (backend/context error)
+                    analyticsService.logEvent('google_signin_failed', { reason: 'backend_error', message: error?.message });
                     console.error('Google login error:', error);
                     showToast(t('googleSignInErrorsUnknownError'), 'error');
                 }
             } else {
+                // Log analytics event for failed Google Sign-In (cancelled)
+                analyticsService.logEvent('google_signin_failed', { reason: 'cancelled_by_user' });
                 showToast(t('googleSignInErrorsSignInCancelled'), 'error');
             }
         } catch (error) {
+            // Log analytics event for failed Google Sign-In (native error)
+            let reason = 'unknown_native_error';
             if (isErrorWithCode(error)) {
+                reason = error.code;
                 switch (error.code) {
                     case statusCodes.IN_PROGRESS:
                         showToast(t('googleSignInErrorsInProgress'), 'error');
@@ -122,7 +132,7 @@ export default function GoogleLogin() {
                         onPress={handleGoogleSignIn}
                         disabled={isLoading}
                         className={`flex-row items-center justify-center py-4 px-5 rounded-xl mb-3 ${isLoading ? 'opacity-70' : ''}`}
-                        style={{ 
+                        style={{
                             backgroundColor: '#4285F4',
                             shadowColor: '#000',
                             shadowOffset: { width: 0, height: 2 },

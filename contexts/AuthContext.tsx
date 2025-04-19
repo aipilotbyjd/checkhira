@@ -4,6 +4,7 @@ import { authService } from '../services/authService';
 import { api } from '../services/api';
 import { User } from '../types/user';
 import * as SecureStore from 'expo-secure-store';
+import { analyticsService } from '../utils/analytics'; // Ensure this path is correct
 
 interface AuthContextType {
   user: User | null;
@@ -58,6 +59,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await AsyncStorage.removeItem('user');
     await SecureStore.deleteItemAsync('token');
     await api.removeToken();
+    // Ensure user ID is cleared in analytics on logout
+    await analyticsService.setUserId(null);
   };
 
   const login = async (identifier: string, password: string) => {
@@ -69,9 +72,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await SecureStore.setItemAsync('token', token);
       setUser(user);
       setIsAuthenticated(true);
+
+      // Set user ID and log login event
+      if (user?.id) {
+        await analyticsService.setUserId(user.id.toString()); // Ensure ID is string
+        await analyticsService.logEvent('login', { method: 'email_phone' }); // Specify method
+      }
+
       return response;
     } catch (error) {
-      await handleLogout();
+      await handleLogout(); // This already clears the user ID via analyticsService.setUserId(null)
       throw error;
     }
   };
@@ -98,17 +108,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await SecureStore.setItemAsync('token', token);
       setUser(user);
       setIsAuthenticated(true);
+
+      // Set user ID and log sign_up event
+      if (user?.id) {
+        await analyticsService.setUserId(user.id.toString()); // Ensure ID is string
+        // Use standard Firebase event name 'sign_up'
+        await analyticsService.logEvent('sign_up', { method: data.email ? 'email' : 'phone' });
+      }
+
       return response;
     } catch (error) {
-      await handleLogout();
+      await handleLogout(); // Clears user ID
       throw error;
     }
   };
 
   const logout = async () => {
     try {
-      await authService.logout();
+      // Log the logout event *before* clearing local data
+      await analyticsService.logEvent('logout');
+      await authService.logout(); // Call backend logout if necessary
+    } catch (error) {
+      console.error("Error during backend logout:", error);
+      // Still proceed with local logout even if backend fails
     } finally {
+      // handleLogout clears local state and analytics user ID
       await handleLogout();
     }
   };
@@ -123,12 +147,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await SecureStore.setItemAsync('token', token);
       setUser(user);
       setIsAuthenticated(true);
+
+      // Set user ID and log login event for Google
+      if (user?.id) {
+        await analyticsService.setUserId(user.id.toString()); // Ensure ID is string
+        await analyticsService.logEvent('login', { method: 'google' }); // Specify Google method
+      }
+
       return response;
     } catch (error) {
       // If the backend call fails, we can create a user from Google data
       // or handle the error appropriately
       console.error('Google login error:', error);
-      await handleLogout();
+      await handleLogout(); // Clears user ID
       throw error;
     }
   };

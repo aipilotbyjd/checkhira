@@ -11,7 +11,6 @@ import * as Updates from 'expo-updates';
 import { Alert } from 'react-native';
 import { ratingService } from '../services/ratingService';
 import { ErrorBoundary } from '../components/ErrorBoundary';
-import { AnalyticsProvider } from '../contexts/AnalyticsContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LanguageProvider, useLanguage } from '../contexts/LanguageContext';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
@@ -19,6 +18,7 @@ import { NetworkProvider, useNetwork } from '../contexts/NetworkContext';
 import { OfflineScreen } from '../components/OfflineScreen';
 import { RatingProvider } from '../contexts/RatingContext';
 import { useEffect } from 'react';
+import * as Analytics from 'expo-firebase-analytics';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -38,6 +38,14 @@ function NetworkAwareLayout({ children }: { children: React.ReactNode }) {
 
 function RootLayoutNav() {
   const { t } = useLanguage();
+
+  // Log screen view for analytics
+  useEffect(() => {
+    Analytics.logEvent('screen_view', {
+      screen_name: 'Root_Navigation',
+      screen_class: 'RootLayoutNav'
+    });
+  }, []);
 
   return (
     <Stack>
@@ -65,7 +73,26 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
-  // t is used in other parts of the component
+  // Initialize Firebase Analytics
+  useEffect(() => {
+    const initializeAnalytics = async () => {
+      try {
+        // Set analytics collection enabled based on environment
+        await Analytics.setAnalyticsCollectionEnabled(environment.production);
+
+        // Set user properties if needed
+        // await Analytics.setUserId('user123');
+
+        if (!environment.production) {
+          console.log('Firebase Analytics initialized in development mode');
+        }
+      } catch (error) {
+        console.error('Failed to initialize Firebase Analytics:', error);
+      }
+    };
+
+    initializeAnalytics();
+  }, []);
 
   useEffect(() => {
     const initializeOneSignal = async () => {
@@ -184,10 +211,8 @@ export default function RootLayout() {
                   <SettingsProvider>
                     <NetworkProvider>
                       <NetworkAwareLayout>
-                        <AnalyticsProvider>
-                          <AppRatingManager />
-                          <RootLayoutNav />
-                        </AnalyticsProvider>
+                        <AppRatingManager />
+                        <RootLayoutNav />
                       </NetworkAwareLayout>
                     </NetworkProvider>
                   </SettingsProvider>

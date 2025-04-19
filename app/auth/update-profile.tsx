@@ -12,11 +12,14 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
+import { useAnalytics } from '../../hooks/useAnalytics'; // Import the hook
+import { analyticsService } from '../../utils/analytics'; // Import the service for events
 
 export default function UpdateProfile() {
+  useAnalytics('UpdateProfileScreen'); // Add screen view tracking
   const router = useRouter();
   const [formData, setFormData] = useState({
     firstName: '',
@@ -26,22 +29,9 @@ export default function UpdateProfile() {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleImagePick = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Please enable image permissions.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-    if (!result.canceled && result.assets?.length) {
-      const uri = result.assets[0].uri;
-      setFormData((prev) => ({ ...prev, profileImage: uri, tempImageUri: uri }));
-    }
+  const handleImagePick = () => {
+    // Image picking functionality removed
+    Alert.alert('Feature Unavailable', 'Profile image upload is not available in this version.');
   };
 
   const handleUpdate = async () => {
@@ -52,12 +42,18 @@ export default function UpdateProfile() {
     setIsLoading(true);
     try {
       // Simulate API update – replace with actual API call
-      setTimeout(() => {
-        setIsLoading(false);
-        router.push('/(tabs)');
-      }, 1500);
-    } catch (error) {
+      // const updateResponse = await userService.updateProfile(formData); // Example API call
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Keep simulation for now
+
+      // Log successful profile update
+      await analyticsService.logEvent('profile_update_success');
+
       setIsLoading(false);
+      router.push('/(tabs)');
+    } catch (error: any) {
+      setIsLoading(false);
+      // Log failed profile update
+      await analyticsService.logEvent('profile_update_failed', { error: error?.message });
       Alert.alert('Error', 'Failed to update profile.');
     }
   };
