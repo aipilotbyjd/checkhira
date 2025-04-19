@@ -51,15 +51,7 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.195151324772-4gc4nhb0ou80sij272shuaa512irgap8"
         }
-      ],
-      [
-        "expo-firebase-core",
-        {
-          "googleServicesFile": "./google-services.json",
-          "androidGoogleServicesFile": "./google-services.json"
-        }
-      ],
-      "expo-firebase-analytics"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
