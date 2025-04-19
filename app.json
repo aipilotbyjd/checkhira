@@ -122,7 +122,7 @@
       "checkAutomatically": "ON_LOAD"
     },
     "notification": {
-      "icon": "./assets/notification-icon.png",
+      "icon": "./assets/notification_icon.png",
       "color": "#ffffff",
       "androidMode": "default",
       "androidCollapsedTitle": "#{unread_notifications} new notifications",
