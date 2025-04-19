@@ -18,6 +18,7 @@ import { statsService } from '../../services/statsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAnalytics } from '../../hooks/useAnalytics';
 
 // Add this type definition above the Home component
 interface Activity {
@@ -31,6 +32,7 @@ interface Activity {
 }
 
 export default function Home() {
+  useAnalytics('HomeTabScreen');
   const router = useRouter();
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);

@@ -4,12 +4,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { useAnalytics } from '../../contexts/AnalyticsContext';
 
 export default function ThemeSettings() {
   const { themeMode, setThemeMode, isDark } = useTheme();
   const { t } = useLanguage();
-  const { trackEvent } = useAnalytics();
   const [isChanging, setIsChanging] = useState(false);
 
   const themeOptions = [
@@ -22,7 +20,6 @@ export default function ThemeSettings() {
     setIsChanging(true);
     try {
       await setThemeMode(mode);
-      trackEvent('change_theme', { theme: mode });
     } finally {
       setIsChanging(false);
     }

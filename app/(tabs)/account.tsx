@@ -1,9 +1,8 @@
 import { View, Text, Share, Platform, Image, Pressable, Alert, ScrollView } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { SuccessModal } from '../../components/SuccessModal';
-import { TestNotification } from '../../components/TestNotification';
 import { useEffect, useState } from 'react';
 import { useToast } from '../../contexts/ToastContext';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -14,8 +13,10 @@ import { ratingService } from '../../services/ratingService';
 import * as Linking from 'expo-linking';
 import Constants from 'expo-constants';
 import { environment } from '~/config/environment';
+import { useAnalytics } from '../../hooks/useAnalytics';
 
 export default function Account() {
+  useAnalytics('AccountTabScreen');
   const router = useRouter();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const { showToast } = useToast();

@@ -6,8 +6,11 @@ import { PublicRoute } from '../../components/PublicRoute';
 import { AuthHeader } from '../../components/AuthHeader';
 import { AuthInput } from '../../components/AuthInput';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAnalytics } from '../../hooks/useAnalytics';
+import { analyticsService } from '../../utils/analytics';
 
 export default function EmailLogin() {
+  useAnalytics('EmailLoginScreen');
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -15,9 +18,11 @@ export default function EmailLogin() {
 
   const handleContinue = () => {
     if (!email.trim()) {
+      analyticsService.logEvent('email_login_validation_failed', { reason: 'invalid_email_format' });
       Alert.alert('Error', 'Please enter your email.');
       return;
     }
+    analyticsService.logEvent('email_login_email_entered'); // Log the event with email data
     router.push(`/auth/password?email=${encodeURIComponent(email)}`);
   };
 

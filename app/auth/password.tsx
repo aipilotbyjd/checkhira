@@ -15,8 +15,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { PublicRoute } from '../../components/PublicRoute';
 import { AuthHeader } from '../../components/AuthHeader';
 import { AuthInput } from '../../components/AuthInput';
+import { useAnalytics } from '../../hooks/useAnalytics';
+import { analyticsService } from '../../utils/analytics';
 
 export default function Password() {
+  useAnalytics('PasswordScreen');
   const router = useRouter();
   const { email, phone } = useLocalSearchParams<{ email: string; phone: string }>();
   const [password, setPassword] = useState('');
@@ -25,6 +28,7 @@ export default function Password() {
 
   const handleLogin = async () => {
     if (!password.trim()) {
+      analyticsService.logEvent('password_login_validation_failed', { reason: 'empty_password' }); // Log the event with reason
       Alert.alert('Error', 'Please enter your password.');
       return;
     }
@@ -35,6 +39,7 @@ export default function Password() {
       await login(identifier, password);
       router.replace('/(tabs)');
     } catch (error: any) {
+      analyticsService.logEvent('password_login_failed', { error: error?.message }); // Log the event with error message
       Alert.alert(
         'Login Failed',
         error.message || 'Invalid credentials. Please try again.'

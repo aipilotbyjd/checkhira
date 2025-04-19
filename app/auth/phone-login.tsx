@@ -22,8 +22,11 @@ import {
   isSuccessResponse,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import { useAnalytics } from '../../hooks/useAnalytics';
+import { analyticsService } from '../../utils/analytics';
 
 export default function PhoneLogin() {
+  useAnalytics('PhoneLoginScreen');
   const router = useRouter();
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -39,15 +42,18 @@ export default function PhoneLogin() {
     const cleanedPhone = phone.trim();
 
     if (!cleanedPhone) {
+      analyticsService.logEvent('phone_login_validation_failed', { reason: 'empty_phone_number' });
       Alert.alert('Error', 'Please enter your phone number.');
       return;
     }
 
     if (!validatePhone(cleanedPhone)) {
+      analyticsService.logEvent('phone_login_validation_failed', { reason: 'invalid_phone_number' }); // Log the event with reason
       Alert.alert('Error', 'Please enter a valid phone number.');
       return;
     }
 
+    analyticsService.logEvent('phone_login_phone_entered', { phone: cleanedPhone });
     router.push(`/auth/password?phone=${encodeURIComponent(cleanedPhone)}`);
   };
 

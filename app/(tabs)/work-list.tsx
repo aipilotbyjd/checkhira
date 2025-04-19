@@ -19,8 +19,11 @@ import { useApi } from '../../hooks/useApi';
 import { Work } from '../../types/work';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useNotification } from '../../contexts/NotificationContext';
+import { useAnalytics } from '../../hooks/useAnalytics';
+import { analyticsService } from '../../utils/analytics';
 
 export default function WorkListScreen() {
+  useAnalytics('WorkListTabScreen');
   const router = useRouter();
   const { showToast } = useToast();
   const actionSheetRef = useRef<ActionSheetRef>(null);
@@ -86,6 +89,8 @@ export default function WorkListScreen() {
 
   const handleLoadMore = useCallback(async () => {
     if (!hasMorePages || isLoadingMore) return;
+
+    analyticsService.logEvent('load_more_work_entries', { page: currentPage + 1 });
     setIsLoadingMore(true);
     await loadWork({ page: currentPage + 1 });
   }, [currentPage, hasMorePages, isLoadingMore, loadWork]);

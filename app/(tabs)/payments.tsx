@@ -13,8 +13,11 @@ import { api } from '../../services/axiosClient';
 import { useApi } from '../../hooks/useApi';
 import { Payment, PaymentsResponse } from '../../types/payment';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAnalytics } from '../../hooks/useAnalytics';
+import { analyticsService } from '../../utils/analytics';
 
 export default function PaymentsList() {
+  useAnalytics('PaymentsTabScreen');
   const router = useRouter();
   const actionSheetRef = useRef<ActionSheetRef>(null);
   const [currentFilter, setCurrentFilter] = useState<string>('all');
@@ -93,6 +96,9 @@ export default function PaymentsList() {
 
   const handleLoadMore = useCallback(async () => {
     if (!hasMorePages || isLoadingMore || isLoadingSub) return;
+
+    // Log analytics event for loading more payments
+    analyticsService.logEvent('load_more_payments', { page: currentPage + 1 });
     await loadPayments({ page: currentPage + 1 });
   }, [currentPage, hasMorePages, isLoadingMore, isLoadingSub]);
 

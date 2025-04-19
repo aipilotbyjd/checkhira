@@ -3,18 +3,15 @@ import { View, Text, Pressable, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { useAnalytics } from '../../contexts/AnalyticsContext';
 
 export default function LanguageSettings() {
     const { locale, setLocale, availableLocales, t } = useLanguage();
-    const { trackEvent } = useAnalytics();
     const [isChanging, setIsChanging] = useState(false);
 
     const handleChangeLanguage = async (code: string) => {
         setIsChanging(true);
         try {
             await setLocale(code);
-            trackEvent('change_language', { language: code });
         } finally {
             setIsChanging(false);
         }
