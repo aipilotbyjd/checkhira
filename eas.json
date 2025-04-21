@@ -28,11 +28,7 @@
       "env": {
         "NODE_ENV": "staging"
       },
-      "channel": "preview",
-      "prebuildCommands": [
-        "echo $GOOGLE_SERVICES_JSON > google-services.json",
-        "echo $GOOGLE_SERVICES_PLIST > GoogleService-Info.plist"
-      ]
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true,
