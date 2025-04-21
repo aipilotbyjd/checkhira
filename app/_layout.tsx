@@ -18,7 +18,9 @@ import { NetworkProvider, useNetwork } from '../contexts/NetworkContext';
 import { OfflineScreen } from '../components/OfflineScreen';
 import { RatingProvider } from '../contexts/RatingContext';
 import { useEffect } from 'react';
-import * as Analytics from 'expo-firebase-analytics';
+import analytics from '@react-native-firebase/analytics';
+import { Platform } from 'react-native';
+import { analyticsService } from '../utils/analytics';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -41,7 +43,7 @@ function RootLayoutNav() {
 
   // Log screen view for analytics
   useEffect(() => {
-    Analytics.logEvent('screen_view', {
+    analyticsService.logEvent('screen_view', {
       screen_name: 'Root_Navigation',
       screen_class: 'RootLayoutNav'
     });
@@ -77,14 +79,12 @@ export default function RootLayout() {
   useEffect(() => {
     const initializeAnalytics = async () => {
       try {
-        // Set analytics collection enabled based on environment
-        await Analytics.setAnalyticsCollectionEnabled(environment.production);
+        if (Platform.OS !== 'web') {
+          await analytics().setAnalyticsCollectionEnabled(environment.production);
 
-        // Set user properties if needed
-        // await Analytics.setUserId('user123');
-
-        if (!environment.production) {
-          console.log('Firebase Analytics initialized in development mode');
+          if (!environment.production) {
+            console.log('Firebase Analytics initialized in development mode');
+          }
         }
       } catch (error) {
         console.error('Failed to initialize Firebase Analytics:', error);
