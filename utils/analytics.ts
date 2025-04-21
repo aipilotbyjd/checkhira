@@ -1,4 +1,4 @@
-import * as Analytics from 'expo-firebase-analytics';
+import analytics from '@react-native-firebase/analytics';
 import { environment } from '~/config/environment';
 
 /**
@@ -12,10 +12,9 @@ class AnalyticsService {
      */
     async logEvent(eventName: string, params?: Record<string, any>): Promise<void> {
         try {
-            await Analytics.logEvent(eventName, params);
+            await analytics().logEvent(eventName, params);
 
             // Log in development mode for debugging
-            console.log(`Analytics Event: ${eventName}`, params);
             if (!environment.production) {
                 console.log(`Analytics Event: ${eventName}`, params);
             }
@@ -25,31 +24,40 @@ class AnalyticsService {
     }
 
     /**
-     * Log a screen view event
-     * @param screenName Name of the screen
-     * @param screenClass Class name of the screen (optional)
-     */
-    async logScreenView(screenName: string, screenClass?: string): Promise<void> {
-        await this.logEvent('screen_view', {
-            screen_name: screenName,
-            screen_class: screenClass || screenName
-        });
-    }
-
-    /**
      * Set user ID for analytics
      * @param userId User ID to set
      */
-    async setUserId(userId: string | null): Promise<void> {
+    async setUserId(userId: string): Promise<void> {
         try {
-            if (userId) {
-                await Analytics.setUserId(userId);
-            } else {
-                await Analytics.setUserId(null);
-            }
+            await analytics().setUserId(userId);
         } catch (error) {
             console.error('Failed to set analytics user ID:', error);
         }
+    }
+
+    /**
+     * Set current screen
+     * @param screenName Name of the screen
+     * @param screenClass Class name of the screen
+     */
+    async setCurrentScreen(screenName: string, screenClass?: string): Promise<void> {
+        try {
+            await analytics().logScreenView({
+                screen_name: screenName,
+                screen_class: screenClass || screenName,
+            });
+        } catch (error) {
+            console.error(`Failed to log screen view ${screenName}:`, error);
+        }
+    }
+
+    /**
+     * Log screen view (alias for setCurrentScreen for consistency with hook)
+     * @param screenName Name of the screen
+     * @param screenClass Class name of the screen
+     */
+    async logScreenView(screenName: string, screenClass?: string): Promise<void> {
+        return this.setCurrentScreen(screenName, screenClass);
     }
 
     /**
@@ -57,22 +65,16 @@ class AnalyticsService {
      * @param name Name of the property
      * @param value Value of the property
      */
-    async setUserProperty(name: string, value: string | null): Promise<void> {
+    async setUserProperty(name: string, value: string): Promise<void> {
         try {
-            await Analytics.setUserProperty(name, value);
+            await analytics().setUserProperty(name, value);
+
+            // Log in development mode for debugging
+            if (!environment.production) {
+                console.log(`Analytics User Property: ${name} = ${value}`);
+            }
         } catch (error) {
             console.error(`Failed to set user property ${name}:`, error);
-        }
-    }
-
-    /**
-     * Reset analytics data
-     */
-    async resetAnalyticsData(): Promise<void> {
-        try {
-            await Analytics.resetAnalyticsData();
-        } catch (error) {
-            console.error('Failed to reset analytics data:', error);
         }
     }
 }
