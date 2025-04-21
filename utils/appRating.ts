@@ -1,4 +1,3 @@
-import { storage } from './storage';
 import { ratingService } from '../services/ratingService';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useEffect } from 'react';
