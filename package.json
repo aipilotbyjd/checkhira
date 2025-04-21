@@ -27,7 +27,8 @@
     "codesign:setup": "node scripts/setup-code-signing.js",
     "codesign:local": "node scripts/setup-code-signing.js local",
     "codesign:eas": "node scripts/setup-code-signing.js eas",
-    "codesign:generate": "node scripts/setup-code-signing.js generate"
+    "codesign:generate": "node scripts/setup-code-signing.js generate",
+    "firebase:encode": "node scripts/encode-firebase-config.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",

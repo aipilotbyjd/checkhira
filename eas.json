@@ -50,11 +50,7 @@
       "channel": "production",
       "cache": {
         "key": "production-{{ os }}-v1"
-      },
-      "prebuildCommands": [
-        "echo $GOOGLE_SERVICES_JSON > google-services.json",
-        "echo $GOOGLE_SERVICES_PLIST > GoogleService-Info.plist"
-      ]
+      }
     }
   },
   "submit": {
