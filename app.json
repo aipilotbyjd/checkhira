@@ -20,8 +20,16 @@
           "launchMode": "most-recent"
         }
       ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/perf",
+      "@react-native-firebase/crashlytics",
       [
-        "expo-build-properties"
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
       ],
       [
         "expo-sqlite",
