@@ -31,7 +31,12 @@ export const useWorkOperations = () => {
   const [error, setError] = useState<string | null>(null);
   const { showToast } = useToast();
 
-  // Local notification functionality removed
+  const handleApiError = (err: unknown, defaultMessage: string) => {
+    const errorMessage = err instanceof ApiError ? err.message : defaultMessage;
+    setError(errorMessage);
+    showToast(errorMessage, 'error');
+    return null;
+  };
 
   const createWork = useCallback(async (workData: WorkEntryPayload) => {
     setIsLoading(true);
@@ -41,7 +46,7 @@ export const useWorkOperations = () => {
       const workWithId = { ...workData, id: tempId, created_at: new Date().toISOString() };
 
       // Queue the action with our improved offline sync service
-      const syncId = await offlineSync.queueAction({
+      await offlineSync.queueAction({
         id: tempId,
         type: 'work',
         action: 'create',
@@ -51,10 +56,7 @@ export const useWorkOperations = () => {
 
       return workWithId;
     } catch (err) {
-      const errorMessage = err instanceof ApiError ? err.message : 'Failed to create work entry';
-      setError(errorMessage);
-      showToast(errorMessage, 'error');
-      return null;
+      return handleApiError(err, 'Failed to create work entry');
     } finally {
       setIsLoading(false);
     }
