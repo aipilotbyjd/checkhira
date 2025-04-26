@@ -1,43 +1,26 @@
 {
   "project_info": {
-    "project_number": "195151324772",
-    "project_id": "fcm-notification-31ce6",
-    "storage_bucket": "fcm-notification-31ce6.firebasestorage.app"
+    "project_number": "76095605495",
+    "project_id": "hirabook-237dc",
+    "storage_bucket": "hirabook-237dc.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:195151324772:android:495ae171",
+        "mobilesdk_app_id": "1:76095605495:android:ce19aed008559b40e5e1f2",
         "android_client_info": {
           "package_name": "com.jaydeepdhrangiya.checkhira"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "195151324772-tpq4g2ctsltd8gd1on3e3nt3vlgbi33c.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "YOUR_API_KEY"
+          "current_key": "AIzaSyAzzEmZE30Fc2WFon0BusdwdWy0xQ6YCyA"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "195151324772-tpq4g2ctsltd8gd1on3e3nt3vlgbi33c.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "195151324772-4gc4nhb0ou80sij272shuaa512irgap8.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.jaydeepdhrangiya.checkhira"
-              }
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

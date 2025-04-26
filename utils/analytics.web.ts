@@ -4,13 +4,13 @@ import { environment } from '~/config/environment';
 
 // This is a placeholder configuration. Replace with your actual Firebase web config
 const firebaseConfig = {
-    apiKey: "AIzaSyDRQ_sNnzMk7Er9ci2AmRK4XER3G7bxdiI",
-    authDomain: "fcm-notification-31ce6.firebaseapp.com",
-    projectId: "fcm-notification-31ce6",
-    storageBucket: "fcm-notification-31ce6.firebasestorage.app",
-    messagingSenderId: "195151324772",
-    appId: "1:195151324772:web:61df4c533b4329495ae171",
-    measurementId: "G-EH9HKQ7CG5"
+    apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+    measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase only if config is properly set
@@ -18,9 +18,9 @@ let webAnalytics: Analytics | null = null;
 try {
     // Check if the config has been updated from placeholder values
     const isConfigured = firebaseConfig.apiKey &&
-        firebaseConfig.apiKey !== "YOUR_API_KEY" &&
+        firebaseConfig.apiKey == process.env.EXPO_PUBLIC_FIREBASE_API_KEY &&
         firebaseConfig.projectId &&
-        firebaseConfig.projectId !== "YOUR_PROJECT_ID";
+        firebaseConfig.projectId == process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
 
     if (isConfigured) {
         const app = initializeApp(firebaseConfig);

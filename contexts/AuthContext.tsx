@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService';
 import { api } from '../services/api';
 import { User } from '../types/user';
-import * as SecureStore from 'expo-secure-store';
+import { secureStorage } from '../utils/secureStorage';
 import { analyticsService } from '../utils/analytics'; // Ensure this path is correct
 
 interface AuthContextType {
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const [storedUser, token] = await Promise.all([
         AsyncStorage.getItem('user'),
-        SecureStore.getItemAsync('token'),
+        secureStorage.getItem('token'),
       ]);
 
       if (token) {
@@ -57,10 +57,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     setIsAuthenticated(false);
     await AsyncStorage.removeItem('user');
-    await SecureStore.deleteItemAsync('token');
+    await secureStorage.removeItem('token');
     await api.removeToken();
     // Ensure user ID is cleared in analytics on logout
-    await analyticsService.setUserId(null);
+    await analyticsService.setUserId('');
   };
 
   const login = async (identifier: string, password: string) => {
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { user, token } = response.data;
 
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      await SecureStore.setItemAsync('token', token);
+      await secureStorage.setItem('token', token);
       setUser(user);
       setIsAuthenticated(true);
 
@@ -101,11 +101,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const register = async (data: User) => {
     try {
       validateRegistration(data);
-      const response = await authService.register(data);
+      // Ensure required fields are present for registration
+      const registrationData = {
+        first_name: data.first_name || '',
+        last_name: data.last_name || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        password: data.password || '',
+        profile_image: data.profile_image || '',
+      };
+      const response = await authService.register(registrationData);
       const { user, token } = response.data;
 
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      await SecureStore.setItemAsync('token', token);
+      await secureStorage.setItem('token', token);
       setUser(user);
       setIsAuthenticated(true);
 
@@ -137,14 +146,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const googleLogin = async (idToken: string, userData: any) => {
+  const googleLogin = async (idToken: string, _userData: any) => {
     try {
       // Call the backend with Google ID token
       const response = await authService.googleLogin(idToken);
       const { user, token } = response.data;
 
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      await SecureStore.setItemAsync('token', token);
+      await secureStorage.setItem('token', token);
       setUser(user);
       setIsAuthenticated(true);
 
@@ -188,14 +197,4 @@ export const useAuth = () => {
   return context;
 };
 
-async function saveToken(key: string, value: string) {
-  await SecureStore.setItemAsync(key, value);
-}
-
-async function getToken(key: string) {
-  return await SecureStore.getItemAsync(key);
-}
-
-async function removeToken(key: string) {
-  await SecureStore.deleteItemAsync(key);
-}
+// Helper functions are now replaced by secureStorage utility

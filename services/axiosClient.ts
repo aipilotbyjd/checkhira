@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent } from 'axios';
 import axiosRetry from 'axios-retry';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
+import { secureStorage } from '../utils/secureStorage';
 import { environment } from '../config/environment';
 
 // Define error class with rich error information
@@ -153,15 +153,15 @@ export class ApiClient {
 
     // Token management methods
     async getToken(): Promise<string | null> {
-        return await SecureStore.getItemAsync(this.tokenKey);
+        return await secureStorage.getItem(this.tokenKey);
     }
 
     async setToken(token: string): Promise<void> {
-        await SecureStore.setItemAsync(this.tokenKey, token);
+        await secureStorage.setItem(this.tokenKey, token);
     }
 
     async removeToken(): Promise<void> {
-        await SecureStore.deleteItemAsync(this.tokenKey);
+        await secureStorage.removeItem(this.tokenKey);
     }
 
     // Clear cache
