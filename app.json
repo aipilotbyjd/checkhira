@@ -77,6 +77,7 @@
       "**/*"
     ],
     "ios": {
+      "googleServicesFile": "./GoogleService-Info.plist",
       "supportsTablet": true,
       "bundleIdentifier": "com.jaydeepdhrangiya.checkhira",
       "infoPlist": {
@@ -87,11 +88,11 @@
     },
     "android": {
       "googleServicesFile": "./google-services.json",
+      "package": "com.jaydeepdhrangiya.checkhira",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.jaydeepdhrangiya.checkhira",
       "permissions": [
         "android.permission.VIBRATE",
         "android.permission.POST_NOTIFICATIONS"
