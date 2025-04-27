@@ -9,6 +9,7 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useProfileOperations } from '../../hooks/useProfileOperations';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { CrashlyticsTest } from '../../components/CrashlyticsTest';
 import { ratingService } from '../../services/ratingService';
 import * as Linking from 'expo-linking';
 import Constants from 'expo-constants';
@@ -257,7 +258,13 @@ export default function Account() {
             ))}
           </View>
 
-          <View className="mt-8 mb-4">
+          {!environment.production && (
+            <View className="mt-4 mb-2">
+              <CrashlyticsTest />
+            </View>
+          )}
+
+          <View className="mt-4 mb-4">
             <Pressable
               onPress={() => {
                 Alert.alert(

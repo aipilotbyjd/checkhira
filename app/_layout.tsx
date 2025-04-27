@@ -18,9 +18,10 @@ import { NetworkProvider, useNetwork } from '../contexts/NetworkContext';
 import { OfflineScreen } from '../components/OfflineScreen';
 import { RatingProvider } from '../contexts/RatingContext';
 import { useEffect } from 'react';
-import analytics from '@react-native-firebase/analytics';
 import { Platform } from 'react-native';
+import { getAnalytics } from '@react-native-firebase/analytics';
 import { analyticsService } from '../utils/analytics';
+import { crashlyticsService } from '../utils/crashlytics';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -75,23 +76,66 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
-  // Initialize Firebase Analytics
+  // Initialize Firebase Analytics and Crashlytics
   useEffect(() => {
-    const initializeAnalytics = async () => {
+    const initializeFirebaseServices = async () => {
       try {
+        // Initialize Analytics
         if (Platform.OS !== 'web') {
-          await analytics().setAnalyticsCollectionEnabled(environment.production);
+          const analytics = getAnalytics();
+          analytics.setAnalyticsCollectionEnabled(environment.production);
 
           if (!environment.production) {
             console.log('Firebase Analytics initialized in development mode');
           }
         }
+
+        // Initialize Crashlytics
+        await crashlyticsService.initialize();
+
+        // Log app start event to Crashlytics
+        await crashlyticsService.log('App started');
+
+        // Set up global error handlers for unhandled promises and JS errors
+        if (Platform.OS !== 'web') {
+          // Handle unhandled promise rejections
+          const unhandledPromiseListener = (event: any) => {
+            const error = new Error(`Unhandled Promise Rejection: ${event.reason}`);
+            crashlyticsService.recordError(error, {
+              originalReason: event.reason?.toString(),
+              unhandledPromise: true
+            });
+          };
+
+          // Add the event listener
+          // @ts-ignore - ErrorUtils is a React Native internal API not in TypeScript definitions
+          if (global.ErrorUtils) {
+            // @ts-ignore
+            const originalGlobalHandler = global.ErrorUtils.getGlobalHandler();
+
+            // @ts-ignore
+            global.ErrorUtils.setGlobalHandler((error: Error, isFatal: boolean) => {
+              // Record to Crashlytics
+              crashlyticsService.recordError(error, { isFatal });
+
+              // Call the original handler
+              originalGlobalHandler(error, isFatal);
+            });
+          }
+
+          // For React Native 0.63+
+          // @ts-ignore - addEventListener for unhandledrejection is not in RN TypeScript definitions
+          if (typeof global.addEventListener === 'function') {
+            // @ts-ignore
+            global.addEventListener('unhandledrejection', unhandledPromiseListener);
+          }
+        }
       } catch (error) {
-        console.error('Failed to initialize Firebase Analytics:', error);
+        console.error('Failed to initialize Firebase services:', error);
       }
     };
 
-    initializeAnalytics();
+    initializeFirebaseServices();
   }, []);
 
   useEffect(() => {

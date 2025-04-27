@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { User } from '../types/user';
 import { secureStorage } from '../utils/secureStorage';
 import { analyticsService } from '../utils/analytics'; // Ensure this path is correct
+import { crashlyticsService } from '../utils/crashlytics';
 
 interface AuthContextType {
   user: User | null;
@@ -59,8 +60,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await AsyncStorage.removeItem('user');
     await secureStorage.removeItem('token');
     await api.removeToken();
-    // Ensure user ID is cleared in analytics on logout
+    // Ensure user ID is cleared in analytics and crashlytics on logout
     await analyticsService.setUserId('');
+    await crashlyticsService.setUserId('');
   };
 
   const login = async (identifier: string, password: string) => {
@@ -75,7 +77,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Set user ID and log login event
       if (user?.id) {
-        await analyticsService.setUserId(user.id.toString()); // Ensure ID is string
+        const userId = user.id.toString();
+        await analyticsService.setUserId(userId); // Ensure ID is string
+        await crashlyticsService.setUserId(userId); // Set user ID in Crashlytics
         await analyticsService.logEvent('login', { method: 'email_phone' }); // Specify method
       }
 
@@ -120,7 +124,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Set user ID and log sign_up event
       if (user?.id) {
-        await analyticsService.setUserId(user.id.toString()); // Ensure ID is string
+        const userId = user.id.toString();
+        await analyticsService.setUserId(userId); // Ensure ID is string
+        await crashlyticsService.setUserId(userId); // Set user ID in Crashlytics
         // Use standard Firebase event name 'sign_up'
         await analyticsService.logEvent('sign_up', { method: data.email ? 'email' : 'phone' });
       }
@@ -159,7 +165,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Set user ID and log login event for Google
       if (user?.id) {
-        await analyticsService.setUserId(user.id.toString()); // Ensure ID is string
+        const userId = user.id.toString();
+        await analyticsService.setUserId(userId); // Ensure ID is string
+        await crashlyticsService.setUserId(userId); // Set user ID in Crashlytics
         await analyticsService.logEvent('login', { method: 'google' }); // Specify Google method
       }
 

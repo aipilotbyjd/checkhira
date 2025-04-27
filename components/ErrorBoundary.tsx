@@ -3,6 +3,7 @@ import { View, Text, Button, StyleSheet, Platform } from 'react-native';
 import { COLORS } from '../constants/theme';
 import * as Updates from 'expo-updates';
 import { environment } from '../config/environment';
+import { crashlyticsService } from '../utils/crashlytics';
 
 interface Props {
     children: ReactNode;
@@ -37,17 +38,11 @@ export class ErrorBoundary extends Component<Props, State> {
 
         console.error('Error context:', errorContext);
 
-        // In production, you would send this to your error reporting service
-        // Example for a real implementation:
-        // if (environment.production) {
-        //     Sentry.captureException(error, {
-        //         extra: errorContext
-        //     });
-        // }
+        // Record error to Crashlytics
+        crashlyticsService.recordError(error, errorContext);
 
-        // For now, we'll just log to console in production
+        // Also log to backend in production
         if (environment.production) {
-            // You could implement a simple logging service that sends errors to your backend
             this.logErrorToServer(error, errorContext);
         }
     }

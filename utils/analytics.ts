@@ -1,4 +1,4 @@
-import analytics from '@react-native-firebase/analytics';
+import { getAnalytics } from '@react-native-firebase/analytics';
 import { environment } from '~/config/environment';
 
 /**
@@ -12,7 +12,8 @@ class AnalyticsService {
      */
     async logEvent(eventName: string, params?: Record<string, any>): Promise<void> {
         try {
-            await analytics().logEvent(eventName, params);
+            const analytics = getAnalytics();
+            analytics.logEvent(eventName, params);
 
             // Log in development mode for debugging
             if (!environment.production) {
@@ -29,7 +30,8 @@ class AnalyticsService {
      */
     async setUserId(userId: string): Promise<void> {
         try {
-            await analytics().setUserId(userId);
+            const analytics = getAnalytics();
+            analytics.setUserId(userId);
         } catch (error) {
             console.error('Failed to set analytics user ID:', error);
         }
@@ -42,7 +44,8 @@ class AnalyticsService {
      */
     async setCurrentScreen(screenName: string, screenClass?: string): Promise<void> {
         try {
-            await analytics().logScreenView({
+            const analytics = getAnalytics();
+            analytics.logScreenView({
                 screen_name: screenName,
                 screen_class: screenClass || screenName,
             });
@@ -67,7 +70,8 @@ class AnalyticsService {
      */
     async setUserProperty(name: string, value: string): Promise<void> {
         try {
-            await analytics().setUserProperty(name, value);
+            const analytics = getAnalytics();
+            analytics.setUserProperty(name, value);
 
             // Log in development mode for debugging
             if (!environment.production) {
