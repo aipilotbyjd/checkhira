@@ -21,6 +21,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { analyticsService } from '../../utils/analytics';
+import { BannerAdComponent } from '../../components/ads';
 
 export default function WorkListScreen() {
   useAnalytics('WorkListTabScreen');
@@ -211,6 +212,9 @@ export default function WorkListScreen() {
             ₹ {todayTotal.toFixed(2)}
           </Text>
         </View>
+
+        {/* Banner Ad */}
+        <BannerAdComponent />
 
         {/* Work list */}
         {workList.map((item: Work) => (

@@ -61,6 +61,7 @@
     "expo-status-bar": "~2.0.1",
     "expo-store-review": "^8.0.1",
     "expo-system-ui": "~4.0.9",
+    "expo-tracking-transparency": "^5.1.1",
     "expo-updates": "~0.27.4",
     "expo-web-browser": "~14.0.1",
     "install": "^0.13.0",

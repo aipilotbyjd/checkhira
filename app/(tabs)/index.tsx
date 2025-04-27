@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAnalytics } from '../../hooks/useAnalytics';
+import { BannerAdComponent } from '../../components/ads/BannerAdComponent';
 
 // Add this type definition above the Home component
 interface Activity {
@@ -388,6 +389,11 @@ export default function Home() {
             </Text>
           </Pressable>
         </View>
+      </View>
+
+      {/* Banner Ad */}
+      <View className="mt-6">
+        <BannerAdComponent />
       </View>
 
       {/* Recent Activities - Enhanced version */}

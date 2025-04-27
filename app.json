@@ -60,11 +60,19 @@
           "iosUrlScheme": "com.googleusercontent.apps.195151324772-4gc4nhb0ou80sij272shuaa512irgap8"
         }
       ],
-      "react-native-google-mobile-ads",
-      {
-        "androidAppId": "ca-app-pub-6156225952846626~9565432583",
-        "iosAppId": "ca-app-pub-6156225952846626~9565432583"
-      }
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-6156225952846626~9565432583",
+          "iosAppId": "ca-app-pub-6156225952846626~9565432583"
+        }
+      ],
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "Allow this app to collect app-related data that can be used for tracking you or your device and deliver personalized ads to you."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
@@ -88,7 +96,8 @@
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
-        ]
+        ],
+        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you and help improve the app experience."
       }
     },
     "android": {

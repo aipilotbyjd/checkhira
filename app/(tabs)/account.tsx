@@ -15,6 +15,8 @@ import * as Linking from 'expo-linking';
 import Constants from 'expo-constants';
 import { environment } from '~/config/environment';
 import { useAnalytics } from '../../hooks/useAnalytics';
+import { useInterstitialAd } from '../../components/ads/InterstitialAdComponent';
+import { BannerAdComponent } from '../../components/ads/BannerAdComponent';
 
 export default function Account() {
   useAnalytics('AccountTabScreen');
@@ -25,6 +27,7 @@ export default function Account() {
   const { isAuthenticated, logout } = useAuth();
   const { getProfile, updateProfile } = useProfileOperations();
   const { t, loading } = useLanguage();
+  const { showInterstitialAd } = useInterstitialAd();
   const [user, setUser] = useState({
     first_name: '',
     last_name: '',
@@ -258,6 +261,11 @@ export default function Account() {
             ))}
           </View>
 
+          {/* Banner Ad */}
+          <View className="mt-6">
+            <BannerAdComponent />
+          </View>
+
           {!environment.production && (
             <View className="mt-4 mb-2">
               <CrashlyticsTest />
@@ -279,6 +287,10 @@ export default function Account() {
                       text: t('logout'),
                       style: 'destructive',
                       onPress: async () => {
+                        // Show interstitial ad before logout
+                        const adShown = await showInterstitialAd();
+
+                        // Logout regardless of whether ad was shown
                         await logout();
                         showToast(t('logoutSuccess'));
                       },

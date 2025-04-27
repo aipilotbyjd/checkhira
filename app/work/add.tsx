@@ -17,6 +17,7 @@ import { useRouter } from 'expo-router';
 import { useWorkOperations } from '../../hooks/useWorkOperations';
 import { formatDateForAPI } from '../../utils/dateFormatter';
 import { DefaultPrice, WorkEntry, WorkFormData } from '../../types/work';
+import { useInterstitialAd } from '../../components/ads/InterstitialAdComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useToast } from '../../contexts/ToastContext';
 import { WorkFormSkeleton } from '../../components/WorkFormSkeleton';
@@ -36,6 +37,7 @@ export default function AddWork() {
   });
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { showInterstitialAd } = useInterstitialAd();
 
   const [formData, setFormData] = useState<WorkFormData>({
     date: new Date(),
@@ -261,6 +263,9 @@ export default function AddWork() {
       total: calculateTotal(),
       user_id: user?.id,
     };
+
+    // Show an interstitial ad before saving
+    await showInterstitialAd();
 
     // Show immediate feedback
     router.back();

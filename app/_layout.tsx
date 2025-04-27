@@ -22,6 +22,8 @@ import { Platform } from 'react-native';
 import { getAnalytics } from '@react-native-firebase/analytics';
 import { analyticsService } from '../utils/analytics';
 import { crashlyticsService } from '../utils/crashlytics';
+import { adService } from '../services/adService';
+import { AppStartAdManager } from '../components/ads';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -80,14 +82,21 @@ export default function RootLayout() {
   useEffect(() => {
     const initializeFirebaseServices = async () => {
       try {
-        // Initialize Analytics
+        // Initialize Analytics - only for native platforms
         if (Platform.OS !== 'web') {
-          const analytics = getAnalytics();
-          analytics.setAnalyticsCollectionEnabled(environment.production);
+          try {
+            const analytics = getAnalytics();
+            analytics.setAnalyticsCollectionEnabled(environment.production);
 
-          if (!environment.production) {
-            console.log('Firebase Analytics initialized in development mode');
+            if (!environment.production) {
+              console.log('Firebase Analytics initialized in development mode');
+            }
+          } catch (analyticsError) {
+            console.error('Failed to initialize Firebase Analytics:', analyticsError);
           }
+        } else {
+          // For web, analytics is initialized in analytics.web.ts with proper checks
+          console.log('Web platform detected - Firebase Analytics initialization handled separately');
         }
 
         // Initialize Crashlytics
@@ -222,6 +231,20 @@ export default function RootLayout() {
     }
   }, []);
 
+  // Initialize AdMob
+  useEffect(() => {
+    // Initialize AdMob ads
+    const initAds = async () => {
+      try {
+        await adService.initializeAds();
+      } catch (error) {
+        console.error('Error initializing AdMob:', error);
+      }
+    };
+
+    initAds();
+  }, []);
+
   const AppRatingManager = () => {
     const { t } = useLanguage();
 
@@ -256,6 +279,7 @@ export default function RootLayout() {
                     <NetworkProvider>
                       <NetworkAwareLayout>
                         <AppRatingManager />
+                        <AppStartAdManager />
                         <RootLayoutNav />
                       </NetworkAwareLayout>
                     </NetworkProvider>

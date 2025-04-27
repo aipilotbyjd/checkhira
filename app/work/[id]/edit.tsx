@@ -24,6 +24,8 @@ import { useApi } from '../../../hooks/useApi';
 import { api, ApiError } from '../../../services/axiosClient';
 import { useWorkOperations } from '../../../hooks/useWorkOperations';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { BannerAdComponent } from '../../../components/ads';
+import { useInterstitialAd } from '../../../components/ads/InterstitialAdComponent';
 
 export default function EditWork() {
   const router = useRouter();
@@ -32,6 +34,7 @@ export default function EditWork() {
   const { trackPositiveAction } = useAppRating();
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { showInterstitialAd } = useInterstitialAd();
 
   const { getWork, updateWork, deleteWork, isLoading } = useWorkOperations();
 
@@ -163,6 +166,9 @@ export default function EditWork() {
       user_id: user?.id,
     };
 
+    // Show an interstitial ad before updating
+    await showInterstitialAd();
+
     // Optimistic update - navigate back immediately
     router.replace('/(tabs)/work-list');
 
@@ -184,6 +190,10 @@ export default function EditWork() {
   const confirmDelete = async () => {
     setIsDeleting(true);
     setShowDeleteWorkModal(false);
+
+    // Show an interstitial ad before deleting
+    await showInterstitialAd();
+
     const result = await deleteWork(Number(id));
     if (result) {
       router.back();
@@ -358,6 +368,11 @@ export default function EditWork() {
           </View>
         ))}
       </ScrollView>
+
+      {/* Banner Ad */}
+      <View className="px-6">
+        <BannerAdComponent />
+      </View>
 
       {/* Footer */}
       <View className="px-6 pb-6">

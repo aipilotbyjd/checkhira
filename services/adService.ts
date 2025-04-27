@@ -1,0 +1,280 @@
+import { Platform, AppState, AppStateStatus } from 'react-native';
+import {
+  BannerAd,
+  BannerAdSize,
+  TestIds,
+  InterstitialAd,
+  AdEventType,
+  RewardedAd,
+  RewardedAdEventType,
+  MobileAds,
+  AppOpenAd,
+} from 'react-native-google-mobile-ads';
+import { environment } from '../config/environment';
+import * as TrackingTransparency from 'expo-tracking-transparency';
+
+// Use test IDs for development and real IDs for production
+const useTestIds = !environment.production;
+
+// Ad unit IDs
+const adUnitIds = {
+  banner: {
+    android: useTestIds ? TestIds.BANNER : 'ca-app-pub-6156225952846626/1234567890',
+    ios: useTestIds ? TestIds.BANNER : 'ca-app-pub-6156225952846626/1234567890',
+  },
+  interstitial: {
+    android: useTestIds ? TestIds.INTERSTITIAL : 'ca-app-pub-6156225952846626/2345678901',
+    ios: useTestIds ? TestIds.INTERSTITIAL : 'ca-app-pub-6156225952846626/2345678901',
+  },
+  rewarded: {
+    android: useTestIds ? TestIds.REWARDED : 'ca-app-pub-6156225952846626/3456789012',
+    ios: useTestIds ? TestIds.REWARDED : 'ca-app-pub-6156225952846626/3456789012',
+  },
+  appOpen: {
+    android: useTestIds ? TestIds.APP_OPEN : 'ca-app-pub-6156225952846626/4567890123',
+    ios: useTestIds ? TestIds.APP_OPEN : 'ca-app-pub-6156225952846626/4567890123',
+  },
+};
+
+// Get the correct ad unit ID based on platform
+const getAdUnitId = (adType: keyof typeof adUnitIds) => {
+  return Platform.OS === 'ios' ? adUnitIds[adType].ios : adUnitIds[adType].android;
+};
+
+// App Open ad management
+let appOpenAd: AppOpenAd | null = null;
+let appOpenAdLoadTime = 0;
+
+// Function to check if an app open ad is ready to be shown
+const isAppOpenAdAvailable = (): boolean => {
+  return !!appOpenAd && (Date.now() - appOpenAdLoadTime < 3600000); // Ad expires after 1 hour
+};
+
+// Load an app open ad
+const loadAppOpenAd = () => {
+  const adUnitId = getAdUnitId('appOpen');
+  appOpenAd = AppOpenAd.createForAdRequest(adUnitId);
+
+  const unsubscribeLoaded = appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
+    console.log('App open ad loaded');
+    appOpenAdLoadTime = Date.now();
+  });
+
+  const unsubscribeClosed = appOpenAd.addAdEventListener(AdEventType.CLOSED, () => {
+    console.log('App open ad closed');
+    // Reload the ad for next time
+    loadAppOpenAd();
+  });
+
+  const unsubscribeError = appOpenAd.addAdEventListener(AdEventType.ERROR, (error) => {
+    console.error('App open ad error:', error);
+    appOpenAd = null;
+  });
+
+  // Start loading
+  appOpenAd.load();
+
+  return () => {
+    unsubscribeLoaded();
+    unsubscribeClosed();
+    unsubscribeError();
+  };
+};
+
+// Show an app open ad
+const showAppOpenAd = async (): Promise<boolean> => {
+  if (!isAppOpenAdAvailable()) {
+    console.log('App open ad not available, loading a new one');
+    loadAppOpenAd();
+    return false;
+  }
+
+  try {
+    await appOpenAd?.show();
+    return true;
+  } catch (error) {
+    console.error('Error showing app open ad:', error);
+    return false;
+  }
+};
+
+// Interstitial ad management
+let interstitialAd: InterstitialAd | null = null;
+
+const loadInterstitialAd = () => {
+  const adUnitId = getAdUnitId('interstitial');
+  interstitialAd = InterstitialAd.createForAdRequest(adUnitId);
+
+  const unsubscribeLoaded = interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
+    console.log('Interstitial ad loaded');
+  });
+
+  const unsubscribeClosed = interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
+    console.log('Interstitial ad closed');
+    // Reload the ad for next time
+    interstitialAd?.load();
+  });
+
+  const unsubscribeError = interstitialAd.addAdEventListener(AdEventType.ERROR, (error) => {
+    console.error('Interstitial ad error:', error);
+  });
+
+  // Start loading
+  interstitialAd.load();
+
+  return () => {
+    unsubscribeLoaded();
+    unsubscribeClosed();
+    unsubscribeError();
+  };
+};
+
+const showInterstitialAd = async (): Promise<boolean> => {
+  if (!interstitialAd) {
+    console.log('Interstitial ad not loaded yet');
+    loadInterstitialAd();
+    return false;
+  }
+
+  if (!interstitialAd.loaded) {
+    console.log('Interstitial ad still loading');
+    return false;
+  }
+
+  await interstitialAd.show();
+  return true;
+};
+
+// Rewarded ad management
+let rewardedAd: RewardedAd | null = null;
+
+const loadRewardedAd = () => {
+  const adUnitId = getAdUnitId('rewarded');
+  rewardedAd = RewardedAd.createForAdRequest(adUnitId);
+
+  const unsubscribeLoaded = rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
+    console.log('Rewarded ad loaded');
+  });
+
+  const unsubscribeEarned = rewardedAd.addAdEventListener(
+    RewardedAdEventType.EARNED_REWARD,
+    (reward) => {
+      console.log('User earned reward:', reward);
+    }
+  );
+
+  const unsubscribeClosed = rewardedAd.addAdEventListener(AdEventType.CLOSED, () => {
+    console.log('Rewarded ad closed');
+    // Reload the ad for next time
+    rewardedAd?.load();
+  });
+
+  const unsubscribeError = rewardedAd.addAdEventListener(AdEventType.ERROR, (error) => {
+    console.error('Rewarded ad error:', error);
+  });
+
+  // Start loading
+  rewardedAd.load();
+
+  return () => {
+    unsubscribeLoaded();
+    unsubscribeEarned();
+    unsubscribeClosed();
+    unsubscribeError();
+  };
+};
+
+const showRewardedAd = async (): Promise<boolean> => {
+  if (!rewardedAd) {
+    console.log('Rewarded ad not loaded yet');
+    loadRewardedAd();
+    return false;
+  }
+
+  if (!rewardedAd.loaded) {
+    console.log('Rewarded ad still loading');
+    return false;
+  }
+
+  await rewardedAd.show();
+  return true;
+};
+
+// Initialize ads
+const initializeAds = async () => {
+  try {
+    // Request tracking permission on iOS
+    if (Platform.OS === 'ios') {
+      // Wait a bit for app to properly initialize
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Request tracking authorization
+      const { status } = await TrackingTransparency.requestTrackingPermissionsAsync();
+      console.log('Tracking permission status:', status);
+    }
+
+    // Initialize the Mobile Ads SDK with privacy options
+    await MobileAds().initialize();
+    console.log('Mobile Ads SDK initialized successfully');
+
+    // Google AdMob will show any messages here that you set up on the AdMob Privacy & Messaging page
+
+    // Load ads
+    loadAppOpenAd();
+    loadInterstitialAd();
+    loadRewardedAd();
+
+    // Set up app state change listener for app open ads
+    AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      // Only show app open ads when coming from background to foreground
+      if (nextAppState === 'active') {
+        showAppOpenAd();
+      }
+    });
+  } catch (error) {
+    console.error('Failed to initialize Mobile Ads SDK:', error);
+  }
+};
+
+// Check tracking permission status
+const getTrackingStatus = async () => {
+  if (Platform.OS !== 'ios') {
+    return 'authorized'; // Not applicable on Android
+  }
+
+  try {
+    const { status } = await TrackingTransparency.getTrackingPermissionsAsync();
+    return status;
+  } catch (error) {
+    console.error('Error getting tracking status:', error);
+    return 'denied'; // Default to denied on error
+  }
+};
+
+// Request tracking permission
+const requestTrackingPermission = async () => {
+  if (Platform.OS !== 'ios') {
+    return { status: 'authorized' }; // Not applicable on Android
+  }
+
+  try {
+    return await TrackingTransparency.requestTrackingPermissionsAsync();
+  } catch (error) {
+    console.error('Error requesting tracking permission:', error);
+    return { status: 'denied' }; // Default to denied on error
+  }
+};
+
+export const adService = {
+  getAdUnitId,
+  loadInterstitialAd,
+  showInterstitialAd,
+  loadRewardedAd,
+  showRewardedAd,
+  loadAppOpenAd,
+  showAppOpenAd,
+  isAppOpenAdAvailable,
+  initializeAds,
+  getTrackingStatus,
+  requestTrackingPermission,
+};
