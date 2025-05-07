@@ -16,6 +16,7 @@ import { api } from '../../../services/axiosClient';
 import { formatDateForAPI, parseCustomDate } from '../../../utils/dateFormatter';
 import { PaymentSource } from '../../../types/payment';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { BannerAdComponent, useInterstitialAd } from '../../../components/ads';
 
 interface Payment {
   id: number;
@@ -52,6 +53,7 @@ export default function EditPayment() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { t } = useLanguage();
+  const { showInterstitialAd } = useInterstitialAd();
 
   const { execute, isLoading: isApiLoading } = useApi({
     showSuccessToast: true,
@@ -125,6 +127,10 @@ export default function EditPayment() {
 
     try {
       setIsUpdating(true);
+
+      // Show an interstitial ad before updating
+      await showInterstitialAd();
+
       const result = await execute(() => api.put(`/payments/${id}`, paymentData));
       if (result) {
         showToast('Payment updated successfully!');
@@ -140,6 +146,10 @@ export default function EditPayment() {
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
+
+      // Show an interstitial ad before deleting
+      await showInterstitialAd();
+
       const result = await executeDelete(() => api.delete(`/payments/${id}`));
       if (result) {
         showToast('Payment deleted successfully!');
@@ -176,6 +186,11 @@ export default function EditPayment() {
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
       <ScrollView className="flex-1">
+        {/* Banner ad at the top of the form */}
+        <BannerAdComponent
+          containerStyle={{ marginVertical: 10 }}
+        />
+
         <View className="px-6 pt-6">
           <Pressable
             onPress={() => setShowDatePicker(true)}

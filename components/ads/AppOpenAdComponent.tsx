@@ -1,26 +1,77 @@
-import React, { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { adService } from '../../services/adService';
+import { adManager } from '../../services/adManager';
 
 type AppOpenAdComponentProps = {
   onAdClosed?: () => void;
 };
 
 export const AppOpenAdComponent = ({ onAdClosed }: AppOpenAdComponentProps) => {
+  const adLoadAttempts = useRef(0);
+  const maxAdLoadAttempts = 3;
+
+  // Function to show ad with retry logic
+  const tryShowAd = async (): Promise<boolean> => {
+    // Check if we've exceeded max attempts
+    if (adLoadAttempts.current >= maxAdLoadAttempts) {
+      console.log(`Exceeded maximum ad load attempts (${maxAdLoadAttempts})`);
+      return false;
+    }
+
+    // Increment attempt counter
+    adLoadAttempts.current++;
+
+    // Use the ad manager to respect frequency caps
+    const shown = await adManager.showAppOpenAd();
+
+    if (shown) {
+      return true;
+    } else if (adLoadAttempts.current < maxAdLoadAttempts) {
+      // Wait a bit before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Load a new ad
+      adService.loadAppOpenAd();
+
+      // Wait for ad to load
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Try again
+      return tryShowAd();
+    }
+
+    return false;
+  };
+
   useEffect(() => {
+    // Load the ad when component mounts
     const unsubscribe = adService.loadAppOpenAd();
+
+    // Try to show the ad after a delay
+    const showAdWithRetry = async () => {
+      // Reset attempts counter
+      adLoadAttempts.current = 0;
+
+      // Wait for component to fully mount
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const shown = await tryShowAd();
+
+      if (!shown) {
+        // If ad couldn't be shown after all attempts, call the callback
+        onAdClosed?.();
+      }
+    };
+
+    // Only try to show if onAdClosed is provided (indicating we want to show the ad)
+    if (onAdClosed) {
+      showAdWithRetry();
+    }
 
     return () => {
       unsubscribe();
     };
-  }, []);
-
-  const showAd = async () => {
-    const shown = await adService.showAppOpenAd();
-    if (!shown) {
-      // If ad couldn't be shown, still call the callback
-      onAdClosed?.();
-    }
-  };
+  }, [onAdClosed]);
 
   // This component doesn't render anything, it's just a controller
   return null;
@@ -28,6 +79,9 @@ export const AppOpenAdComponent = ({ onAdClosed }: AppOpenAdComponentProps) => {
 
 // Helper hook to show app open ads
 export const useAppOpenAd = () => {
+  const adLoadAttempts = useRef(0);
+  const maxAdLoadAttempts = 3;
+
   useEffect(() => {
     const unsubscribe = adService.loadAppOpenAd();
 
@@ -37,7 +91,43 @@ export const useAppOpenAd = () => {
   }, []);
 
   const showAppOpenAd = async (): Promise<boolean> => {
-    return await adService.showAppOpenAd();
+    // Reset attempts counter
+    adLoadAttempts.current = 0;
+
+    // Try to show the ad with retry logic
+    const tryShowAd = async (): Promise<boolean> => {
+      // Check if we've exceeded max attempts
+      if (adLoadAttempts.current >= maxAdLoadAttempts) {
+        console.log(`Exceeded maximum ad load attempts (${maxAdLoadAttempts})`);
+        return false;
+      }
+
+      // Increment attempt counter
+      adLoadAttempts.current++;
+
+      // Use the ad manager to respect frequency caps
+      const shown = await adManager.showAppOpenAd();
+
+      if (shown) {
+        return true;
+      } else if (adLoadAttempts.current < maxAdLoadAttempts) {
+        // Wait a bit before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Load a new ad
+        adService.loadAppOpenAd();
+
+        // Wait for ad to load
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Try again
+        return tryShowAd();
+      }
+
+      return false;
+    };
+
+    return tryShowAd();
   };
 
   return { showAppOpenAd };

@@ -34,6 +34,10 @@ const adUnitIds = {
     android: useTestIds ? TestIds.APP_OPEN : 'ca-app-pub-6156225952846626/4567890123',
     ios: useTestIds ? TestIds.APP_OPEN : 'ca-app-pub-6156225952846626/4567890123',
   },
+  native: {
+    android: useTestIds ? TestIds.NATIVE : 'ca-app-pub-6156225952846626/5678901234',
+    ios: useTestIds ? TestIds.NATIVE : 'ca-app-pub-6156225952846626/5678901234',
+  },
 };
 
 // Get the correct ad unit ID based on platform
@@ -44,24 +48,37 @@ const getAdUnitId = (adType: keyof typeof adUnitIds) => {
 // App Open ad management
 let appOpenAd: AppOpenAd | null = null;
 let appOpenAdLoadTime = 0;
+let isAppOpenAdLoading = false;
+let isAppOpenAdLoaded = false;
 
 // Function to check if an app open ad is ready to be shown
 const isAppOpenAdAvailable = (): boolean => {
-  return !!appOpenAd && (Date.now() - appOpenAdLoadTime < 3600000); // Ad expires after 1 hour
+  return !!appOpenAd && isAppOpenAdLoaded && (Date.now() - appOpenAdLoadTime < 3600000); // Ad expires after 1 hour
 };
 
 // Load an app open ad
 const loadAppOpenAd = () => {
+  // Don't try to load if already loading
+  if (isAppOpenAdLoading) {
+    return () => { };
+  }
+
+  isAppOpenAdLoading = true;
+  isAppOpenAdLoaded = false;
+
   const adUnitId = getAdUnitId('appOpen');
   appOpenAd = AppOpenAd.createForAdRequest(adUnitId);
 
   const unsubscribeLoaded = appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
     console.log('App open ad loaded');
     appOpenAdLoadTime = Date.now();
+    isAppOpenAdLoaded = true;
+    isAppOpenAdLoading = false;
   });
 
   const unsubscribeClosed = appOpenAd.addAdEventListener(AdEventType.CLOSED, () => {
     console.log('App open ad closed');
+    isAppOpenAdLoaded = false;
     // Reload the ad for next time
     loadAppOpenAd();
   });
@@ -69,6 +86,8 @@ const loadAppOpenAd = () => {
   const unsubscribeError = appOpenAd.addAdEventListener(AdEventType.ERROR, (error) => {
     console.error('App open ad error:', error);
     appOpenAd = null;
+    isAppOpenAdLoaded = false;
+    isAppOpenAdLoading = false;
   });
 
   // Start loading
@@ -84,16 +103,29 @@ const loadAppOpenAd = () => {
 // Show an app open ad
 const showAppOpenAd = async (): Promise<boolean> => {
   if (!isAppOpenAdAvailable()) {
-    console.log('App open ad not available, loading a new one');
-    loadAppOpenAd();
+    console.log('App open ad not available or not loaded yet');
+
+    // If not already loading, start loading a new one
+    if (!isAppOpenAdLoading) {
+      loadAppOpenAd();
+    }
+
     return false;
   }
 
   try {
-    await appOpenAd?.show();
-    return true;
+    if (appOpenAd && isAppOpenAdLoaded) {
+      await appOpenAd.show();
+      return true;
+    } else {
+      console.log('App open ad not fully loaded yet');
+      return false;
+    }
   } catch (error) {
     console.error('Error showing app open ad:', error);
+    // Reset state and try to load a new ad
+    isAppOpenAdLoaded = false;
+    loadAppOpenAd();
     return false;
   }
 };
@@ -219,20 +251,52 @@ const initializeAds = async () => {
 
     // Google AdMob will show any messages here that you set up on the AdMob Privacy & Messaging page
 
-    // Load ads
+    // Load ads with a slight delay to ensure SDK is fully initialized
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Preload all ad types
     loadAppOpenAd();
     loadInterstitialAd();
     loadRewardedAd();
+
+    // Wait a bit more to ensure app open ad has time to load
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Check if app open ad loaded successfully
+    if (!isAppOpenAdLoaded && !isAppOpenAdLoading) {
+      console.log('Retrying app open ad load after initial failure');
+      loadAppOpenAd();
+    }
+
+    // Note: We can't directly access listeners in React Native's AppState
+    // Instead, we'll just add our listener and rely on the cleanup in component unmount
+    // to remove previous listeners
 
     // Set up app state change listener for app open ads
     AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
       // Only show app open ads when coming from background to foreground
       if (nextAppState === 'active') {
-        showAppOpenAd();
+        // Don't show immediately, give a small delay
+        setTimeout(() => {
+          if (isAppOpenAdAvailable()) {
+            showAppOpenAd();
+          } else {
+            loadAppOpenAd();
+          }
+        }, 500);
       }
     });
   } catch (error) {
     console.error('Failed to initialize Mobile Ads SDK:', error);
+
+    // Try to recover by loading ads anyway
+    try {
+      loadAppOpenAd();
+      loadInterstitialAd();
+      loadRewardedAd();
+    } catch (loadError) {
+      console.error('Failed to load ads after SDK initialization error:', loadError);
+    }
   }
 };
 

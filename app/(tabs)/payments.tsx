@@ -3,7 +3,7 @@ import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { format } from 'date-fns';
 import { PaymentSkeleton } from '../../components/PaymentSkeleton';
@@ -15,6 +15,8 @@ import { Payment, PaymentsResponse } from '../../types/payment';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { analyticsService } from '../../utils/analytics';
+import { BannerAdComponent, NativeAdComponent } from '../../components/ads';
+import { BannerAdSize } from 'react-native-google-mobile-ads';
 
 export default function PaymentsList() {
   useAnalytics('PaymentsTabScreen');
@@ -191,6 +193,13 @@ export default function PaymentsList() {
           </Text>
         </View>
 
+        {/* Banner ad at the top of the list */}
+        <BannerAdComponent
+          size={BannerAdSize.LARGE_BANNER}
+          containerStyle={{ marginBottom: 10 }}
+          refreshInterval={60000} // Refresh every 60 seconds
+        />
+
         {paymentsList.length === 0 && !isLoadingSub && !isLoadingMore ? (
           <View className="items-center justify-center py-8">
             <MaterialCommunityIcons name="cash-remove" size={48} color={COLORS.gray[400]} />
@@ -199,49 +208,68 @@ export default function PaymentsList() {
             </Text>
           </View>
         ) : (
-          paymentsList.map((item) => (
-            <Pressable
-              key={item.id}
-              onPress={() => router.push(`/payments/${item.id}/edit`)}
-              className="mb-4 rounded-xl p-4"
-              style={{
-                backgroundColor: COLORS.background.secondary,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.05,
-                shadowRadius: 2,
-                elevation: 1,
-              }}>
-              <View className="flex-row items-center justify-between">
-                <View>
-                  <Text className="text-base font-medium" style={{ color: COLORS.secondary }}>
-                    ₹ {Number(item.amount).toFixed(2)}
-                  </Text>
-                  <View className="mt-2 flex-row items-center">
-                    <MaterialCommunityIcons
-                      name={item.source?.icon as any}
-                      size={16}
-                      color={COLORS.gray[500]}
-                    />
-                    <Text className="ml-2 text-sm" style={{ color: COLORS.gray[500] }}>
-                      {item.source?.name}
-                    </Text>
-                  </View>
-                  <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
-                    {format(new Date(item.date), 'MMMM dd, yyyy')}
-                  </Text>
-                  {item.from && (
-                    <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
-                      From: {item.from}
-                    </Text>
+          <>
+            {paymentsList.map((item, index) => {
+              // Insert a native ad after every 5 items
+              const showNativeAd = index > 0 && index % 5 === 0;
+
+              return (
+                <React.Fragment key={item.id}>
+                  {showNativeAd && (
+                    <View className="my-4">
+                      <NativeAdComponent adType="medium" />
+                    </View>
                   )}
-                </View>
-                <View className="rounded-full p-2" style={{ backgroundColor: COLORS.gray[100] }}>
-                  <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray[500]} />
-                </View>
-              </View>
-            </Pressable>
-          ))
+                  <Pressable
+                    onPress={() => router.push(`/payments/${item.id}/edit`)}
+                    className="mb-4 rounded-xl p-4"
+                    style={{
+                      backgroundColor: COLORS.background.secondary,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 2,
+                      elevation: 1,
+                    }}>
+                    <View className="flex-row items-center justify-between">
+                      <View>
+                        <Text className="text-base font-medium" style={{ color: COLORS.secondary }}>
+                          ₹ {Number(item.amount).toFixed(2)}
+                        </Text>
+                        <View className="mt-2 flex-row items-center">
+                          <MaterialCommunityIcons
+                            name={item.source?.icon as any}
+                            size={16}
+                            color={COLORS.gray[500]}
+                          />
+                          <Text className="ml-2 text-sm" style={{ color: COLORS.gray[500] }}>
+                            {item.source?.name}
+                          </Text>
+                        </View>
+                        <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
+                          {format(new Date(item.date), 'MMMM dd, yyyy')}
+                        </Text>
+                        {item.from && (
+                          <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
+                            From: {item.from}
+                          </Text>
+                        )}
+                      </View>
+                      <View className="rounded-full p-2" style={{ backgroundColor: COLORS.gray[100] }}>
+                        <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray[500]} />
+                      </View>
+                    </View>
+                  </Pressable>
+                </React.Fragment>
+              );
+            })}
+
+            {/* Banner ad at the bottom of the list */}
+            <BannerAdComponent
+              size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+              containerStyle={{ marginTop: 10, marginBottom: 20 }}
+            />
+          </>
         )}
 
         {isLoadingMore && (

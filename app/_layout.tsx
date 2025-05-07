@@ -19,7 +19,7 @@ import { OfflineScreen } from '../components/OfflineScreen';
 import { RatingProvider } from '../contexts/RatingContext';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
-import { getAnalytics } from '@react-native-firebase/analytics';
+import analytics from '@react-native-firebase/analytics';
 import { analyticsService } from '../utils/analytics';
 import { crashlyticsService } from '../utils/crashlytics';
 import { adService } from '../services/adService';
@@ -85,8 +85,8 @@ export default function RootLayout() {
         // Initialize Analytics - only for native platforms
         if (Platform.OS !== 'web') {
           try {
-            const analytics = getAnalytics();
-            analytics.setAnalyticsCollectionEnabled(environment.production);
+            // Use the modular API
+            await analytics().setAnalyticsCollectionEnabled(environment.production);
 
             if (!environment.production) {
               console.log('Firebase Analytics initialized in development mode');
