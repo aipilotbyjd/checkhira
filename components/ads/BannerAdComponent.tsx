@@ -2,14 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, Platform, Dimensions, ViewStyle } from 'react-native';
 import {
   BannerAd,
-  BannerAdSize,
-  AdEventType,
-  BannerAd as BannerAdType,
-  AdEventHandler,
-  ErrorWithCode
+  BannerAdSize
 } from 'react-native-google-mobile-ads';
 import { adService } from '../../services/adService';
 import * as TrackingTransparency from 'expo-tracking-transparency';
+
+// Define types for ad events
+type AdEventHandler = () => void;
+interface ErrorWithCode {
+  code: string;
+  message: string;
+}
 
 interface BannerAdComponentProps {
   size?: BannerAdSize;
@@ -35,7 +38,7 @@ export const BannerAdComponent = ({
   const [adError, setAdError] = useState(false);
   const adUnitId = adService.getAdUnitId('banner');
   const screenWidth = Dimensions.get('window').width;
-  const bannerRef = useRef<BannerAdType | null>(null);
+  const bannerRef = useRef<BannerAd | null>(null);
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Choose the best banner size based on screen width
@@ -118,13 +121,23 @@ export const BannerAdComponent = ({
   };
 
   // Handle ad failed to load event
-  const handleAdFailedToLoad = (error: ErrorWithCode) => {
+  const handleAdFailedToLoad = (error: Error) => {
     console.error('Banner ad failed to load:', error);
     setAdError(true);
 
+    // Retry loading the ad after a delay
+    setTimeout(() => {
+      setAdError(false);
+    }, 30000); // Retry after 30 seconds
+
     // Call the external handler if provided
     if (onAdFailedToLoad) {
-      onAdFailedToLoad(error);
+      // Convert Error to our ErrorWithCode type
+      const errorWithCode: ErrorWithCode = {
+        code: 'unknown',
+        message: error.message
+      };
+      onAdFailedToLoad(errorWithCode);
     }
   };
 

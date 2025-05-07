@@ -254,6 +254,7 @@ const showRewardedAd = async (): Promise<boolean> => {
 /**
  * Initialize ads with proper consent handling
  * This follows the latest Google Mobile Ads SDK recommendations
+ * with a fallback for misconfigured consent forms
  */
 const initializeAds = async (): Promise<void> => {
   try {
@@ -267,39 +268,52 @@ const initializeAds = async (): Promise<void> => {
       console.log('Tracking permission status:', status);
     }
 
-    // Step 1: Request user consent information
-    const consentInfo = await AdsConsent.requestInfoUpdate({
-      debugGeography: environment.production
-        ? AdsConsentDebugGeography.DISABLED
-        : AdsConsentDebugGeography.EEA,
-      testDeviceIdentifiers: [], // Add test device IDs here if needed
-    });
-
-    // Step 2: Show the consent form if required
-    if (consentInfo.isConsentFormAvailable &&
-        (consentInfo.status === AdsConsentStatus.REQUIRED ||
-         consentInfo.status === AdsConsentStatus.UNKNOWN)) {
-      try {
-        const formStatus = await AdsConsent.showForm();
-        console.log('Consent form status:', formStatus);
-      } catch (formError) {
-        console.error('Error showing consent form:', formError);
-      }
-    }
-
-    // Step 3: Configure the Mobile Ads SDK with appropriate settings
-    await MobileAds().setRequestConfiguration({
-      // Set max ad content rating
-      maxAdContentRating: MaxAdContentRating.PG,
-      // Specify if you want to request ads for children
-      tagForChildDirectedTreatment: false,
-      // Specify if you want to request ads for users under the age of consent
-      tagForUnderAgeOfConsent: false,
-    } as RequestConfiguration);
-
-    // Step 4: Initialize the Mobile Ads SDK
+    // Initialize the Mobile Ads SDK directly first to avoid consent form errors
+    // when the AdMob account isn't properly configured
     await MobileAds().initialize();
     console.log('Mobile Ads SDK initialized successfully');
+
+    // Try to handle consent if possible, but don't block ad loading if it fails
+    try {
+      // Configure the Mobile Ads SDK with appropriate settings
+      await MobileAds().setRequestConfiguration({
+        // Set max ad content rating
+        maxAdContentRating: MaxAdContentRating.PG,
+        // Specify if you want to request ads for children
+        tagForChildDirectedTreatment: false,
+        // Specify if you want to request ads for users under the age of consent
+        tagForUnderAgeOfConsent: false,
+      } as RequestConfiguration);
+
+      // Try to request consent information, but don't block if it fails
+      try {
+        const consentInfo = await AdsConsent.requestInfoUpdate({
+          debugGeography: environment.production
+            ? AdsConsentDebugGeography.DISABLED
+            : AdsConsentDebugGeography.EEA,
+          testDeviceIdentifiers: [], // Add test device IDs here if needed
+        });
+
+        // Show the consent form if required and available
+        if (consentInfo.isConsentFormAvailable &&
+            (consentInfo.status === AdsConsentStatus.REQUIRED ||
+             consentInfo.status === AdsConsentStatus.UNKNOWN)) {
+          try {
+            const formStatus = await AdsConsent.showForm();
+            console.log('Consent form status:', formStatus);
+          } catch (formError) {
+            console.error('Error showing consent form:', formError);
+            // Continue without showing consent form
+          }
+        }
+      } catch (consentError) {
+        console.error('Error requesting consent information:', consentError);
+        // Continue without consent information
+      }
+    } catch (configError) {
+      console.error('Error configuring Mobile Ads SDK:', configError);
+      // Continue without configuration
+    }
 
     // Load ads with a slight delay to ensure SDK is fully initialized
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -335,9 +349,9 @@ const initializeAds = async (): Promise<void> => {
   } catch (error) {
     console.error('Failed to initialize Mobile Ads SDK:', error);
 
-    // Try to recover by loading ads anyway
+    // Try to recover by loading ads anyway with minimal initialization
     try {
-      // Initialize with default settings
+      // Initialize with default settings and no consent
       await MobileAds().initialize();
 
       loadAppOpenAd();
