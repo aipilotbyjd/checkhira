@@ -17,6 +17,8 @@ import { useAnalytics } from '../../hooks/useAnalytics';
 import { analyticsService } from '../../utils/analytics';
 import { BannerAdComponent, NativeAdComponent } from '../../components/ads';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
+import { useInterstitialAd } from '../../components/ads/InterstitialAdComponent';
+import { useRewardedAd } from '../../components/ads/RewardedAdComponent';
 
 export default function PaymentsList() {
   useAnalytics('PaymentsTabScreen');
@@ -33,6 +35,8 @@ export default function PaymentsList() {
   const { refreshUnreadCount } = useNotification();
   const { showToast } = useToast();
   const { t } = useLanguage();
+  const { showInterstitialAd } = useInterstitialAd();
+  const { showRewardedAd } = useRewardedAd();
 
   // Use the modern API hook pattern
   const { execute: executeGetPayments, isLoading } = useApi({
@@ -137,7 +141,16 @@ export default function PaymentsList() {
           </Text>
           <View className="flex-row space-x-3">
             <Pressable
-              onPress={() => router.push('/payments/add')}
+              onPress={async () => {
+                // Show rewarded ad for premium feature with 50% probability
+                if (Math.random() < 0.5) {
+                  const rewarded = await showRewardedAd();
+                  if (rewarded) {
+                    showToast('Premium feature unlocked!');
+                  }
+                }
+                router.push('/payments/add');
+              }}
               className="mr-2 rounded-full p-3"
               style={{ backgroundColor: COLORS.primary }}>
               <MaterialCommunityIcons name="plus" size={22} color="white" />
@@ -219,7 +232,13 @@ export default function PaymentsList() {
                     </View>
                   )}
                   <Pressable
-                    onPress={() => router.push(`/payments/${item.id}/edit`)}
+                    onPress={async () => {
+                      // Show interstitial ad with 25% probability
+                      if (Math.random() < 0.25) {
+                        await showInterstitialAd();
+                      }
+                      router.push(`/payments/${item.id}/edit`);
+                    }}
                     className="mb-4 rounded-xl p-4"
                     style={{
                       backgroundColor: COLORS.background.secondary,

@@ -19,7 +19,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAnalytics } from '../../hooks/useAnalytics';
-import { BannerAdComponent } from '../../components/ads/BannerAdComponent';
+import { BannerAdComponent, NativeAdComponent } from '../../components/ads';
+import { useInterstitialAd } from '../../components/ads/InterstitialAdComponent';
+import { BannerAdSize } from 'react-native-google-mobile-ads';
 
 // Add this type definition above the Home component
 interface Activity {
@@ -50,6 +52,7 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const { refreshUnreadCount } = useNotification();
   const { t } = useLanguage();
+  const { showInterstitialAd } = useInterstitialAd();
 
   const fetchActivities = async () => {
     try {
@@ -117,7 +120,12 @@ export default function Home() {
     return 'Good Evening';
   };
 
-  const handleQuickActionPress = (action: 'work' | 'payment', id: number) => {
+  const handleQuickActionPress = async (action: 'work' | 'payment', id: number) => {
+    // Show interstitial ad with 30% probability
+    if (Math.random() < 0.3) {
+      await showInterstitialAd();
+    }
+
     if (action === 'work') {
       router.push(`/work/${id}/edit` as any);
     } else if (action === 'payment') {
@@ -255,6 +263,14 @@ export default function Home() {
         </View>
       </View>
 
+      {/* Native Ad */}
+      <View className="mt-0 px-6">
+        <BannerAdComponent
+          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+          containerStyle={{ marginTop: 10 }}
+        />
+      </View>
+
       {/* Payment Dashboard */}
       <View className="mt-6 px-6">
         <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
@@ -343,6 +359,14 @@ export default function Home() {
         </View>
       </View>
 
+      {/* Native Ad */}
+      <View className="mt-0 px-6">
+        <BannerAdComponent
+          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+          containerStyle={{ marginTop: 10 }}
+        />
+      </View>
+
       {/* Quick Actions - Enhanced version */}
       <View className="mt-8 px-6">
         <Text className="mb-4 text-lg font-semibold" style={{ color: COLORS.secondary }}>
@@ -391,6 +415,11 @@ export default function Home() {
         </View>
       </View>
 
+      {/* Native Ad */}
+      <View className="mt-6 px-6">
+        <NativeAdComponent adType="medium" />
+      </View>
+
       {/* Banner Ad */}
       <View className="mt-6">
         <BannerAdComponent />
@@ -424,7 +453,7 @@ export default function Home() {
           recentActivities.map((activity: Activity, index: number) => (
             <Pressable
               key={`${activity.id}-${activity.time.getTime()}`}
-              onPress={() => handleQuickActionPress(activity.type, activity.id)}
+              onPress={async () => handleQuickActionPress(activity.type, activity.id)}
               className="mb-4 flex-row items-center rounded-xl p-4"
               style={{ backgroundColor: COLORS.background.secondary }}>
               <View className="rounded-full p-2" style={{ backgroundColor: activity.color + '15' }}>

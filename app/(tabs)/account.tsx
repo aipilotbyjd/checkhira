@@ -16,7 +16,9 @@ import Constants from 'expo-constants';
 import { environment } from '~/config/environment';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { useInterstitialAd } from '../../components/ads/InterstitialAdComponent';
-import { BannerAdComponent } from '../../components/ads/BannerAdComponent';
+import { BannerAdComponent, NativeAdComponent } from '../../components/ads';
+import { BannerAdSize } from 'react-native-google-mobile-ads';
+import { useRewardedAd } from '../../components/ads/RewardedAdComponent';
 
 export default function Account() {
   useAnalytics('AccountTabScreen');
@@ -26,8 +28,9 @@ export default function Account() {
   const { refreshUnreadCount } = useNotification();
   const { isAuthenticated, logout } = useAuth();
   const { getProfile, updateProfile } = useProfileOperations();
-  const { t, loading } = useLanguage();
+  const { t } = useLanguage();
   const { showInterstitialAd } = useInterstitialAd();
+  const { showRewardedAd } = useRewardedAd();
   const [user, setUser] = useState({
     first_name: '',
     last_name: '',
@@ -66,7 +69,16 @@ export default function Account() {
     {
       title: t('editProfile'),
       icon: 'account-edit',
-      href: '/account/edit-profile',
+      onPress: async () => {
+        // Show rewarded ad with 40% probability
+        if (Math.random() < 0.4) {
+          const rewarded = await showRewardedAd();
+          if (rewarded) {
+            showToast('Premium profile editing unlocked!');
+          }
+        }
+        router.push('/account/edit-profile');
+      },
     },
     {
       title: t('defaultPrices'),
@@ -261,9 +273,14 @@ export default function Account() {
             ))}
           </View>
 
-          {/* Banner Ad */}
+          {/* Native Ad */}
           <View className="mt-6">
-            <BannerAdComponent />
+            <NativeAdComponent adType="medium" />
+          </View>
+
+          {/* Banner Ad */}
+          <View className="mt-4">
+            <BannerAdComponent size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
           </View>
 
           {!environment.production && (
@@ -288,9 +305,9 @@ export default function Account() {
                       style: 'destructive',
                       onPress: async () => {
                         // Show interstitial ad before logout
-                        const adShown = await showInterstitialAd();
+                        await showInterstitialAd();
 
-                        // Logout regardless of whether ad was shown
+                        // Logout after ad is shown or skipped
                         await logout();
                         showToast(t('logoutSuccess'));
                       },

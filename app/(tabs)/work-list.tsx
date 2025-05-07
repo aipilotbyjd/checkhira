@@ -21,7 +21,9 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { analyticsService } from '../../utils/analytics';
-import { BannerAdComponent } from '../../components/ads';
+import { BannerAdComponent, NativeAdComponent } from '../../components/ads';
+import { useInterstitialAd } from '../../components/ads/InterstitialAdComponent';
+import { BannerAdSize } from 'react-native-google-mobile-ads';
 
 export default function WorkListScreen() {
   useAnalytics('WorkListTabScreen');
@@ -29,6 +31,7 @@ export default function WorkListScreen() {
   const { showToast } = useToast();
   const actionSheetRef = useRef<ActionSheetRef>(null);
   const { t } = useLanguage();
+  const { showInterstitialAd } = useInterstitialAd();
 
   const [workList, setWorkList] = useState<Work[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -213,13 +216,35 @@ export default function WorkListScreen() {
           </Text>
         </View>
 
-        {/* Banner Ad at the top of the list at the top of the list */}
+        {/* Banner Ad at the top of the list */}
         <BannerAdComponent containerStyle={{ marginTop: -10 }} />
 
-        {/* Work list */}
-        {workList.map((item: Work) => (
-          <WorkListItem key={item.id.toString()} item={item} />
-        ))}
+        {/* Work list with native ads */}
+        {workList.map((item: Work, index: number) => {
+          // Insert a native ad after every 4 items
+          const showNativeAd = index > 0 && index % 4 === 0;
+
+          return (
+            <React.Fragment key={item.id.toString()}>
+              {showNativeAd && (
+                <View className="my-2">
+                  <NativeAdComponent adType="small" />
+                </View>
+              )}
+              <Pressable
+                onPress={async () => {
+                  // Show interstitial ad with 20% probability
+                  if (Math.random() < 0.2) {
+                    await showInterstitialAd();
+                  }
+                  router.push(`/work/${item.id}/edit`);
+                }}
+              >
+                <WorkListItem item={item} />
+              </Pressable>
+            </React.Fragment>
+          );
+        })}
 
         {/* Loading more indicator */}
         {isLoadingMore && (
@@ -237,6 +262,11 @@ export default function WorkListScreen() {
             </Text>
           </View>
         )}
+
+        {/* Banner ad at the bottom of the list */}
+        <View className="mb-2">
+          <BannerAdComponent size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
+        </View>
       </ScrollView>
 
       <ActionSheet
