@@ -195,9 +195,7 @@ export default function PaymentsList() {
 
         {/* Banner ad at the top of the list */}
         <BannerAdComponent
-          size={BannerAdSize.LARGE_BANNER}
           containerStyle={{ marginBottom: 10, marginTop: -10 }}
-          refreshInterval={60000} // Refresh every 60 seconds
         />
 
         {paymentsList.length === 0 && !isLoadingSub && !isLoadingMore ? (

@@ -213,8 +213,8 @@ export default function WorkListScreen() {
           </Text>
         </View>
 
-        {/* Banner Ad */}
-        <BannerAdComponent />
+        {/* Banner Ad at the top of the list at the top of the list */}
+        <BannerAdComponent containerStyle={{ marginTop: -10 }} />
 
         {/* Work list */}
         {workList.map((item: Work) => (

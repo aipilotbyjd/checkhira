@@ -186,11 +186,6 @@ export default function EditPayment() {
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
       <ScrollView className="flex-1">
-        {/* Banner ad at the top of the form */}
-        <BannerAdComponent
-          containerStyle={{ marginVertical: 10 }}
-        />
-
         <View className="px-6 pt-6">
           <Pressable
             onPress={() => setShowDatePicker(true)}
@@ -321,6 +316,11 @@ export default function EditPayment() {
               />
             </View>
           </View>
+
+          {/* Banner ad at the top of the form */}
+          <BannerAdComponent
+            containerStyle={{ marginVertical: 10 }}
+          />
         </View>
       </ScrollView>
 
