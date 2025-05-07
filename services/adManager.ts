@@ -17,8 +17,8 @@ const AD_FREQUENCY = {
     DAILY_COUNT_KEY: 'rewarded_daily_count',
   },
   APP_OPEN: {
-    MIN_INTERVAL: 5 * 60 * 1000, // 5 minutes in milliseconds
-    MAX_DAILY: 8, // Maximum app open ads per day
+    MIN_INTERVAL: 15 * 60 * 1000, // 15 minutes in milliseconds (increased from 5 minutes)
+    MAX_DAILY: 5, // Maximum app open ads per day (reduced from 8)
     STORAGE_KEY: 'app_open_ad_timestamps',
     DAILY_COUNT_KEY: 'app_open_daily_count',
   },
@@ -105,14 +105,14 @@ class AdManagerService {
 
       // Increment session count
       await AsyncStorage.setItem(
-        USER_EXPERIENCE.STORAGE_KEYS.SESSION_COUNT, 
+        USER_EXPERIENCE.STORAGE_KEYS.SESSION_COUNT,
         (this.sessionCount + 1).toString()
       );
 
       // Record session start time
       this.sessionStartTime = Date.now();
       await AsyncStorage.setItem(
-        USER_EXPERIENCE.STORAGE_KEYS.SESSION_START_TIME, 
+        USER_EXPERIENCE.STORAGE_KEYS.SESSION_START_TIME,
         this.sessionStartTime.toString()
       );
     } catch (error) {
@@ -122,7 +122,7 @@ class AdManagerService {
 
   private async checkAndResetDailyCounts() {
     const today = new Date().toDateString();
-    
+
     if (this.lastResetDate !== today) {
       // Reset all daily counts
       this.dailyCounts = {
@@ -130,12 +130,12 @@ class AdManagerService {
         rewarded: 0,
         appOpen: 0,
       };
-      
+
       // Save the reset counts
       await AsyncStorage.setItem(AD_FREQUENCY.INTERSTITIAL.DAILY_COUNT_KEY, '0');
       await AsyncStorage.setItem(AD_FREQUENCY.REWARDED.DAILY_COUNT_KEY, '0');
       await AsyncStorage.setItem(AD_FREQUENCY.APP_OPEN.DAILY_COUNT_KEY, '0');
-      
+
       // Update the reset date
       this.lastResetDate = today;
       await AsyncStorage.setItem('ad_counts_last_reset', today);
@@ -145,11 +145,11 @@ class AdManagerService {
   private async updateAdTimestamp(adType: 'interstitial' | 'rewarded' | 'appOpen') {
     const now = Date.now();
     this.lastAdTimestamps[adType] = now;
-    
+
     // Determine which storage key to use
     let storageKey = '';
     let countKey = '';
-    
+
     switch (adType) {
       case 'interstitial':
         storageKey = AD_FREQUENCY.INTERSTITIAL.STORAGE_KEY;
@@ -164,10 +164,10 @@ class AdManagerService {
         countKey = AD_FREQUENCY.APP_OPEN.DAILY_COUNT_KEY;
         break;
     }
-    
+
     // Update timestamp
     await AsyncStorage.setItem(storageKey, now.toString());
-    
+
     // Increment and update daily count
     this.dailyCounts[adType]++;
     await AsyncStorage.setItem(countKey, this.dailyCounts[adType].toString());
@@ -176,24 +176,24 @@ class AdManagerService {
   // Check if we can show an interstitial ad based on frequency rules
   public canShowInterstitial(): boolean {
     const now = Date.now();
-    
+
     // Don't show ads in first session
     if (this.sessionCount < USER_EXPERIENCE.MIN_SESSIONS_FOR_INTERSTITIAL) {
       return false;
     }
-    
+
     // Don't show ads in the grace period
     const sessionElapsedTime = now - this.sessionStartTime;
     const gracePeriodMs = USER_EXPERIENCE.GRACE_PERIOD_MINUTES * 60 * 1000;
     if (sessionElapsedTime < gracePeriodMs) {
       return false;
     }
-    
+
     // Check if we've exceeded daily maximum
     if (this.dailyCounts.interstitial >= AD_FREQUENCY.INTERSTITIAL.MAX_DAILY) {
       return false;
     }
-    
+
     // Check if enough time has passed since the last ad
     const timeSinceLastAd = now - this.lastAdTimestamps.interstitial;
     return timeSinceLastAd >= AD_FREQUENCY.INTERSTITIAL.MIN_INTERVAL;
@@ -204,25 +204,25 @@ class AdManagerService {
     if (!this.canShowInterstitial()) {
       return false;
     }
-    
+
     const shown = await adService.showInterstitialAd();
-    
+
     if (shown) {
       await this.updateAdTimestamp('interstitial');
     }
-    
+
     return shown;
   }
 
   // Check if we can show a rewarded ad
   public canShowRewarded(): boolean {
     const now = Date.now();
-    
+
     // Check if we've exceeded daily maximum
     if (this.dailyCounts.rewarded >= AD_FREQUENCY.REWARDED.MAX_DAILY) {
       return false;
     }
-    
+
     // Check if enough time has passed since the last ad
     const timeSinceLastAd = now - this.lastAdTimestamps.rewarded;
     return timeSinceLastAd >= AD_FREQUENCY.REWARDED.MIN_INTERVAL;
@@ -233,25 +233,25 @@ class AdManagerService {
     if (!this.canShowRewarded()) {
       return false;
     }
-    
+
     const shown = await adService.showRewardedAd();
-    
+
     if (shown) {
       await this.updateAdTimestamp('rewarded');
     }
-    
+
     return shown;
   }
 
   // Check if we can show an app open ad
   public canShowAppOpenAd(): boolean {
     const now = Date.now();
-    
+
     // Check if we've exceeded daily maximum
     if (this.dailyCounts.appOpen >= AD_FREQUENCY.APP_OPEN.MAX_DAILY) {
       return false;
     }
-    
+
     // Check if enough time has passed since the last ad
     const timeSinceLastAd = now - this.lastAdTimestamps.appOpen;
     return timeSinceLastAd >= AD_FREQUENCY.APP_OPEN.MIN_INTERVAL;
@@ -262,13 +262,13 @@ class AdManagerService {
     if (!this.canShowAppOpenAd()) {
       return false;
     }
-    
+
     const shown = await adService.showAppOpenAd();
-    
+
     if (shown) {
       await this.updateAdTimestamp('appOpen');
     }
-    
+
     return shown;
   }
 }

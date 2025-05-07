@@ -194,41 +194,77 @@ const showInterstitialAd = async (): Promise<boolean> => {
 
 // Rewarded ad management
 let rewardedAd: RewardedAd | null = null;
+let isRewardedAdLoading = false;
 
 const loadRewardedAd = () => {
-  const adUnitId = getAdUnitId('rewarded');
-  rewardedAd = RewardedAd.createForAdRequest(adUnitId);
+  // Prevent multiple simultaneous load attempts
+  if (isRewardedAdLoading) {
+    console.log('Rewarded ad is already loading');
+    return () => {};
+  }
 
-  const unsubscribeLoaded = rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
-    console.log('Rewarded ad loaded');
-  });
+  isRewardedAdLoading = true;
 
-  const unsubscribeEarned = rewardedAd.addAdEventListener(
-    RewardedAdEventType.EARNED_REWARD,
-    (reward) => {
-      console.log('User earned reward:', reward);
+  try {
+    // Clean up previous ad instance if it exists
+    if (rewardedAd) {
+      rewardedAd = null;
     }
-  );
 
-  const unsubscribeClosed = rewardedAd.addAdEventListener(AdEventType.CLOSED, () => {
-    console.log('Rewarded ad closed');
-    // Reload the ad for next time
-    rewardedAd?.load();
-  });
+    const adUnitId = getAdUnitId('rewarded');
+    rewardedAd = RewardedAd.createForAdRequest(adUnitId, {
+      requestNonPersonalizedAdsOnly: true, // Use non-personalized ads to avoid consent issues
+    });
 
-  const unsubscribeError = rewardedAd.addAdEventListener(AdEventType.ERROR, (error) => {
-    console.error('Rewarded ad error:', error);
-  });
+    const unsubscribeLoaded = rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
+      console.log('Rewarded ad loaded successfully');
+      isRewardedAdLoading = false;
+    });
 
-  // Start loading
-  rewardedAd.load();
+    const unsubscribeEarned = rewardedAd.addAdEventListener(
+      RewardedAdEventType.EARNED_REWARD,
+      (reward) => {
+        console.log('User earned reward:', reward);
+      }
+    );
 
-  return () => {
-    unsubscribeLoaded();
-    unsubscribeEarned();
-    unsubscribeClosed();
-    unsubscribeError();
-  };
+    const unsubscribeClosed = rewardedAd.addAdEventListener(AdEventType.CLOSED, () => {
+      console.log('Rewarded ad closed');
+      // Schedule a new ad load after a short delay
+      setTimeout(() => {
+        loadRewardedAd();
+      }, 1000);
+    });
+
+    const unsubscribeError = rewardedAd.addAdEventListener(AdEventType.ERROR, (error) => {
+      console.error('Rewarded ad error:', error);
+      isRewardedAdLoading = false;
+
+      // Retry loading after error with a delay
+      setTimeout(() => {
+        loadRewardedAd();
+      }, 5000); // Wait 5 seconds before retry
+    });
+
+    // Start loading with error handling
+    try {
+      rewardedAd.load();
+    } catch (loadError) {
+      console.error('Error initiating rewarded ad load:', loadError);
+      isRewardedAdLoading = false;
+    }
+
+    return () => {
+      unsubscribeLoaded();
+      unsubscribeEarned();
+      unsubscribeClosed();
+      unsubscribeError();
+    };
+  } catch (error) {
+    console.error('Error setting up rewarded ad:', error);
+    isRewardedAdLoading = false;
+    return () => {};
+  }
 };
 
 const showRewardedAd = async (): Promise<boolean> => {
@@ -243,8 +279,15 @@ const showRewardedAd = async (): Promise<boolean> => {
     return false;
   }
 
-  await rewardedAd.show();
-  return true;
+  try {
+    await rewardedAd.show();
+    return true;
+  } catch (error) {
+    console.error('Error showing rewarded ad:', error);
+    // Reload the ad after error
+    loadRewardedAd();
+    return false;
+  }
 };
 
 /**
@@ -327,19 +370,46 @@ const initializeAds = async (): Promise<void> => {
     }
 
     // Set up app state change listener for app open ads
-    AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+    // Use a variable to track if we're coming from background
+    let appStateChangeListener: any = null;
+    let lastAppState = AppState.currentState;
+
+    // Remove any existing listeners first to prevent duplicates
+    try {
+      // @ts-ignore - TypeScript doesn't know about the remove method
+      AppState.removeEventListener('change', appStateChangeListener);
+    } catch (error) {
+      // Ignore errors when removing non-existent listeners
+    }
+
+    // Add new listener
+    appStateChangeListener = (nextAppState: AppStateStatus) => {
       // Only show app open ads when coming from background to foreground
-      if (nextAppState === 'active') {
-        // Don't show immediately, give a small delay
-        setTimeout(() => {
-          if (isAppOpenAdAvailable()) {
-            showAppOpenAd();
-          } else {
-            loadAppOpenAd();
-          }
-        }, 500);
+      if (
+        (lastAppState === 'background' || lastAppState === 'inactive') &&
+        nextAppState === 'active'
+      ) {
+        // Check with adManager if we should show an app open ad
+        // This adds an extra layer of frequency capping
+        const adManager = require('./adManager').adManager;
+
+        if (adManager.canShowAppOpenAd()) {
+          // Don't show immediately, give a small delay
+          setTimeout(() => {
+            if (isAppOpenAdAvailable()) {
+              adManager.showAppOpenAd();
+            } else {
+              loadAppOpenAd();
+            }
+          }, 1000);
+        }
       }
-    });
+
+      // Update last state
+      lastAppState = nextAppState;
+    };
+
+    AppState.addEventListener('change', appStateChangeListener);
   } catch (error) {
     console.error('Failed to initialize Mobile Ads SDK:', error);
 
