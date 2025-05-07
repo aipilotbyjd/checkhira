@@ -196,7 +196,7 @@ export default function PaymentsList() {
         {/* Banner ad at the top of the list */}
         <BannerAdComponent
           size={BannerAdSize.LARGE_BANNER}
-          containerStyle={{ marginBottom: 10 }}
+          containerStyle={{ marginBottom: 10, marginTop: -10 }}
           refreshInterval={60000} // Refresh every 60 seconds
         />
 
@@ -216,8 +216,8 @@ export default function PaymentsList() {
               return (
                 <React.Fragment key={item.id}>
                   {showNativeAd && (
-                    <View className="my-4">
-                      <NativeAdComponent adType="medium" />
+                    <View className="my-0">
+                      <NativeAdComponent containerStyle={{ marginTop: -5 }} adType="medium" />
                     </View>
                   )}
                   <Pressable
