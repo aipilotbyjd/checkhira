@@ -9,15 +9,34 @@ import {
   RewardedAdEventType,
   MobileAds,
   AppOpenAd,
+  AdsConsent,
+  AdsConsentStatus,
+  AdsConsentDebugGeography,
+  MaxAdContentRating,
+  RequestConfiguration,
 } from 'react-native-google-mobile-ads';
 import { environment } from '../config/environment';
 import * as TrackingTransparency from 'expo-tracking-transparency';
+
+// TypeScript interfaces for ad unit IDs
+interface PlatformSpecificAdUnitId {
+  android: string;
+  ios: string;
+}
+
+interface AdUnitIds {
+  banner: PlatformSpecificAdUnitId;
+  interstitial: PlatformSpecificAdUnitId;
+  rewarded: PlatformSpecificAdUnitId;
+  appOpen: PlatformSpecificAdUnitId;
+  native: PlatformSpecificAdUnitId;
+}
 
 // Use test IDs for development and real IDs for production
 const useTestIds = !environment.production;
 
 // Ad unit IDs
-const adUnitIds = {
+const adUnitIds: AdUnitIds = {
   banner: {
     android: useTestIds ? TestIds.BANNER : 'ca-app-pub-6156225952846626/1234567890',
     ios: useTestIds ? TestIds.BANNER : 'ca-app-pub-6156225952846626/1234567890',
@@ -41,7 +60,7 @@ const adUnitIds = {
 };
 
 // Get the correct ad unit ID based on platform
-const getAdUnitId = (adType: keyof typeof adUnitIds) => {
+const getAdUnitId = (adType: keyof AdUnitIds): string => {
   return Platform.OS === 'ios' ? adUnitIds[adType].ios : adUnitIds[adType].android;
 };
 
@@ -232,8 +251,11 @@ const showRewardedAd = async (): Promise<boolean> => {
   return true;
 };
 
-// Initialize ads
-const initializeAds = async () => {
+/**
+ * Initialize ads with proper consent handling
+ * This follows the latest Google Mobile Ads SDK recommendations
+ */
+const initializeAds = async (): Promise<void> => {
   try {
     // Request tracking permission on iOS
     if (Platform.OS === 'ios') {
@@ -245,11 +267,39 @@ const initializeAds = async () => {
       console.log('Tracking permission status:', status);
     }
 
-    // Initialize the Mobile Ads SDK with privacy options
+    // Step 1: Request user consent information
+    const consentInfo = await AdsConsent.requestInfoUpdate({
+      debugGeography: environment.production
+        ? AdsConsentDebugGeography.DISABLED
+        : AdsConsentDebugGeography.EEA,
+      testDeviceIdentifiers: [], // Add test device IDs here if needed
+    });
+
+    // Step 2: Show the consent form if required
+    if (consentInfo.isConsentFormAvailable &&
+        (consentInfo.status === AdsConsentStatus.REQUIRED ||
+         consentInfo.status === AdsConsentStatus.UNKNOWN)) {
+      try {
+        const formStatus = await AdsConsent.showForm();
+        console.log('Consent form status:', formStatus);
+      } catch (formError) {
+        console.error('Error showing consent form:', formError);
+      }
+    }
+
+    // Step 3: Configure the Mobile Ads SDK with appropriate settings
+    await MobileAds().setRequestConfiguration({
+      // Set max ad content rating
+      maxAdContentRating: MaxAdContentRating.PG,
+      // Specify if you want to request ads for children
+      tagForChildDirectedTreatment: false,
+      // Specify if you want to request ads for users under the age of consent
+      tagForUnderAgeOfConsent: false,
+    } as RequestConfiguration);
+
+    // Step 4: Initialize the Mobile Ads SDK
     await MobileAds().initialize();
     console.log('Mobile Ads SDK initialized successfully');
-
-    // Google AdMob will show any messages here that you set up on the AdMob Privacy & Messaging page
 
     // Load ads with a slight delay to ensure SDK is fully initialized
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -267,10 +317,6 @@ const initializeAds = async () => {
       console.log('Retrying app open ad load after initial failure');
       loadAppOpenAd();
     }
-
-    // Note: We can't directly access listeners in React Native's AppState
-    // Instead, we'll just add our listener and rely on the cleanup in component unmount
-    // to remove previous listeners
 
     // Set up app state change listener for app open ads
     AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
@@ -291,6 +337,9 @@ const initializeAds = async () => {
 
     // Try to recover by loading ads anyway
     try {
+      // Initialize with default settings
+      await MobileAds().initialize();
+
       loadAppOpenAd();
       loadInterstitialAd();
       loadRewardedAd();
@@ -329,6 +378,59 @@ const requestTrackingPermission = async () => {
   }
 };
 
+/**
+ * Get the current consent status
+ */
+const getConsentStatus = async (): Promise<AdsConsentStatus> => {
+  try {
+    const consentInfo = await AdsConsent.requestInfoUpdate({
+      debugGeography: environment.production
+        ? AdsConsentDebugGeography.DISABLED
+        : AdsConsentDebugGeography.EEA,
+    });
+    return consentInfo.status;
+  } catch (error) {
+    console.error('Error getting consent status:', error);
+    return AdsConsentStatus.UNKNOWN;
+  }
+};
+
+/**
+ * Show the consent form manually
+ */
+const showConsentForm = async (): Promise<boolean> => {
+  try {
+    const consentInfo = await AdsConsent.requestInfoUpdate({
+      debugGeography: environment.production
+        ? AdsConsentDebugGeography.DISABLED
+        : AdsConsentDebugGeography.EEA,
+    });
+
+    if (consentInfo.isConsentFormAvailable) {
+      await AdsConsent.showForm();
+      return true;
+    } else {
+      console.log('Consent form is not available');
+      return false;
+    }
+  } catch (error) {
+    console.error('Error showing consent form:', error);
+    return false;
+  }
+};
+
+/**
+ * Reset the consent information
+ */
+const resetConsent = async (): Promise<void> => {
+  try {
+    await AdsConsent.reset();
+    console.log('Consent information reset successfully');
+  } catch (error) {
+    console.error('Error resetting consent:', error);
+  }
+};
+
 export const adService = {
   getAdUnitId,
   loadInterstitialAd,
@@ -341,4 +443,8 @@ export const adService = {
   initializeAds,
   getTrackingStatus,
   requestTrackingPermission,
+  // New consent methods
+  getConsentStatus,
+  showConsentForm,
+  resetConsent,
 };

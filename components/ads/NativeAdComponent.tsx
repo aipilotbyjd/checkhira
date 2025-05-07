@@ -1,40 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, Pressable, Platform } from 'react-native';
-import {
-  NativeAd,
-  NativeAdView,
-  AdBadge,
-  MediaView,
-  StarRating,
-  NativeAsset,
-  NativeAssetType,
-  NativeMediaAspectRatio,
-  AdEventType
-} from 'react-native-google-mobile-ads';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Platform, ViewStyle } from 'react-native';
 import { adService } from '../../services/adService';
 import { COLORS } from '../../constants/theme';
 import * as TrackingTransparency from 'expo-tracking-transparency';
 
-type NativeAdComponentProps = {
-  containerStyle?: object;
+interface NativeAdComponentProps {
+  containerStyle?: ViewStyle;
   adType?: 'small' | 'medium' | 'large';
-};
+  onAdLoaded?: () => void;
+  onAdFailedToLoad?: (error: any) => void;
+}
 
 export const NativeAdComponent = ({
   containerStyle = {},
   adType = 'medium',
+  onAdLoaded,
+  onAdFailedToLoad,
 }: NativeAdComponentProps) => {
   const [nonPersonalizedOnly, setNonPersonalizedOnly] = useState(true);
-  const [nativeAd, setNativeAd] = useState<NativeAd | null>(null);
   const [adLoaded, setAdLoaded] = useState(false);
   const [adError, setAdError] = useState(false);
-  const adRef = useRef<NativeAd | null>(null);
 
-  // Get the ad unit ID from adService
-  const adUnitId = adService.getAdUnitId('native');
-
-  // No longer needed with the updated implementation
-
+  // Check tracking permission on iOS
   useEffect(() => {
     const checkTrackingPermission = async () => {
       if (Platform.OS === 'ios') {
@@ -53,261 +40,18 @@ export const NativeAdComponent = ({
     checkTrackingPermission();
   }, []);
 
-  // Load native ad
-  useEffect(() => {
-    // Create the native ad with options
-    const loadAd = async () => {
-      try {
-        // Reset states
-        setAdError(false);
-        setAdLoaded(false);
-
-        // Create ad with options
-        const ad = await NativeAd.createForAdRequest(adUnitId, {
-          requestNonPersonalizedAdsOnly: nonPersonalizedOnly,
-          keywords: ['finance', 'business', 'management', 'productivity'],
-          aspectRatio: NativeMediaAspectRatio.LANDSCAPE,
-        });
-
-        // Store ad in ref for cleanup
-        adRef.current = ad;
-
-        // Set up event listeners using AdEventType for general ad events
-        const loadedListener = ad.addAdEventListener(AdEventType.LOADED, () => {
-          console.log('Native ad loaded successfully');
-          setNativeAd(ad);
-          setAdLoaded(true);
-          setAdError(false);
-        });
-
-        const errorListener = ad.addAdEventListener(AdEventType.ERROR, () => {
-          console.error('Native ad failed to load');
-          setAdError(true);
-          setAdLoaded(false);
-        });
-
-        // No need to call load() as it's automatically loaded when created
-
-        // Cleanup function
-        return () => {
-          loadedListener.remove();
-          errorListener.remove();
-        };
-      } catch (error) {
-        console.error('Error creating native ad:', error);
-        setAdError(true);
-        return () => { };
-      }
-    };
-
-    const cleanup = loadAd();
-
-    // Cleanup on unmount
-    return () => {
-      cleanup.then(cleanupFn => cleanupFn && cleanupFn());
-      if (adRef.current) {
-        adRef.current.destroy();
-        adRef.current = null;
-      }
-    };
-  }, [adUnitId, nonPersonalizedOnly]);
-
-  // No longer needed with the updated implementation
-
-  // Don't render anything if there was an error loading the ad
-  if (adError) return null;
-
-  // Render different layouts based on adType
-  const renderSmallAd = () => {
-    if (!nativeAd) return null;
-
-    return (
-      <NativeAdView
-        style={styles.smallAdContainer}
-        nativeAd={nativeAd as any}
-      >
-        <View style={styles.smallAdContent}>
-          <View style={styles.smallAdHeader}>
-            {nativeAd.icon && (
-              <NativeAsset assetType={NativeAssetType.ICON}>
-                <Image
-                  source={{ uri: nativeAd.icon.url }}
-                  style={styles.smallIcon}
-                  defaultSource={require('../../assets/icon.png')}
-                />
-              </NativeAsset>
-            )}
-            <View style={styles.smallAdMeta}>
-              <NativeAsset assetType={NativeAssetType.ADVERTISER}>
-                <Text style={styles.smallAdvertiser} numberOfLines={1}>
-                  {nativeAd.advertiser || nativeAd.headline || 'Advertisement'}
-                </Text>
-              </NativeAsset>
-              {nativeAd.starRating && (
-                <StarRating
-                  rating={nativeAd.starRating}
-                  starSize={12}
-                  style={styles.smallStarRating}
-                />
-              )}
-            </View>
-            <AdBadge style={styles.smallAdBadge} />
-          </View>
-          <NativeAsset assetType={NativeAssetType.HEADLINE}>
-            <Text style={styles.smallHeadline} numberOfLines={2}>
-              {nativeAd.headline || 'Advertisement'}
-            </Text>
-          </NativeAsset>
-          <NativeAsset assetType={NativeAssetType.CALL_TO_ACTION}>
-            <Pressable style={styles.smallCallToAction}>
-              <Text style={styles.smallCallToActionText}>
-                {nativeAd.callToAction || 'Learn More'}
-              </Text>
-            </Pressable>
-          </NativeAsset>
-        </View>
-      </NativeAdView>
-    );
-  };
-
-  const renderMediumAd = () => {
-    if (!nativeAd) return null;
-
-    return (
-      <NativeAdView
-        style={styles.mediumAdContainer}
-        nativeAd={nativeAd as any}
-      >
-        <View style={styles.mediumAdContent}>
-          <View style={styles.mediumAdHeader}>
-            {nativeAd.icon && (
-              <NativeAsset assetType={NativeAssetType.ICON}>
-                <Image
-                  source={{ uri: nativeAd.icon.url }}
-                  style={styles.mediumIcon}
-                  defaultSource={require('../../assets/icon.png')}
-                />
-              </NativeAsset>
-            )}
-            <View style={styles.mediumAdMeta}>
-              <NativeAsset assetType={NativeAssetType.ADVERTISER}>
-                <Text style={styles.mediumAdvertiser} numberOfLines={1}>
-                  {nativeAd.advertiser || 'Advertisement'}
-                </Text>
-              </NativeAsset>
-              {nativeAd.starRating && (
-                <StarRating
-                  rating={nativeAd.starRating}
-                  starSize={14}
-                  style={styles.mediumStarRating}
-                />
-              )}
-            </View>
-            <AdBadge style={styles.mediumAdBadge} />
-          </View>
-          <NativeAsset assetType={NativeAssetType.HEADLINE}>
-            <Text style={styles.mediumHeadline} numberOfLines={2}>
-              {nativeAd.headline || 'Advertisement'}
-            </Text>
-          </NativeAsset>
-          <NativeAsset assetType={NativeAssetType.BODY}>
-            <Text style={styles.mediumBody} numberOfLines={2}>
-              {nativeAd.body || 'Check out this great offer!'}
-            </Text>
-          </NativeAsset>
-          <MediaView style={styles.mediumMediaView} />
-          <NativeAsset assetType={NativeAssetType.CALL_TO_ACTION}>
-            <Pressable style={styles.mediumCallToAction}>
-              <Text style={styles.mediumCallToActionText}>
-                {nativeAd.callToAction || 'Learn More'}
-              </Text>
-            </Pressable>
-          </NativeAsset>
-        </View>
-      </NativeAdView>
-    );
-  };
-
-  const renderLargeAd = () => {
-    if (!nativeAd) return null;
-
-    return (
-      <NativeAdView
-        style={styles.largeAdContainer}
-        nativeAd={nativeAd as any}
-      >
-        <View style={styles.largeAdContent}>
-          <MediaView style={styles.largeMediaView} />
-          <View style={styles.largeAdHeader}>
-            {nativeAd.icon && (
-              <NativeAsset assetType={NativeAssetType.ICON}>
-                <Image
-                  source={{ uri: nativeAd.icon.url }}
-                  style={styles.largeIcon}
-                  defaultSource={require('../../assets/icon.png')}
-                />
-              </NativeAsset>
-            )}
-            <View style={styles.largeAdMeta}>
-              <NativeAsset assetType={NativeAssetType.ADVERTISER}>
-                <Text style={styles.largeAdvertiser} numberOfLines={1}>
-                  {nativeAd.advertiser || 'Advertisement'}
-                </Text>
-              </NativeAsset>
-              {nativeAd.starRating && (
-                <StarRating
-                  rating={nativeAd.starRating}
-                  starSize={16}
-                  style={styles.largeStarRating}
-                />
-              )}
-            </View>
-            <AdBadge style={styles.largeAdBadge} />
-          </View>
-          <NativeAsset assetType={NativeAssetType.HEADLINE}>
-            <Text style={styles.largeHeadline} numberOfLines={2}>
-              {nativeAd.headline || 'Advertisement'}
-            </Text>
-          </NativeAsset>
-          <NativeAsset assetType={NativeAssetType.BODY}>
-            <Text style={styles.largeBody} numberOfLines={3}>
-              {nativeAd.body || 'Check out this great offer with amazing benefits for you!'}
-            </Text>
-          </NativeAsset>
-          <NativeAsset assetType={NativeAssetType.CALL_TO_ACTION}>
-            <Pressable style={styles.largeCallToAction}>
-              <Text style={styles.largeCallToActionText}>
-                {nativeAd.callToAction || 'Learn More'}
-              </Text>
-            </Pressable>
-          </NativeAsset>
-        </View>
-      </NativeAdView>
-    );
-  };
-
-  // Render the appropriate ad based on type
-  const renderAd = () => {
-    switch (adType) {
-      case 'small':
-        console.log('Rendering small ad');
-        return renderSmallAd();
-      case 'large':
-        console.log('Rendering large ad');
-        return renderLargeAd();
-      case 'medium':
-        console.log('Rendering medium ad');
-        return renderMediumAd();
-
-      default:
-        console.log('Rendering medium ad');
-        return renderMediumAd();
-    }
-  };
-
+  // This is a placeholder component until we can properly implement native ads
+  // with the latest version of react-native-google-mobile-ads
   return (
-    <View style={[styles.container, containerStyle, !adLoaded && styles.hidden]}>
-      {renderAd()}
+    <View style={[styles.container, containerStyle]}>
+      <View style={styles.placeholderContainer}>
+        <Text style={styles.placeholderText}>
+          Native Ad - {adType} format
+        </Text>
+        <Text style={styles.placeholderSubtext}>
+          Native ads will appear here in production
+        </Text>
+      </View>
     </View>
   );
 };
@@ -315,6 +59,29 @@ export const NativeAdComponent = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+    marginVertical: 10,
+    overflow: 'hidden',
+  },
+  placeholderContainer: {
+    width: '100%',
+    padding: 16,
+    backgroundColor: COLORS.background.secondary,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.gray[300],
+    minHeight: 100,
+  },
+  placeholderText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.secondary,
+    marginBottom: 8,
+  },
+  placeholderSubtext: {
+    fontSize: 14,
+    color: COLORS.gray[600],
     marginVertical: 10,
     overflow: 'hidden',
   },
