@@ -1,7 +1,5 @@
 import { Platform, AppState, AppStateStatus } from 'react-native';
 import {
-  BannerAd,
-  BannerAdSize,
   TestIds,
   InterstitialAd,
   AdEventType,
@@ -9,9 +7,7 @@ import {
   RewardedAdEventType,
   MobileAds,
   AppOpenAd,
-  AdsConsent,
   AdsConsentStatus,
-  AdsConsentDebugGeography,
   MaxAdContentRating,
   RequestConfiguration,
 } from 'react-native-google-mobile-ads';
@@ -285,7 +281,11 @@ const initializeAds = async (): Promise<void> => {
         tagForUnderAgeOfConsent: false,
       } as RequestConfiguration);
 
-      // Try to request consent information, but don't block if it fails
+      // Skip consent form handling completely until you configure it in AdMob console
+      console.log('Skipping consent form handling - configure forms in AdMob console first');
+
+      // For reference, here's how to implement consent when you have forms configured:
+      /*
       try {
         const consentInfo = await AdsConsent.requestInfoUpdate({
           debugGeography: environment.production
@@ -294,22 +294,16 @@ const initializeAds = async (): Promise<void> => {
           testDeviceIdentifiers: [], // Add test device IDs here if needed
         });
 
-        // Show the consent form if required and available
         if (consentInfo.isConsentFormAvailable &&
             (consentInfo.status === AdsConsentStatus.REQUIRED ||
              consentInfo.status === AdsConsentStatus.UNKNOWN)) {
-          try {
-            const formStatus = await AdsConsent.showForm();
-            console.log('Consent form status:', formStatus);
-          } catch (formError) {
-            console.error('Error showing consent form:', formError);
-            // Continue without showing consent form
-          }
+          const formStatus = await AdsConsent.showForm();
+          console.log('Consent form status:', formStatus);
         }
       } catch (consentError) {
         console.error('Error requesting consent information:', consentError);
-        // Continue without consent information
       }
+      */
     } catch (configError) {
       console.error('Error configuring Mobile Ads SDK:', configError);
       // Continue without configuration
@@ -394,55 +388,28 @@ const requestTrackingPermission = async () => {
 
 /**
  * Get the current consent status
+ * Note: This will return UNKNOWN until you configure consent forms in AdMob console
  */
 const getConsentStatus = async (): Promise<AdsConsentStatus> => {
-  try {
-    const consentInfo = await AdsConsent.requestInfoUpdate({
-      debugGeography: environment.production
-        ? AdsConsentDebugGeography.DISABLED
-        : AdsConsentDebugGeography.EEA,
-    });
-    return consentInfo.status;
-  } catch (error) {
-    console.error('Error getting consent status:', error);
-    return AdsConsentStatus.UNKNOWN;
-  }
+  console.log('Consent forms not configured in AdMob console - returning UNKNOWN status');
+  return AdsConsentStatus.UNKNOWN;
 };
 
 /**
  * Show the consent form manually
+ * Note: This will not work until you configure consent forms in AdMob console
  */
 const showConsentForm = async (): Promise<boolean> => {
-  try {
-    const consentInfo = await AdsConsent.requestInfoUpdate({
-      debugGeography: environment.production
-        ? AdsConsentDebugGeography.DISABLED
-        : AdsConsentDebugGeography.EEA,
-    });
-
-    if (consentInfo.isConsentFormAvailable) {
-      await AdsConsent.showForm();
-      return true;
-    } else {
-      console.log('Consent form is not available');
-      return false;
-    }
-  } catch (error) {
-    console.error('Error showing consent form:', error);
-    return false;
-  }
+  console.log('Consent forms not configured in AdMob console - cannot show form');
+  return false;
 };
 
 /**
  * Reset the consent information
+ * Note: This is a placeholder until you configure consent forms in AdMob console
  */
 const resetConsent = async (): Promise<void> => {
-  try {
-    await AdsConsent.reset();
-    console.log('Consent information reset successfully');
-  } catch (error) {
-    console.error('Error resetting consent:', error);
-  }
+  console.log('Consent forms not configured in AdMob console - cannot reset consent');
 };
 
 export const adService = {
