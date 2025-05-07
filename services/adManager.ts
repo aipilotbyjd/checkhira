@@ -17,8 +17,8 @@ const AD_FREQUENCY = {
     DAILY_COUNT_KEY: 'rewarded_daily_count',
   },
   APP_OPEN: {
-    MIN_INTERVAL: 15 * 60 * 1000, // 15 minutes in milliseconds (increased from 5 minutes)
-    MAX_DAILY: 5, // Maximum app open ads per day (reduced from 8)
+    MIN_INTERVAL: 5 * 60 * 1000, // 5 minutes in milliseconds (reduced from 15 minutes)
+    MAX_DAILY: 10, // Maximum app open ads per day (increased from 5)
     STORAGE_KEY: 'app_open_ad_timestamps',
     DAILY_COUNT_KEY: 'app_open_daily_count',
   },
@@ -249,12 +249,19 @@ class AdManagerService {
 
     // Check if we've exceeded daily maximum
     if (this.dailyCounts.appOpen >= AD_FREQUENCY.APP_OPEN.MAX_DAILY) {
+      console.log('Daily app open ad limit reached:', this.dailyCounts.appOpen);
       return false;
     }
 
     // Check if enough time has passed since the last ad
     const timeSinceLastAd = now - this.lastAdTimestamps.appOpen;
-    return timeSinceLastAd >= AD_FREQUENCY.APP_OPEN.MIN_INTERVAL;
+    const canShow = timeSinceLastAd >= AD_FREQUENCY.APP_OPEN.MIN_INTERVAL;
+
+    console.log(`Time since last app open ad: ${timeSinceLastAd / 1000} seconds`);
+    console.log(`Minimum interval: ${AD_FREQUENCY.APP_OPEN.MIN_INTERVAL / 1000} seconds`);
+    console.log(`Can show app open ad? ${canShow}`);
+
+    return canShow;
   }
 
   // Show an app open ad if frequency rules allow

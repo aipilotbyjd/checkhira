@@ -10,8 +10,9 @@ import { adManager } from '../../services/adManager';
  */
 // Storage key for tracking app open ad frequency
 const APP_OPEN_AD_LAST_SHOWN_KEY = 'app_open_ad_last_shown';
-// Minimum time between app open ads on app start (12 hours in milliseconds)
-const MIN_APP_START_AD_INTERVAL = 12 * 60 * 60 * 1000;
+// Minimum time between app open ads on app start (1 hour in milliseconds)
+// Reduced from 12 hours to 1 hour to make ads more likely to show
+const MIN_APP_START_AD_INTERVAL = 1 * 60 * 60 * 1000;
 
 export const AppStartAdManager = () => {
   const appState = useRef(AppState.currentState);
@@ -102,16 +103,24 @@ export const AppStartAdManager = () => {
       try {
         const lastShownStr = await AsyncStorage.getItem(APP_OPEN_AD_LAST_SHOWN_KEY);
         if (!lastShownStr) {
-          // First time, allow ad but don't show immediately
-          return false;
+          // First time, allow ad to show immediately
+          console.log('No previous app open ad shown, allowing ad to show');
+          return true;
         }
 
         const lastShown = parseInt(lastShownStr, 10);
         const now = Date.now();
-        return (now - lastShown) >= MIN_APP_START_AD_INTERVAL;
+        const timeSinceLastShown = now - lastShown;
+        const shouldShow = timeSinceLastShown >= MIN_APP_START_AD_INTERVAL;
+
+        console.log(`Time since last app open ad: ${timeSinceLastShown / 1000 / 60} minutes`);
+        console.log(`Should show app open ad? ${shouldShow}`);
+
+        return shouldShow;
       } catch (error) {
         console.error('Error checking last app open ad time:', error);
-        return false;
+        // On error, default to showing the ad
+        return true;
       }
     };
 
@@ -126,22 +135,42 @@ export const AppStartAdManager = () => {
 
     // Show an ad when the app first starts
     const showInitialAd = async () => {
-      // Wait for app to fully initialize
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('Preparing to show initial app open ad');
+
+      // Wait for app to fully initialize, but not too long
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Force load a new app open ad
+      adService.loadAppOpenAd();
+      console.log('Loaded new app open ad on app start');
+
+      // Wait a bit for the ad to load
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       // Check if enough time has passed since the last app open ad
       const shouldShowAd = await checkLastAppOpenAdTime();
+      console.log('Should show initial app open ad?', shouldShowAd);
 
       if (shouldShowAd) {
+        console.log('Attempting to show initial app open ad');
         // Try to load and show the ad
         const shown = await loadAndShowAppOpenAd(true);
+        console.log('Initial app open ad shown?', shown);
 
         // Update the timestamp if ad was shown
         if (shown) {
           await updateLastAppOpenAdTime();
+        } else {
+          // If ad wasn't shown, try directly with adService
+          console.log('Trying direct adService.showAppOpenAd() call');
+          const directShown = await adService.showAppOpenAd();
+          if (directShown) {
+            console.log('Direct app open ad shown successfully');
+            await updateLastAppOpenAdTime();
+          }
         }
       } else {
-        console.log('Skipping app open ad due to frequency cap (12-hour interval)');
+        console.log('Skipping app open ad due to frequency cap (1-hour interval)');
       }
 
       // Mark initial start as complete regardless of ad result
@@ -150,20 +179,44 @@ export const AppStartAdManager = () => {
 
     // Handle app state changes (background to foreground)
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+      console.log(`App state changing from ${appState.current} to ${nextAppState}`);
+
       if (
         appState.current.match(/inactive|background/) &&
         nextAppState === 'active' &&
         !isInitialStart.current
       ) {
+        console.log('App coming to foreground, checking if we should show an app open ad');
+
+        // Force load a new app open ad
+        adService.loadAppOpenAd();
+
+        // Wait a bit for the ad to load
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         // Check both our custom frequency cap and the ad manager's cap
         const shouldShowAd = await checkLastAppOpenAdTime();
+        const adManagerAllows = adManager.canShowAppOpenAd();
 
-        if (shouldShowAd && adManager.canShowAppOpenAd()) {
+        console.log('Custom frequency cap allows ad?', shouldShowAd);
+        console.log('Ad manager allows ad?', adManagerAllows);
+
+        if (shouldShowAd && adManagerAllows) {
+          console.log('Attempting to show app open ad on app resume');
           const shown = await loadAndShowAppOpenAd(true);
+          console.log('App open ad shown on resume?', shown);
 
           // Update the timestamp if ad was shown
           if (shown) {
             await updateLastAppOpenAdTime();
+          } else {
+            // If ad wasn't shown, try directly with adService
+            console.log('Trying direct adService.showAppOpenAd() call on resume');
+            const directShown = await adService.showAppOpenAd();
+            if (directShown) {
+              console.log('Direct app open ad shown successfully on resume');
+              await updateLastAppOpenAdTime();
+            }
           }
         } else {
           console.log('Ad frequency cap prevented showing app open ad on app resume');

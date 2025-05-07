@@ -75,53 +75,88 @@ const isAppOpenAdAvailable = (): boolean => {
 const loadAppOpenAd = () => {
   // Don't try to load if already loading
   if (isAppOpenAdLoading) {
+    console.log('App open ad is already loading, skipping duplicate load');
     return () => { };
   }
 
+  console.log('Starting to load app open ad');
   isAppOpenAdLoading = true;
   isAppOpenAdLoaded = false;
 
-  const adUnitId = getAdUnitId('appOpen');
-  appOpenAd = AppOpenAd.createForAdRequest(adUnitId);
+  try {
+    // Clean up previous ad instance if it exists
+    if (appOpenAd) {
+      appOpenAd = null;
+    }
 
-  const unsubscribeLoaded = appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
-    console.log('App open ad loaded');
-    appOpenAdLoadTime = Date.now();
-    isAppOpenAdLoaded = true;
+    const adUnitId = getAdUnitId('appOpen');
+    console.log('Using app open ad unit ID:', adUnitId);
+
+    // Create the ad with non-personalized option to avoid consent issues
+    appOpenAd = AppOpenAd.createForAdRequest(adUnitId, {
+      requestNonPersonalizedAdsOnly: true,
+    });
+
+    const unsubscribeLoaded = appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
+      console.log('App open ad loaded successfully');
+      appOpenAdLoadTime = Date.now();
+      isAppOpenAdLoaded = true;
+      isAppOpenAdLoading = false;
+    });
+
+    const unsubscribeClosed = appOpenAd.addAdEventListener(AdEventType.CLOSED, () => {
+      console.log('App open ad closed');
+      isAppOpenAdLoaded = false;
+      // Reload the ad for next time after a short delay
+      setTimeout(() => {
+        loadAppOpenAd();
+      }, 1000);
+    });
+
+    const unsubscribeError = appOpenAd.addAdEventListener(AdEventType.ERROR, (error) => {
+      console.error('App open ad error:', error);
+      appOpenAd = null;
+      isAppOpenAdLoaded = false;
+      isAppOpenAdLoading = false;
+
+      // Retry loading after error with a delay
+      setTimeout(() => {
+        loadAppOpenAd();
+      }, 5000); // Wait 5 seconds before retry
+    });
+
+    // Start loading with error handling
+    try {
+      console.log('Calling load() on app open ad');
+      appOpenAd.load();
+    } catch (loadError) {
+      console.error('Error initiating app open ad load:', loadError);
+      isAppOpenAdLoading = false;
+    }
+
+    return () => {
+      unsubscribeLoaded();
+      unsubscribeClosed();
+      unsubscribeError();
+    };
+  } catch (error) {
+    console.error('Error setting up app open ad:', error);
     isAppOpenAdLoading = false;
-  });
-
-  const unsubscribeClosed = appOpenAd.addAdEventListener(AdEventType.CLOSED, () => {
-    console.log('App open ad closed');
-    isAppOpenAdLoaded = false;
-    // Reload the ad for next time
-    loadAppOpenAd();
-  });
-
-  const unsubscribeError = appOpenAd.addAdEventListener(AdEventType.ERROR, (error) => {
-    console.error('App open ad error:', error);
-    appOpenAd = null;
-    isAppOpenAdLoaded = false;
-    isAppOpenAdLoading = false;
-  });
-
-  // Start loading
-  appOpenAd.load();
-
-  return () => {
-    unsubscribeLoaded();
-    unsubscribeClosed();
-    unsubscribeError();
-  };
+    return () => { };
+  }
 };
 
 // Show an app open ad
 const showAppOpenAd = async (): Promise<boolean> => {
+  console.log('Attempting to show app open ad');
+  console.log('Is app open ad available?', isAppOpenAdAvailable());
+
   if (!isAppOpenAdAvailable()) {
     console.log('App open ad not available or not loaded yet');
 
     // If not already loading, start loading a new one
     if (!isAppOpenAdLoading) {
+      console.log('Starting to load a new app open ad');
       loadAppOpenAd();
     }
 
@@ -130,7 +165,9 @@ const showAppOpenAd = async (): Promise<boolean> => {
 
   try {
     if (appOpenAd && isAppOpenAdLoaded) {
+      console.log('Showing app open ad now');
       await appOpenAd.show();
+      console.log('App open ad shown successfully');
       return true;
     } else {
       console.log('App open ad not fully loaded yet');
