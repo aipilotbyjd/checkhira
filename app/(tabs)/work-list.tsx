@@ -217,12 +217,12 @@ export default function WorkListScreen() {
         </View>
 
         {/* Banner Ad at the top of the list */}
-        <BannerAdComponent containerStyle={{ marginTop: -10 }} />
+        <BannerAdComponent size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} containerStyle={{ marginTop: -10 }} />
 
         {/* Work list with native ads */}
         {workList.map((item: Work, index: number) => {
-          // Insert a native ad after every 4 items
-          const showNativeAd = index > 0 && index % 4 === 0;
+          // Insert a native ad after every 8 items (reduced from 4)
+          const showNativeAd = index > 0 && index % 8 === 0;
 
           return (
             <React.Fragment key={item.id.toString()}>
@@ -233,8 +233,8 @@ export default function WorkListScreen() {
               )}
               <Pressable
                 onPress={async () => {
-                  // Show interstitial ad with 20% probability
-                  if (Math.random() < 0.2) {
+                  // Show interstitial ad with 10% probability (reduced from 20%)
+                  if (Math.random() < 0.1) {
                     await showInterstitialAd();
                   }
                   router.push(`/work/${item.id}/edit`);

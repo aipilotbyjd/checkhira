@@ -136,6 +136,7 @@
     "pleaseEnterDescription": "कृपया वर्णन दर्ज करें",
     "pleaseEnterValidAmount": "कृपया वैध राशि दर्ज करें",
     "failedToLoadWorkEntries": "काम प्रविष्टियाँ लोड नहीं हो सकी। कृपया पुनः प्रयास करें।",
+    "failedToDeleteWork": "Failed to delete work entry. Please try again.",
     "failedToGetUnreadNotificationsCount": "अपठित सूचनाओं की गिनती लोड नहीं हो सकी। कृपया पुनः प्रयास करें।",
     "howWeUseYourInformation": "हम आपकी जानकारी कैसे उपयोग करते हैं",
     "howWeUseYourInformationDesc": "हम आपकी जानकारी को आपके लिए उपयुक्त और आवश्यक होने पर उपयोग करते हैं।",

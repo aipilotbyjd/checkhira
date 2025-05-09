@@ -264,22 +264,28 @@ export default function AddWork() {
       user_id: user?.id,
     };
 
-    // Show an interstitial ad before saving
-    await showInterstitialAd();
+    // router.back(); // Navigation moved to after successful save and ad
 
-    // Show immediate feedback
-    router.back();
-
-    // Perform the API call after navigation
     try {
       const result = await api.post('/works', workData);
-      if (result) {
-        showToast('Work entries saved successfully!');
+      if (result) { // Assuming result indicates success
+        // Data saved successfully
+        showToast('Work entries saved successfully!'); // Show toast first
+
+        // THEN show the interstitial ad
+        await showInterstitialAd();
+
+        // THEN navigate back
+        // Ensure router is available here. If it's part of a conditional hook, ensure it's stable.
+        if (router) {
+          router.back();
+        }
       }
+      // No explicit else here, error toast will be handled by catch block
     } catch (error) {
-      // If there's an error, notify the user
       const errorMessage = error instanceof ApiError ? error.message : 'Failed to save work entries';
       showToast(errorMessage, 'error');
+      // Do NOT show ad if saving failed
     } finally {
       setIsSaving(false);
     }

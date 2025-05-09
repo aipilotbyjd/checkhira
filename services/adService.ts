@@ -234,97 +234,152 @@ let rewardedAd: RewardedAd | null = null;
 let isRewardedAdLoading = false;
 
 const loadRewardedAd = () => {
-  // Prevent multiple simultaneous load attempts
+  if (isRewardedAdLoading && rewardedAd && rewardedAd.loaded) {
+    console.log('Rewarded ad: Already loaded and ready.');
+    return () => {}; // No new listeners to cleanup if ad is already loaded
+  }
   if (isRewardedAdLoading) {
-    console.log('Rewarded ad is already loading');
-    return () => {};
+    console.log('Rewarded ad: Already in the process of loading.');
+    return () => {}; // Don't attach new listeners or create new ad object if already loading
   }
 
+  console.log('Rewarded ad: Attempting to load a new ad...');
   isRewardedAdLoading = true;
 
+  // Create a new ad instance.
+  // react-native-google-mobile-ads recommends creating a new instance for each load.
+  const adUnitId = getAdUnitId('rewarded');
+  rewardedAd = RewardedAd.createForAdRequest(adUnitId, {
+    requestNonPersonalizedAdsOnly: true,
+  });
+  console.log(`Rewarded ad: Created new instance for unit ID: ${adUnitId}`);
+
+  // Define a variable to hold the unsubscribe function for LOADED event
+  let unsubscribeLoaded: undefined | (() => void);
+  // Define a variable to hold the unsubscribe function for ERROR event
+  let unsubscribeLoadError: undefined | (() => void);
+
+  // Listener for when the ad is loaded successfully
+  unsubscribeLoaded = rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
+    console.log('Rewarded ad: Loaded successfully (event listener in loadRewardedAd).');
+    isRewardedAdLoading = false;
+  });
+
+  // Listener for errors specifically during the ad loading process
+  unsubscribeLoadError = rewardedAd.addAdEventListener(AdEventType.ERROR, (error) => {
+    console.error('Rewarded ad: Load-time error (event listener in loadRewardedAd):', error);
+    isRewardedAdLoading = false;
+    // Clean up these specific listeners as this ad instance failed to load
+    if (typeof unsubscribeLoaded === 'function') unsubscribeLoaded();
+    if (typeof unsubscribeLoadError === 'function') unsubscribeLoadError();
+    
+    // Optional: Retry loading after a delay. 
+    // This creates a new ad instance and new set of listeners.
+    setTimeout(() => {
+      if (!isRewardedAdLoading) { // Check flag again before retrying
+         console.log('Rewarded ad: Retrying load after previous load-time error...');
+         loadRewardedAd(); // This will call the main loadRewardedAd function again
+      }
+    }, 7000); // Retry after 7 seconds
+  });
+
+  // Start loading the ad
   try {
-    // Clean up previous ad instance if it exists
-    if (rewardedAd) {
-      rewardedAd = null;
+    console.log('Rewarded ad: Calling .load() on the new instance.');
+    rewardedAd.load();
+  } catch (loadCatchError) {
+    console.error('Rewarded ad: Critical error during .load() call (in loadRewardedAd):', loadCatchError);
+    isRewardedAdLoading = false;
+    // Clean up listeners if .load() itself throws an immediate error
+    if (typeof unsubscribeLoaded === 'function') unsubscribeLoaded();
+    if (typeof unsubscribeLoadError === 'function') unsubscribeLoadError();
+    return () => {}; // Return an empty cleanup
+  }
+
+  // Return a cleanup function for these load-time listeners.
+  return () => {
+    console.log('Rewarded ad: Cleaning up load-time listeners (from loadRewardedAd).');
+    if (typeof unsubscribeLoaded === 'function') unsubscribeLoaded();
+    if (typeof unsubscribeLoadError === 'function') unsubscribeLoadError();
+  };
+};
+
+// Define a return type for showing rewarded ads
+export interface ShowRewardedAdResult {
+  shown: boolean;
+  rewardEarned: boolean;
+  error?: any; // Optional error details
+}
+
+const showRewardedAd = async (): Promise<ShowRewardedAdResult> => {
+  if (!rewardedAd || !rewardedAd.loaded) {
+    console.log('Rewarded ad not available or not loaded yet.');
+    // Attempt to load an ad for the next opportunity if not already loading
+    if (!isRewardedAdLoading) {
+        loadRewardedAd();
     }
+    return { shown: false, rewardEarned: false };
+  }
 
-    const adUnitId = getAdUnitId('rewarded');
-    rewardedAd = RewardedAd.createForAdRequest(adUnitId, {
-      requestNonPersonalizedAdsOnly: true, // Use non-personalized ads to avoid consent issues
-    });
+  // Keep a reference to the current ad instance for the listeners
+  const currentRewardedAd = rewardedAd;
 
-    const unsubscribeLoaded = rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
-      console.log('Rewarded ad loaded successfully');
-      isRewardedAdLoading = false;
-    });
+  return new Promise(async (resolve) => {
+    let earnedReward = false;
+    // let rewardDetails: { type: string; amount: number } | null = null; // Store reward details
 
-    const unsubscribeEarned = rewardedAd.addAdEventListener(
+    const unsubscribeEarned = currentRewardedAd.addAdEventListener(
       RewardedAdEventType.EARNED_REWARD,
       (reward) => {
-        console.log('User earned reward:', reward);
+        console.log('User earned reward in showRewardedAd:', reward);
+        earnedReward = true;
+        // rewardDetails = reward; // Capture reward details
       }
     );
 
-    const unsubscribeClosed = rewardedAd.addAdEventListener(AdEventType.CLOSED, () => {
-      console.log('Rewarded ad closed');
-      // Schedule a new ad load after a short delay
-      setTimeout(() => {
-        loadRewardedAd();
-      }, 1000);
-    });
-
-    const unsubscribeError = rewardedAd.addAdEventListener(AdEventType.ERROR, (error) => {
-      console.error('Rewarded ad error:', error);
-      isRewardedAdLoading = false;
-
-      // Retry loading after error with a delay
-      setTimeout(() => {
-        loadRewardedAd();
-      }, 5000); // Wait 5 seconds before retry
-    });
-
-    // Start loading with error handling
-    try {
-      rewardedAd.load();
-    } catch (loadError) {
-      console.error('Error initiating rewarded ad load:', loadError);
-      isRewardedAdLoading = false;
-    }
-
-    return () => {
-      unsubscribeLoaded();
+    const unsubscribeClosed = currentRewardedAd.addAdEventListener(AdEventType.CLOSED, () => {
+      console.log('Rewarded ad closed by user.');
       unsubscribeEarned();
       unsubscribeClosed();
       unsubscribeError();
-    };
-  } catch (error) {
-    console.error('Error setting up rewarded ad:', error);
-    isRewardedAdLoading = false;
-    return () => {};
-  }
-};
+      resolve({ shown: true, rewardEarned: earnedReward });
 
-const showRewardedAd = async (): Promise<boolean> => {
-  if (!rewardedAd) {
-    console.log('Rewarded ad not loaded yet');
-    loadRewardedAd();
-    return false;
-  }
+      // It's important to load a new ad for the next time AFTER this one is closed
+      // and all its event listeners are cleaned up.
+      setTimeout(() => {
+        loadRewardedAd();
+      }, 500);
+    });
 
-  if (!rewardedAd.loaded) {
-    console.log('Rewarded ad still loading');
-    return false;
-  }
+    const unsubscribeError = currentRewardedAd.addAdEventListener(AdEventType.ERROR, (error) => {
+      console.error('Error showing or during rewarded ad:', error);
+      unsubscribeEarned();
+      unsubscribeClosed();
+      unsubscribeError();
+      resolve({ shown: false, rewardEarned: false, error: error });
 
-  try {
-    await rewardedAd.show();
-    return true;
-  } catch (error) {
-    console.error('Error showing rewarded ad:', error);
-    // Reload the ad after error
-    loadRewardedAd();
-    return false;
-  }
+      setTimeout(() => {
+        loadRewardedAd();
+      }, 1000); 
+    });
+
+    try {
+      console.log('Attempting to show rewarded ad from adService...');
+      await currentRewardedAd.show();
+      console.log('Rewarded ad presented.');
+      // Now we wait for EARNED_REWARD or CLOSED events.
+    } catch (showError) {
+      console.error('Error directly from rewardedAd.show():', showError);
+      unsubscribeEarned();
+      unsubscribeClosed();
+      unsubscribeError();
+      resolve({ shown: false, rewardEarned: false, error: showError });
+      
+      setTimeout(() => {
+        loadRewardedAd();
+      }, 1000);
+    }
+  });
 };
 
 /**

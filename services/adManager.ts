@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { adService } from './adService';
+import { adService, ShowRewardedAdResult } from './adService'; // Import ShowRewardedAdResult
 
 // Constants for ad frequency control
 const AD_FREQUENCY = {
@@ -229,18 +229,18 @@ class AdManagerService {
   }
 
   // Show a rewarded ad if frequency rules allow
-  public async showRewarded(): Promise<boolean> {
+  public async showRewarded(): Promise<ShowRewardedAdResult> {
     if (!this.canShowRewarded()) {
-      return false;
+      return { shown: false, rewardEarned: false }; // Return the specific result type
     }
 
-    const shown = await adService.showRewardedAd();
+    const result = await adService.showRewardedAd();
 
-    if (shown) {
+    if (result.shown) { // Check the 'shown' property of the result
       await this.updateAdTimestamp('rewarded');
     }
 
-    return shown;
+    return result; // Return the full result object
   }
 
   // Check if we can show an app open ad

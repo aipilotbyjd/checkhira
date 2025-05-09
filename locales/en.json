@@ -142,6 +142,7 @@
   "pleaseEnterDescription": "Please enter a description",
   "pleaseEnterValidAmount": "Please enter a valid amount",
   "failedToLoadWorkEntries": "Failed to load work entries. Please try again.",
+  "failedToDeleteWork": "Failed to delete work entry. Please try again.",
   "failedToGetUnreadNotificationsCount": "Failed to get unread notifications count. Please try again.",
   "howWeUseYourInformation": "How We Use Your Information",
   "howWeUseYourInformationDesc": "We use your information to provide you with the best possible service.",

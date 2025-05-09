@@ -128,38 +128,41 @@ export default function EditPayment() {
     try {
       setIsUpdating(true);
 
-      // Show an interstitial ad before updating
-      await showInterstitialAd();
-
+      // `execute` from useApi handles success/error toasts
       const result = await execute(() => api.put(`/payments/${id}`, paymentData));
-      if (result) {
-        showToast('Payment updated successfully!');
-        router.replace('/(tabs)/payments');
+    
+      if (result) { // `execute` throws on error, so this means success
+        // Ad after successful update
+        await showInterstitialAd();
+        router.replace('/(tabs)/payments'); // Navigate after ad
       }
     } catch (error) {
-      showToast('Failed to update payment', 'error');
+      // Error is already handled by useApi's showErrorToast
+      // No need to show ad if update failed
     } finally {
       setIsUpdating(false);
     }
   };
 
   const handleDelete = async () => {
+    // setShowDeleteModal(false); // Moved to finally or after success
     try {
       setIsDeleting(true);
 
-      // Show an interstitial ad before deleting
-      await showInterstitialAd();
-
+      // `executeDelete` from useApi handles success/error toasts
       const result = await executeDelete(() => api.delete(`/payments/${id}`));
-      if (result) {
-        showToast('Payment deleted successfully!');
-        router.replace('/(tabs)/payments');
+    
+      if (result) { // `executeDelete` throws on error, so this means success
+        // Ad after successful delete
+        await showInterstitialAd();
+        router.replace('/(tabs)/payments'); // Navigate after ad
       }
     } catch (error) {
-      showToast('Failed to delete payment', 'error');
+      // Error is already handled by useApi's showErrorToast
+      // No need to show ad if delete failed
     } finally {
       setIsDeleting(false);
-      setShowDeleteModal(false);
+      setShowDeleteModal(false); // Ensure modal is closed
     }
   };
 

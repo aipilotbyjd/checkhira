@@ -166,18 +166,19 @@ export default function EditWork() {
       user_id: user?.id,
     };
 
-    // Show an interstitial ad before updating
-    await showInterstitialAd();
-
-    // Optimistic update - navigate back immediately
-    router.replace('/(tabs)/work-list');
-
-    // Perform the API call after navigation
     try {
-      const result = await execute(() => api.put(`/works/${id}`, workData));
-      if (result) {
+      const response = await execute(() => api.put(`/works/${id}`, workData)); // `execute` from useApi handles success/error toasts
+    
+      if (response) { // `execute` will throw on error, so if we are here, it's a success
         await trackPositiveAction();
+        // Ad after successful update and positive action tracking
+        await showInterstitialAd(); 
+        router.replace('/(tabs)/work-list'); // Navigate after ad
       }
+    } catch (error) {
+      // Error is already handled by useApi's showErrorToast
+      // console.error("Update failed:", error); // Optional: for local debugging
+      // Do NOT show ad if update failed
     } finally {
       setIsUpdating(false);
     }
@@ -191,14 +192,28 @@ export default function EditWork() {
     setIsDeleting(true);
     setShowDeleteWorkModal(false);
 
-    // Show an interstitial ad before deleting
-    await showInterstitialAd();
-
-    const result = await deleteWork(Number(id));
-    if (result) {
-      router.back();
+    try {
+      // Assuming deleteWork is from useWorkOperations and handles its own toasts/errors
+      // And returns a truthy value on success
+      const success = await deleteWork(Number(id)); 
+    
+      if (success) {
+        // Ad after successful delete
+        await showInterstitialAd();
+        router.back(); // Navigate after ad
+      }
+      // If deleteWork internally throws an error, the catch block in useWorkOperations should handle it.
+      // If it returns false for failure, we might need an else here to show a generic error toast if not already handled.
+    } catch (error) {
+        // This catch block is if deleteWork itself throws an unhandled error
+        // or if there's an issue not caught by useWorkOperations.
+        // useWorkOperations should ideally handle its own error toasts.
+        console.error("Delete operation failed:", error);
+        showToast(t('failedToDeleteWork'), 'error'); // Show a fallback error toast
+        // Do NOT show ad if delete failed
+    } finally {
+      setIsDeleting(false);
     }
-    setIsDeleting(false);
   };
 
   if (isLoadingData || isApiLoading || isDeleteLoading) {

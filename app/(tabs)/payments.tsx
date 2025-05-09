@@ -141,14 +141,8 @@ export default function PaymentsList() {
           </Text>
           <View className="flex-row space-x-3">
             <Pressable
-              onPress={async () => {
-                // Show rewarded ad for premium feature with 50% probability
-                if (Math.random() < 0.5) {
-                  const rewarded = await showRewardedAd();
-                  if (rewarded) {
-                    showToast('Premium feature unlocked!');
-                  }
-                }
+              onPress={() => {
+                // Direct navigation without forced rewarded ad
                 router.push('/payments/add');
               }}
               className="mr-2 rounded-full p-3"
@@ -208,6 +202,7 @@ export default function PaymentsList() {
 
         {/* Banner ad at the top of the list */}
         <BannerAdComponent
+          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
           containerStyle={{ marginBottom: 10, marginTop: -10 }}
         />
 
@@ -221,8 +216,8 @@ export default function PaymentsList() {
         ) : (
           <>
             {paymentsList.map((item, index) => {
-              // Insert a native ad after every 5 items
-              const showNativeAd = index > 0 && index % 5 === 0;
+              // Insert a native ad after every 10 items (reduced from 5)
+              const showNativeAd = index > 0 && index % 10 === 0;
 
               return (
                 <React.Fragment key={item.id}>
@@ -233,8 +228,8 @@ export default function PaymentsList() {
                   )}
                   <Pressable
                     onPress={async () => {
-                      // Show interstitial ad with 25% probability
-                      if (Math.random() < 0.25) {
+                      // Show interstitial ad with 10% probability (reduced from 25%)
+                      if (Math.random() < 0.1) {
                         await showInterstitialAd();
                       }
                       router.push(`/payments/${item.id}/edit`);
@@ -282,10 +277,7 @@ export default function PaymentsList() {
             })}
 
             {/* Banner ad at the bottom of the list */}
-            <BannerAdComponent
-              size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-              containerStyle={{ marginTop: 10, marginBottom: 20 }}
-            />
+            <BannerAdComponent size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
           </>
         )}
 

@@ -132,6 +132,7 @@
   "pleaseEnterDescription": "કૃપા કરીને વર્ણન દાખલ કરો",
   "pleaseEnterValidAmount": "કૃપા કરીને વૈધ રકમ દાખલ કરો",
   "failedToLoadWorkEntries": "કામની નોંધો લાવવામાં નિષ્ફળ. કૃપા કરીને ફરીથી પ્રયાસ કરો.",
+  "failedToDeleteWork": "Failed to delete work entry. Please try again.",
   "failedToGetUnreadNotificationsCount": "અમલાવવાની નોંધો લાવવામાં નિષ્ફળ. કૃપા કરીને ફરીથી પ્રયાસ કરો.",
   "howWeUseYourInformation": "અમે તમારી જાનકારી વિષે શું કરીએ છીએ",
   "howWeUseYourInformationDesc": "અમે તમારી જાનકારી વિષે શું કરીએ છીએ",

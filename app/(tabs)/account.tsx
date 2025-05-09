@@ -69,15 +69,18 @@ export default function Account() {
     {
       title: t('editProfile'),
       icon: 'account-edit',
+      href: '/account/edit-profile',
+    },
+    {
+      title: 'Premium Features',
+      icon: 'star-circle',
       onPress: async () => {
-        // Show rewarded ad with 40% probability
-        if (Math.random() < 0.4) {
-          const rewarded = await showRewardedAd();
-          if (rewarded) {
-            showToast('Premium profile editing unlocked!');
-          }
+        // Optional rewarded ad for premium features
+        showToast('Watch an ad to unlock premium features');
+        const rewarded = await showRewardedAd();
+        if (rewarded) {
+          showToast('Premium features unlocked!');
         }
-        router.push('/account/edit-profile');
       },
     },
     {
@@ -273,21 +276,16 @@ export default function Account() {
             ))}
           </View>
 
-          {/* Native Ad */}
-          <View className="mt-6">
-            <NativeAdComponent adType="medium" />
+          {/* Banner Ad - using standard size for less intrusion */}
+          <View className="mt-6 mb-2">
+            <BannerAdComponent size={BannerAdSize.BANNER} />
           </View>
 
-          {/* Banner Ad */}
-          <View className="mt-4">
-            <BannerAdComponent size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
-          </View>
-
-          {!environment.production && (
+          {/* {!environment.production && (
             <View className="mt-4 mb-2">
               <CrashlyticsTest />
             </View>
-          )}
+          )} */}
 
           <View className="mt-4 mb-4">
             <Pressable

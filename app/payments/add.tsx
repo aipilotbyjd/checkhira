@@ -14,6 +14,7 @@ import { Payment, PaymentSource } from '../../types/payment';
 import { useApi } from '../../hooks/useApi';
 import { api } from '../../services/axiosClient';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useInterstitialAd } from '../../components/ads/InterstitialAdComponent';
 
 export default function AddPayment() {
   const router = useRouter();
@@ -54,6 +55,7 @@ export default function AddPayment() {
 
   const { settings } = useAppSettings();
   const { showToast } = useToast();
+  const { showInterstitialAd } = useInterstitialAd(); // Initialize the hook
 
   useEffect(() => {
     loadPaymentSources();
@@ -101,8 +103,10 @@ export default function AddPayment() {
       };
 
       const result = await execute(() => api.post('/payments', paymentData));
-      if (result) {
-        router.back();
+      if (result) { // 'execute' from useApi shows success toast and throws on error
+        // Ad after successful save
+        await showInterstitialAd();
+        router.back(); // Navigate after ad
       }
     } finally {
       setIsSaving(false);

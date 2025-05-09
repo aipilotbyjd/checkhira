@@ -121,8 +121,8 @@ export default function Home() {
   };
 
   const handleQuickActionPress = async (action: 'work' | 'payment', id: number) => {
-    // Show interstitial ad with 30% probability
-    if (Math.random() < 0.3) {
+    // Show interstitial ad with 15% probability (reduced from 30%)
+    if (Math.random() < 0.15) {
       await showInterstitialAd();
     }
 

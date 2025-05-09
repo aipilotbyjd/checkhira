@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { adService } from '../../services/adService';
+import { adService, ShowRewardedAdResult } from '../../services/adService'; // Import ShowRewardedAdResult
 import { adManager } from '../../services/adManager';
 
 type RewardedAdComponentProps = {
@@ -48,41 +48,45 @@ export const useRewardedAd = () => {
     };
   }, []);
 
-  const showRewardedAd = async (): Promise<boolean> => {
-    // Reset attempts counter
+  const showRewardedAd = async (): Promise<ShowRewardedAdResult> => {
     adLoadAttempts.current = 0;
 
-    // Try to show the ad with retry logic
-    const tryShowAd = async (): Promise<boolean> => {
-      // Check if we've exceeded max attempts
+    const tryShowAd = async (): Promise<ShowRewardedAdResult> => {
       if (adLoadAttempts.current >= maxAdLoadAttempts) {
-        console.log(`Exceeded maximum ad load attempts (${maxAdLoadAttempts})`);
-        return false;
+        console.log(`Rewarded Ad: Exceeded maximum load attempts (${maxAdLoadAttempts})`);
+        return { shown: false, rewardEarned: false, error: 'Max attempts reached' };
       }
 
-      // Increment attempt counter
       adLoadAttempts.current++;
+      console.log(`Rewarded Ad: Attempt ${adLoadAttempts.current} to show.`);
 
-      // Use the ad manager to respect frequency caps
-      const shown = await adManager.showRewarded();
+      const result = await adManager.showRewarded();
 
-      if (shown) {
-        return true;
-      } else if (adLoadAttempts.current < maxAdLoadAttempts) {
-        // Wait a bit before retrying
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      if (result.shown) {
+        console.log('Rewarded Ad: Successfully shown.');
+        return result;
+      }
+      // If not shown, but there was no specific error from adManager (e.g. frequency cap)
+      // and we have attempts left, try reloading and retrying.
+      // If result.error exists, it means adService already tried and failed, so maybe don't retry here unless it's a specific case.
+      // For now, we retry if not shown and attempts are left.
+      else if (adLoadAttempts.current < maxAdLoadAttempts) {
+        console.log('Rewarded Ad: Not shown, attempting retry...');
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before reloading
 
-        // Load a new ad
-        adService.loadRewardedAd();
+        // It's good practice to ensure an ad is loading for the next attempt.
+        // adService.loadRewardedAd() is already called by adManager/adService internally on failures/closes.
+        // However, an explicit call here can sometimes help if the ad pool was exhausted.
+        // For now, let's trust the internal reloading logic of adService.
+        // adService.loadRewardedAd(); 
+        // await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for potential load
 
-        // Wait for ad to load
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Try again
-        return tryShowAd();
+        return tryShowAd(); // Recursive call to retry
       }
 
-      return false;
+      console.log('Rewarded Ad: Failed to show after all attempts or ad not shown and no retries left.');
+      // Ensure a consistent ShowRewardedAdResult is returned on failure
+      return result; // Return the last result from adManager, which might contain error info
     };
 
     return tryShowAd();
