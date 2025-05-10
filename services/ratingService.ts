@@ -1,6 +1,7 @@
 
 import { Alert, Platform, Linking } from 'react-native';
 import * as StoreReview from 'expo-store-review';
+import Constants from 'expo-constants'; // Import Constants
 import { storage } from '../utils/storage';
 import { RATING_CONFIG } from '../config/ratingConfig';
 
@@ -113,6 +114,66 @@ class RatingService {
   async resetRatingFlags(): Promise<void> {
     await storage.setValue(RATING_CONFIG.STORAGE_KEYS.HAS_RATED, 'false');
     await storage.setValue(RATING_CONFIG.STORAGE_KEYS.LAST_PROMPT, '0');
+  }
+
+  async promptForRatingManually(translations?: RatingTranslations): Promise<void> {
+    try {
+      const defaultTranslations: RatingTranslations = {
+        enjoyingApp: 'Enjoying Checkhira?',
+        rateExperience: 'Would you like to rate your experience? Your feedback helps us improve!',
+        notNow: 'Not Now',
+        rateNow: 'Rate Now'
+      };
+      const t = translations || defaultTranslations;
+
+      return new Promise<void>((resolve) => {
+        const handleManualRate = async () => {
+          try {
+            // Prefer StoreReview API
+            if (await StoreReview.isAvailableAsync() && await StoreReview.hasAction()) {
+              await StoreReview.requestReview();
+            } else {
+              // Fallback to linking to store page if StoreReview is not available or has no action
+              const storeUrl = Platform.select({
+                ios: `https://apps.apple.com/app/id${process.env.EXPO_PUBLIC_APP_STORE_ID || Constants.expoConfig?.extra?.appStoreId}`,
+                android: `https://play.google.com/store/apps/details?id=${Constants.expoConfig?.android?.package || 'com.jaydeepdhrangiya.checkhira'}`,
+              });
+              if (storeUrl && await Linking.canOpenURL(storeUrl)) {
+                await Linking.openURL(storeUrl);
+              } else {
+                console.warn('Could not open store URL. StoreReview also unavailable.');
+                Alert.alert('Rate App', 'Could not open the app store page at this moment.');
+              }
+            }
+            // DO NOT set HAS_RATED or LAST_PROMPT for manual prompts
+          } catch (error) {
+            console.error('Error requesting review (manual):', error);
+            Alert.alert('Error', 'Failed to open the app store.');
+          }
+          resolve();
+        };
+
+        const handleManualClose = () => {
+          // DO NOT update LAST_PROMPT for manual prompts
+          resolve();
+        };
+
+        if (typeof global.showRatingDialog === 'function') {
+          global.showRatingDialog({
+            translations: t,
+            onClose: handleManualClose,
+            onRate: handleManualRate
+          });
+        } else {
+          console.error('Rating dialog not initialized (manual call)');
+          Alert.alert('Error', 'Rating feature is currently unavailable. Please try again later.');
+          resolve();
+        }
+      });
+    } catch (error) {
+      console.error('Error in manual rating prompt process:', error);
+      Alert.alert('Error', 'Could not display the rating prompt due to an unexpected issue.');
+    }
   }
 }
 

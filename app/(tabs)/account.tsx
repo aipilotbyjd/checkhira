@@ -102,17 +102,20 @@ export default function Account() {
       title: t('rateApp'),
       icon: 'star',
       onPress: async () => {
-        if (!ratingService) return;
+        // No need to check for ratingService if it's a top-level export, but good practice if it could be undefined.
+        // if (!ratingService) return;
         try {
-          await ratingService.incrementAppUsage();
-          await ratingService.promptForRating({
-            enjoyingApp: t('enjoyingApp'),
+          // Call the new manual prompt method
+          await ratingService.promptForRatingManually({
+            enjoyingApp: t('enjoyingApp'), // Or use custom messages for manual prompt if desired
             rateExperience: t('rateExperience'),
             notNow: t('notNow'),
             rateNow: t('rateNow')
           });
         } catch (error) {
-          console.error('Error showing rating prompt:', error);
+          // The service method itself should handle user-facing alerts for critical errors.
+          // This console.error is for development debugging.
+          console.error('Error triggering manual rating prompt from account page:', error);
         }
       },
     },
