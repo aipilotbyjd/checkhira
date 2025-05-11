@@ -408,11 +408,14 @@ export default function EditWork() {
         <View className="space-y-3">
           <Pressable
             onPress={handleUpdate}
-            disabled={isUpdating}
+            disabled={isUpdating || isApiLoading}
             className="mb-4 rounded-2xl p-4"
-            style={{ backgroundColor: COLORS.primary }}>
+            style={{
+              backgroundColor: (isUpdating || isApiLoading) ? COLORS.gray[300] : COLORS.primary,
+              opacity: (isUpdating || isApiLoading) ? 0.7 : 1,
+            }}>
             <Text className="text-center text-lg font-semibold text-white">
-              {isUpdating ? t('Updating...') : t('editWork')}
+              {(isUpdating || isApiLoading) ? t('Updating...') : t('editWork')}
             </Text>
           </Pressable>
 

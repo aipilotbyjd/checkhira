@@ -22,7 +22,6 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { analyticsService } from '../../utils/analytics';
 import { BannerAdComponent, NativeAdComponent } from '../../components/ads';
-import { useInterstitialAd } from '../../components/ads/InterstitialAdComponent';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
 
 export default function WorkListScreen() {
@@ -31,7 +30,6 @@ export default function WorkListScreen() {
   const { showToast } = useToast();
   const actionSheetRef = useRef<ActionSheetRef>(null);
   const { t } = useLanguage();
-  const { showInterstitialAd } = useInterstitialAd();
 
   const [workList, setWorkList] = useState<Work[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -233,10 +231,6 @@ export default function WorkListScreen() {
               )}
               <Pressable
                 onPress={async () => {
-                  // Show interstitial ad with 10% probability (reduced from 20%)
-                  if (Math.random() < 0.1) {
-                    await showInterstitialAd();
-                  }
                   router.push(`/work/${item.id}/edit`);
                 }}
               >

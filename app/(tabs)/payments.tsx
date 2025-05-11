@@ -17,8 +17,6 @@ import { useAnalytics } from '../../hooks/useAnalytics';
 import { analyticsService } from '../../utils/analytics';
 import { BannerAdComponent, NativeAdComponent } from '../../components/ads';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
-import { useInterstitialAd } from '../../components/ads/InterstitialAdComponent';
-import { useRewardedAd } from '../../components/ads/RewardedAdComponent';
 
 export default function PaymentsList() {
   useAnalytics('PaymentsTabScreen');
@@ -35,8 +33,6 @@ export default function PaymentsList() {
   const { refreshUnreadCount } = useNotification();
   const { showToast } = useToast();
   const { t } = useLanguage();
-  const { showInterstitialAd } = useInterstitialAd();
-  const { showRewardedAd } = useRewardedAd();
 
   // Use the modern API hook pattern
   const { execute: executeGetPayments, isLoading } = useApi({
@@ -228,10 +224,6 @@ export default function PaymentsList() {
                   )}
                   <Pressable
                     onPress={async () => {
-                      // Show interstitial ad with 10% probability (reduced from 25%)
-                      if (Math.random() < 0.1) {
-                        await showInterstitialAd();
-                      }
                       router.push(`/payments/${item.id}/edit`);
                     }}
                     className="mb-4 rounded-xl p-4"

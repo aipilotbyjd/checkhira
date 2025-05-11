@@ -131,7 +131,7 @@ export default function EditPayment() {
 
       // `execute` from useApi handles success/error toasts
       const result = await execute(() => api.put(`/payments/${id}`, paymentData));
-    
+
       if (result) { // `execute` throws on error, so this means success
         // Ad after successful update
         await showRewardedAd();
@@ -152,7 +152,7 @@ export default function EditPayment() {
 
       // `executeDelete` from useApi handles success/error toasts
       const result = await executeDelete(() => api.delete(`/payments/${id}`));
-    
+
       if (result) { // `executeDelete` throws on error, so this means success
         // Ad after successful delete
         await showRewardedAd();
@@ -331,10 +331,14 @@ export default function EditPayment() {
       <View className="space-y-3 p-6">
         <Pressable
           onPress={handleUpdate}
+          disabled={isUpdating || isApiLoading}
           className="mb-4 rounded-2xl p-4"
-          style={{ backgroundColor: COLORS.primary }}>
+          style={{
+            backgroundColor: isUpdating || isApiLoading ? COLORS.gray[300] : COLORS.primary,
+            opacity: isUpdating || isApiLoading ? 0.7 : 1,
+          }}>
           <Text className="text-center text-lg font-semibold text-white">
-            {t('updatePayment')}
+            {isUpdating || isApiLoading ? t('Updating...') : t('updatePayment')}
           </Text>
         </Pressable>
 
