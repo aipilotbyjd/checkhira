@@ -2,21 +2,40 @@ import Constants from 'expo-constants';
 import { productionEnvironment } from './production';
 import { developmentEnvironment } from './development';
 
+/**
+ * Environment configuration interface
+ */
 export interface Environment {
-  apiUrl: string;
+  apiUrl: string | undefined;
   nodeEnv: string;
   oneSignalAppId: string | undefined;
   production: boolean;
-  appVersion: string;
-  appName: string;
-  appStoreId: string;
-  playStoreId: string;
-  supportEmail: string;
-  googleWebClientId?: string;
-  firebaseApiKey?: string;
-  privacyPolicyUrl?: string;
+  appVersion: string | undefined;
+  appName: string | undefined;
+  appStoreId: string | undefined;
+  playStoreId: string | undefined;
+  supportEmail: string | undefined;
+  googleWebClientId?: string | undefined;
+  googleIosClientId?: string | undefined;
+  googleAndroidClientId?: string | undefined;
+  firebaseApiKey?: string | undefined;
+  privacyPolicyUrl?: string | undefined;
+  termsUrl?: string | undefined;
+  adBannerAndroid?: string | undefined;
+  adBannerIos?: string | undefined;
+  adInterstitialAndroid?: string | undefined;
+  adInterstitialIos?: string | undefined;
+  adRewardedAndroid?: string | undefined;
+  adRewardedIos?: string | undefined;
+  adAppOpenAndroid?: string | undefined;
+  adAppOpenIos?: string | undefined;
+  adNativeAndroid?: string | undefined;
+  adNativeIos?: string | undefined;
 }
 
+/**
+ * Gets the environment configuration based on NODE_ENV
+ */
 const getEnvironmentConfig = (): Environment => {
   const nodeEnv = (process.env.NODE_ENV || 'development') as 'development' | 'production';
 
@@ -29,37 +48,14 @@ const getEnvironmentConfig = (): Environment => {
   }
 };
 
-// Get the base environment configuration
+/**
+ * Merges environment variables from different sources with the following priority:
+ * 1. process.env.EXPO_PUBLIC_* variables (highest priority)
+ * 2. Constants.expoConfig.extra values (medium priority)
+ * 3. Base environment config from development/production (lowest priority)
+ */
+// Get the base environment configuration based on NODE_ENV
 const baseEnvironment = getEnvironmentConfig();
 
-// Override with values from environment variables or Constants if available
-export const environment: Environment = {
-  ...baseEnvironment,
-  apiUrl: process.env.EXPO_PUBLIC_API_URL ||
-    Constants.expoConfig?.extra?.apiUrl ||
-    baseEnvironment.apiUrl,
-  oneSignalAppId: process.env.EXPO_PUBLIC_ONESIGNAL_APP_ID ||
-    Constants.expoConfig?.extra?.oneSignalAppId ||
-    baseEnvironment.oneSignalAppId,
-  appVersion: Constants.expoConfig?.version || baseEnvironment.appVersion,
-  appName: Constants.expoConfig?.name || baseEnvironment.appName,
-  supportEmail: process.env.EXPO_PUBLIC_SUPPORT_EMAIL ||
-    Constants.expoConfig?.extra?.supportEmail ||
-    baseEnvironment.supportEmail,
-  appStoreId: process.env.EXPO_PUBLIC_APP_STORE_ID ||
-    Constants.expoConfig?.extra?.appStoreId ||
-    baseEnvironment.appStoreId,
-  playStoreId: process.env.EXPO_PUBLIC_PLAY_STORE_ID ||
-    Constants.expoConfig?.extra?.playStoreId ||
-    baseEnvironment.playStoreId,
-  // Populate added variables
-  googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
-    Constants.expoConfig?.extra?.googleWebClientId ||
-    baseEnvironment.googleWebClientId,
-  firebaseApiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ||
-    Constants.expoConfig?.extra?.firebaseApiKey ||
-    baseEnvironment.firebaseApiKey,
-  privacyPolicyUrl: process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL ||
-    Constants.expoConfig?.extra?.privacyPolicyUrl ||
-    baseEnvironment.privacyPolicyUrl,
-};
+// Merge with values from Constants.expoConfig.extra and process.env
+export const environment: Environment = baseEnvironment;

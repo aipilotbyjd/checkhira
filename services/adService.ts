@@ -12,6 +12,7 @@ import {
   RequestConfiguration,
 } from 'react-native-google-mobile-ads';
 import * as TrackingTransparency from 'expo-tracking-transparency';
+import { environment } from '../config/environment';
 
 // TypeScript interfaces for ad unit IDs
 interface PlatformSpecificAdUnitId {
@@ -30,24 +31,24 @@ interface AdUnitIds {
 // Ad unit IDs - read from environment variables with fallback to TestIds
 const adUnitIds: AdUnitIds = {
   banner: {
-    android: process.env.EXPO_PUBLIC_AD_BANNER_ANDROID || TestIds.BANNER,
-    ios: process.env.EXPO_PUBLIC_AD_BANNER_IOS || TestIds.BANNER,
+    android: environment.adBannerAndroid || TestIds.BANNER,
+    ios: environment.adBannerIos || TestIds.BANNER,
   },
   interstitial: {
-    android: process.env.EXPO_PUBLIC_AD_INTERSTITIAL_ANDROID || TestIds.INTERSTITIAL,
-    ios: process.env.EXPO_PUBLIC_AD_INTERSTITIAL_IOS || TestIds.INTERSTITIAL,
+    android: environment.adInterstitialAndroid || TestIds.INTERSTITIAL,
+    ios: environment.adInterstitialIos || TestIds.INTERSTITIAL,
   },
   rewarded: {
-    android: process.env.EXPO_PUBLIC_AD_REWARDED_ANDROID || TestIds.REWARDED,
-    ios: process.env.EXPO_PUBLIC_AD_REWARDED_IOS || TestIds.REWARDED,
+    android: environment.adRewardedAndroid || TestIds.REWARDED,
+    ios: environment.adRewardedIos || TestIds.REWARDED,
   },
   appOpen: {
-    android: process.env.EXPO_PUBLIC_AD_APP_OPEN_ANDROID || TestIds.APP_OPEN,
-    ios: process.env.EXPO_PUBLIC_AD_APP_OPEN_IOS || TestIds.APP_OPEN,
+    android: environment.adAppOpenAndroid || TestIds.APP_OPEN,
+    ios: environment.adAppOpenIos || TestIds.APP_OPEN,
   },
   native: {
-    android: process.env.EXPO_PUBLIC_AD_NATIVE_ANDROID || TestIds.NATIVE,
-    ios: process.env.EXPO_PUBLIC_AD_NATIVE_IOS || TestIds.NATIVE,
+    android: environment.adNativeAndroid || TestIds.NATIVE,
+    ios: environment.adNativeIos || TestIds.NATIVE,
   },
 };
 
