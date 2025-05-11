@@ -4,12 +4,8 @@ module.exports = function (api) {
   // Define plugins array
   const plugins = [
     'react-native-reanimated/plugin',
+    'transform-remove-console'
   ];
-
-  // Add 'transform-remove-console' only in production
-  if (process.env.NODE_ENV === 'production') {
-    plugins.push('transform-remove-console');
-  }
 
   return {
     presets: [
