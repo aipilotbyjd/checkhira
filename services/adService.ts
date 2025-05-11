@@ -267,25 +267,27 @@ const loadRewardedAd = () => {
 
   // Listener for errors specifically during the ad loading process
   unsubscribeLoadError = rewardedAd.addAdEventListener(AdEventType.ERROR, (error) => {
-    console.error('Rewarded ad: Load-time error (event listener in loadRewardedAd):', error);
+    console.error(`Rewarded ad: Load-time error for ad unit ${adUnitId} (event listener in loadRewardedAd):`, error);
     isRewardedAdLoading = false;
     // Clean up these specific listeners as this ad instance failed to load
     if (typeof unsubscribeLoaded === 'function') unsubscribeLoaded();
     if (typeof unsubscribeLoadError === 'function') unsubscribeLoadError();
     
-    // Optional: Retry loading after a delay. 
-    // This creates a new ad instance and new set of listeners.
+    // Retry loading after a delay.
+    console.log(`Rewarded ad: Scheduling retry load for ${adUnitId} in 7 seconds due to load error.`);
     setTimeout(() => {
       if (!isRewardedAdLoading) { // Check flag again before retrying
-         console.log('Rewarded ad: Retrying load after previous load-time error...');
+         console.log(`Rewarded ad: Retrying load for ${adUnitId} after previous load-time error (7s passed).`);
          loadRewardedAd(); // This will call the main loadRewardedAd function again
+      } else {
+         console.log(`Rewarded ad: Skipping retry load for ${adUnitId} as another load is already in progress.`);
       }
     }, 7000); // Retry after 7 seconds
   });
 
   // Start loading the ad
   try {
-    console.log('Rewarded ad: Calling .load() on the new instance.');
+    console.log(`Rewarded ad: Calling .load() on new instance for unit ID: ${adUnitId}.`);
     rewardedAd.load();
   } catch (loadCatchError) {
     console.error('Rewarded ad: Critical error during .load() call (in loadRewardedAd):', loadCatchError);

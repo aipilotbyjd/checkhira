@@ -17,7 +17,7 @@ import { useRouter } from 'expo-router';
 import { useWorkOperations } from '../../hooks/useWorkOperations';
 import { formatDateForAPI } from '../../utils/dateFormatter';
 import { DefaultPrice, WorkEntry, WorkFormData } from '../../types/work';
-import { useInterstitialAd } from '../../components/ads/InterstitialAdComponent';
+import { useRewardedAd } from '../../components/ads/RewardedAdComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useToast } from '../../contexts/ToastContext';
 import { WorkFormSkeleton } from '../../components/WorkFormSkeleton';
@@ -37,7 +37,7 @@ export default function AddWork() {
   });
   const { user } = useAuth();
   const { t } = useLanguage();
-  const { showInterstitialAd } = useInterstitialAd();
+  const { showRewardedAd } = useRewardedAd();
 
   const [formData, setFormData] = useState<WorkFormData>({
     date: new Date(),
@@ -273,7 +273,7 @@ export default function AddWork() {
         showToast('Work entries saved successfully!'); // Show toast first
 
         // THEN show the interstitial ad
-        await showInterstitialAd();
+        await showRewardedAd();
 
         // THEN navigate back
         // Ensure router is available here. If it's part of a conditional hook, ensure it's stable.

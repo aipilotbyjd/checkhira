@@ -16,7 +16,8 @@ import { api } from '../../../services/axiosClient';
 import { formatDateForAPI, parseCustomDate } from '../../../utils/dateFormatter';
 import { PaymentSource } from '../../../types/payment';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { BannerAdComponent, useInterstitialAd } from '../../../components/ads';
+import { BannerAdComponent } from '../../../components/ads';
+import { useRewardedAd } from '../../../components/ads/RewardedAdComponent';
 
 interface Payment {
   id: number;
@@ -53,7 +54,7 @@ export default function EditPayment() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { t } = useLanguage();
-  const { showInterstitialAd } = useInterstitialAd();
+  const { showRewardedAd } = useRewardedAd();
 
   const { execute, isLoading: isApiLoading } = useApi({
     showSuccessToast: true,
@@ -133,7 +134,7 @@ export default function EditPayment() {
     
       if (result) { // `execute` throws on error, so this means success
         // Ad after successful update
-        await showInterstitialAd();
+        await showRewardedAd();
         router.replace('/(tabs)/payments'); // Navigate after ad
       }
     } catch (error) {
@@ -154,7 +155,7 @@ export default function EditPayment() {
     
       if (result) { // `executeDelete` throws on error, so this means success
         // Ad after successful delete
-        await showInterstitialAd();
+        await showRewardedAd();
         router.replace('/(tabs)/payments'); // Navigate after ad
       }
     } catch (error) {

@@ -7,7 +7,7 @@ module.exports = function (api) {
   ];
 
   // Add 'transform-remove-console' only in production
-  if (api.env('production')) {
+  if (process.env.NODE_ENV === 'production') {
     plugins.push('transform-remove-console');
   }
 

@@ -25,7 +25,7 @@ import { api, ApiError } from '../../../services/axiosClient';
 import { useWorkOperations } from '../../../hooks/useWorkOperations';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { BannerAdComponent } from '../../../components/ads';
-import { useInterstitialAd } from '../../../components/ads/InterstitialAdComponent';
+import { useRewardedAd } from '../../../components/ads/RewardedAdComponent';
 
 export default function EditWork() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export default function EditWork() {
   const { trackPositiveAction } = useAppRating();
   const { user } = useAuth();
   const { t } = useLanguage();
-  const { showInterstitialAd } = useInterstitialAd();
+  const { showRewardedAd } = useRewardedAd();
 
   const { getWork, updateWork, deleteWork, isLoading } = useWorkOperations();
 
@@ -168,11 +168,11 @@ export default function EditWork() {
 
     try {
       const response = await execute(() => api.put(`/works/${id}`, workData)); // `execute` from useApi handles success/error toasts
-    
+
       if (response) { // `execute` will throw on error, so if we are here, it's a success
         await trackPositiveAction();
         // Ad after successful update and positive action tracking
-        await showInterstitialAd(); 
+        await showRewardedAd();
         router.replace('/(tabs)/work-list'); // Navigate after ad
       }
     } catch (error) {
@@ -195,22 +195,22 @@ export default function EditWork() {
     try {
       // Assuming deleteWork is from useWorkOperations and handles its own toasts/errors
       // And returns a truthy value on success
-      const success = await deleteWork(Number(id)); 
-    
+      const success = await deleteWork(Number(id));
+
       if (success) {
         // Ad after successful delete
-        await showInterstitialAd();
+        await showRewardedAd();
         router.back(); // Navigate after ad
       }
       // If deleteWork internally throws an error, the catch block in useWorkOperations should handle it.
       // If it returns false for failure, we might need an else here to show a generic error toast if not already handled.
     } catch (error) {
-        // This catch block is if deleteWork itself throws an unhandled error
-        // or if there's an issue not caught by useWorkOperations.
-        // useWorkOperations should ideally handle its own error toasts.
-        console.error("Delete operation failed:", error);
-        showToast(t('failedToDeleteWork'), 'error'); // Show a fallback error toast
-        // Do NOT show ad if delete failed
+      // This catch block is if deleteWork itself throws an unhandled error
+      // or if there's an issue not caught by useWorkOperations.
+      // useWorkOperations should ideally handle its own error toasts.
+      console.error("Delete operation failed:", error);
+      showToast(t('failedToDeleteWork'), 'error'); // Show a fallback error toast
+      // Do NOT show ad if delete failed
     } finally {
       setIsDeleting(false);
     }
