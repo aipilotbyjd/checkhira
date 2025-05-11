@@ -1,7 +1,7 @@
 import { environment } from "./environment";
 
 export interface ApiConfig {
-    baseURL: string;
+    baseURL: string | undefined;
     timeout: number;
     tokenKey: string;
     defaultCacheTime: number;

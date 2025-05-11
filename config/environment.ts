@@ -31,6 +31,11 @@ export interface Environment {
   adAppOpenIos?: string | undefined;
   adNativeAndroid?: string | undefined;
   adNativeIos?: string | undefined;
+  websiteUrl?: string | undefined;
+  twitterUrl?: string | undefined;
+  instagramUrl?: string | undefined;
+  facebookUrl?: string | undefined;
+  linkedinUrl?: string | undefined;
 }
 
 /**

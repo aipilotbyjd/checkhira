@@ -11,30 +11,30 @@ export default function About() {
   const socialLinks = [
     {
       icon: 'web',
-      url: 'https://checkhira.com',
+      url: environment.websiteUrl,
       label: t('website'),
     },
     {
       icon: 'twitter',
-      url: 'https://twitter.com/checkhira',
+      url: environment.twitterUrl,
       label: 'Twitter',
     },
     {
       icon: 'instagram',
-      url: 'https://instagram.com/checkhira',
+      url: environment.instagramUrl,
       label: 'Instagram',
     },
     {
       icon: 'facebook',
-      url: 'https://facebook.com/checkhira',
+      url: environment.facebookUrl,
       label: 'Facebook',
     },
     {
       icon: 'linkedin',
-      url: 'https://linkedin.com/company/checkhira',
+      url: environment.linkedinUrl,
       label: 'LinkedIn',
     },
-  ];
+  ].filter(link => link.url); // Filter out links with undefined URLs
 
   const appFeatures = [
     {
@@ -73,7 +73,7 @@ export default function About() {
 
         <View className="mt-8 space-y-4">
           <Text className="text-center text-base leading-6" style={{ color: COLORS.gray[600] }}>
-            {t('appDescription') || 'Checkhira helps diamond industry professionals track work, manage payments, and streamline operations with an intuitive mobile app.'}
+            {t('appDescription')}
           </Text>
 
           {/* Features Section */}

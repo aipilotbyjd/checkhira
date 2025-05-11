@@ -75,7 +75,7 @@ class RatingService {
           try {
             const storeUrl = Platform.select({
               ios: `https://apps.apple.com/app/id${process.env.EXPO_PUBLIC_APP_STORE_ID}`,
-              android: 'https://play.google.com/store/apps/details?id=com.jaydeepdhrangiya.checkhira',
+              android: `https://play.google.com/store/apps/details?id=${process.env.EXPO_PUBLIC_PLAY_STORE_ID || Constants.expoConfig?.android?.package}`,
             });
 
             if (await StoreReview.hasAction()) {
@@ -136,7 +136,7 @@ class RatingService {
               // Fallback to linking to store page if StoreReview is not available or has no action
               const storeUrl = Platform.select({
                 ios: `https://apps.apple.com/app/id${process.env.EXPO_PUBLIC_APP_STORE_ID || Constants.expoConfig?.extra?.appStoreId}`,
-                android: `https://play.google.com/store/apps/details?id=${Constants.expoConfig?.android?.package || 'com.jaydeepdhrangiya.checkhira'}`,
+                android: `https://play.google.com/store/apps/details?id=${Constants.expoConfig?.android?.package || process.env.EXPO_PUBLIC_PLAY_STORE_ID}`,
               });
               if (storeUrl && await Linking.canOpenURL(storeUrl)) {
                 await Linking.openURL(storeUrl);

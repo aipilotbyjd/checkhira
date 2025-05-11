@@ -113,8 +113,8 @@ export default function Account() {
       onPress: async () => {
         try {
           const storeUrl = Platform.select({
-            ios: `https://apps.apple.com/app/id${Constants.expoConfig?.extra?.appStoreId}`,
-            android: 'https://play.google.com/store/apps/details?id=com.jaydeepdhrangiya.checkhira'
+            ios: `https://apps.apple.com/app/id${environment.appStoreId}`,
+            android: `https://play.google.com/store/apps/details?id=${environment.playStoreId}`
           });
 
           await Share.share({
@@ -133,12 +133,12 @@ export default function Account() {
     {
       title: t('termsAndConditions'),
       icon: 'file-document',
-      onPress: () => Linking.openURL('https://checkhira.com/terms'),
+      onPress: () => environment.termsUrl && Linking.openURL(environment.termsUrl),
     },
     {
       title: t('privacyPolicy'),
       icon: 'shield-lock',
-      onPress: () => Linking.openURL('https://checkhira.com/privacy'),
+      onPress: () => environment.privacyPolicyUrl && Linking.openURL(environment.privacyPolicyUrl),
     },
     {
       title: t('aboutApp'),

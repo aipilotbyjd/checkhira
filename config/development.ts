@@ -32,4 +32,9 @@ export const developmentEnvironment: Environment = {
   adAppOpenIos: process.env.EXPO_PUBLIC_AD_APP_OPEN_IOS,
   adNativeAndroid: process.env.EXPO_PUBLIC_AD_NATIVE_ANDROID,
   adNativeIos: process.env.EXPO_PUBLIC_AD_NATIVE_IOS,
+  websiteUrl: process.env.EXPO_PUBLIC_WEBSITE_URL,
+  twitterUrl: process.env.EXPO_PUBLIC_TWITTER_URL,
+  instagramUrl: process.env.EXPO_PUBLIC_INSTAGRAM_URL,
+  facebookUrl: process.env.EXPO_PUBLIC_FACEBOOK_URL,
+  linkedinUrl: process.env.EXPO_PUBLIC_LINKEDIN_URL,
 };
