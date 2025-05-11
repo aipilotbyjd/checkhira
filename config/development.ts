@@ -10,4 +10,7 @@ export const developmentEnvironment: Environment = {
   appStoreId: '1234567890',
   playStoreId: 'com.jaydeepdhrangiya.checkhira',
   supportEmail: 'dev@checkhira.com',
+  googleWebClientId: undefined,
+  firebaseApiKey: undefined,
+  privacyPolicyUrl: 'https://dev.checkhira.com/privacy',
 };

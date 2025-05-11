@@ -10,4 +10,7 @@ export const productionEnvironment: Environment = {
   appStoreId: '1234567890', // Replace with your actual App Store ID
   playStoreId: 'com.jaydeepdhrangiya.checkhira',
   supportEmail: 'support@checkhira.com',
+  googleWebClientId: 'YOUR_PRODUCTION_GOOGLE_WEB_CLIENT_ID_FROM_ENV', // Should be overridden by .env
+  firebaseApiKey: 'YOUR_PRODUCTION_FIREBASE_API_KEY_FROM_ENV', // Should be overridden by .env
+  privacyPolicyUrl: 'https://checkhira.com/privacy',
 };

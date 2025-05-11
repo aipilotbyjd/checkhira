@@ -12,18 +12,16 @@ export interface Environment {
   appStoreId: string;
   playStoreId: string;
   supportEmail: string;
+  googleWebClientId?: string;
+  firebaseApiKey?: string;
+  privacyPolicyUrl?: string;
 }
 
-// Determine which environment to use based on NODE_ENV
 const getEnvironmentConfig = (): Environment => {
-  // Use type assertion to tell TypeScript that nodeEnv can be any of these values
-  const nodeEnv = (process.env.NODE_ENV || 'development') as 'development' | 'production' | 'test' | 'staging';
+  const nodeEnv = (process.env.NODE_ENV || 'development') as 'development' | 'production';
 
   switch (nodeEnv) {
     case 'production':
-      return productionEnvironment;
-    case 'staging':
-      // You can add a staging environment configuration if needed
       return productionEnvironment;
     case 'development':
     default:
@@ -37,7 +35,6 @@ const baseEnvironment = getEnvironmentConfig();
 // Override with values from environment variables or Constants if available
 export const environment: Environment = {
   ...baseEnvironment,
-  // First check for Expo's environment variables
   apiUrl: process.env.EXPO_PUBLIC_API_URL ||
     Constants.expoConfig?.extra?.apiUrl ||
     baseEnvironment.apiUrl,
@@ -55,4 +52,14 @@ export const environment: Environment = {
   playStoreId: process.env.EXPO_PUBLIC_PLAY_STORE_ID ||
     Constants.expoConfig?.extra?.playStoreId ||
     baseEnvironment.playStoreId,
+  // Populate added variables
+  googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+    Constants.expoConfig?.extra?.googleWebClientId ||
+    baseEnvironment.googleWebClientId,
+  firebaseApiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ||
+    Constants.expoConfig?.extra?.firebaseApiKey ||
+    baseEnvironment.firebaseApiKey,
+  privacyPolicyUrl: process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL ||
+    Constants.expoConfig?.extra?.privacyPolicyUrl ||
+    baseEnvironment.privacyPolicyUrl,
 };
