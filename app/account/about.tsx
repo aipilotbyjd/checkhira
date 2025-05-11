@@ -3,7 +3,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { environment } from '~/config/environment';
 import { useLanguage } from '../../contexts/LanguageContext';
-import Constants from 'expo-constants';
 
 export default function About() {
   const { t } = useLanguage();

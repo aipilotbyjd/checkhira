@@ -1,4 +1,3 @@
-import Constants from 'expo-constants';
 import { productionEnvironment } from './production';
 import { developmentEnvironment } from './development';
 

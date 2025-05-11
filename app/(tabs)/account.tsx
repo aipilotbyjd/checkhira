@@ -12,7 +12,6 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { CrashlyticsTest } from '../../components/CrashlyticsTest';
 import { ratingService } from '../../services/ratingService';
 import * as Linking from 'expo-linking';
-import Constants from 'expo-constants';
 import { environment } from '~/config/environment';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { useInterstitialAd } from '../../components/ads/InterstitialAdComponent';
