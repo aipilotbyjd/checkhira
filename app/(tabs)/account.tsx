@@ -72,18 +72,6 @@ export default function Account() {
       href: '/account/edit-profile',
     },
     {
-      title: 'Premium Features',
-      icon: 'star-circle',
-      onPress: async () => {
-        // Optional rewarded ad for premium features
-        showToast('Watch an ad to unlock premium features');
-        const rewarded = await showRewardedAd();
-        if (rewarded) {
-          showToast('Premium features unlocked!');
-        }
-      },
-    },
-    {
       title: t('defaultPrices'),
       icon: 'diamond-stone',
       href: '/account/default-prices',

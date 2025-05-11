@@ -415,18 +415,13 @@ export default function Home() {
         </View>
       </View>
 
-      {/* Native Ad */}
-      <View className="mt-6 px-6">
-        <NativeAdComponent adType="medium" />
-      </View>
-
       {/* Banner Ad */}
       <View className="mt-6">
         <BannerAdComponent />
       </View>
 
       {/* Recent Activities - Enhanced version */}
-      <View className="mt-8 px-6 pb-8">
+      <View className="mt-8 px-6 pb-0">
         <View className="mb-4 flex-row items-center justify-between">
           <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
             {t('recentActivities')}
@@ -484,6 +479,11 @@ export default function Home() {
             </Pressable>
           ))
         )}
+      </View>
+
+      {/* Native Ad */}
+      <View className="mt-0 px-6">
+        <NativeAdComponent adType="medium" />
       </View>
     </ScrollView>
   );

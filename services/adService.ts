@@ -11,7 +11,6 @@ import {
   MaxAdContentRating,
   RequestConfiguration,
 } from 'react-native-google-mobile-ads';
-import { environment } from '../config/environment';
 import * as TrackingTransparency from 'expo-tracking-transparency';
 
 // TypeScript interfaces for ad unit IDs
@@ -28,30 +27,27 @@ interface AdUnitIds {
   native: PlatformSpecificAdUnitId;
 }
 
-// Use test IDs for development and real IDs for production
-const useTestIds = !environment.production;
-
-// Ad unit IDs
+// Ad unit IDs - read from environment variables with fallback to TestIds
 const adUnitIds: AdUnitIds = {
   banner: {
-    android: useTestIds ? TestIds.BANNER : 'ca-app-pub-6156225952846626/1234567890',
-    ios: useTestIds ? TestIds.BANNER : 'ca-app-pub-6156225952846626/1234567890',
+    android: process.env.EXPO_PUBLIC_AD_BANNER_ANDROID || TestIds.BANNER,
+    ios: process.env.EXPO_PUBLIC_AD_BANNER_IOS || TestIds.BANNER,
   },
   interstitial: {
-    android: useTestIds ? TestIds.INTERSTITIAL : 'ca-app-pub-6156225952846626/2345678901',
-    ios: useTestIds ? TestIds.INTERSTITIAL : 'ca-app-pub-6156225952846626/2345678901',
+    android: process.env.EXPO_PUBLIC_AD_INTERSTITIAL_ANDROID || TestIds.INTERSTITIAL,
+    ios: process.env.EXPO_PUBLIC_AD_INTERSTITIAL_IOS || TestIds.INTERSTITIAL,
   },
   rewarded: {
-    android: useTestIds ? TestIds.REWARDED : 'ca-app-pub-6156225952846626/3456789012',
-    ios: useTestIds ? TestIds.REWARDED : 'ca-app-pub-6156225952846626/3456789012',
+    android: process.env.EXPO_PUBLIC_AD_REWARDED_ANDROID || TestIds.REWARDED,
+    ios: process.env.EXPO_PUBLIC_AD_REWARDED_IOS || TestIds.REWARDED,
   },
   appOpen: {
-    android: useTestIds ? TestIds.APP_OPEN : 'ca-app-pub-6156225952846626/4567890123',
-    ios: useTestIds ? TestIds.APP_OPEN : 'ca-app-pub-6156225952846626/4567890123',
+    android: process.env.EXPO_PUBLIC_AD_APP_OPEN_ANDROID || TestIds.APP_OPEN,
+    ios: process.env.EXPO_PUBLIC_AD_APP_OPEN_IOS || TestIds.APP_OPEN,
   },
   native: {
-    android: useTestIds ? TestIds.NATIVE : 'ca-app-pub-6156225952846626/5678901234',
-    ios: useTestIds ? TestIds.NATIVE : 'ca-app-pub-6156225952846626/5678901234',
+    android: process.env.EXPO_PUBLIC_AD_NATIVE_ANDROID || TestIds.NATIVE,
+    ios: process.env.EXPO_PUBLIC_AD_NATIVE_IOS || TestIds.NATIVE,
   },
 };
 
@@ -236,11 +232,11 @@ let isRewardedAdLoading = false;
 const loadRewardedAd = () => {
   if (isRewardedAdLoading && rewardedAd && rewardedAd.loaded) {
     console.log('Rewarded ad: Already loaded and ready.');
-    return () => {}; // No new listeners to cleanup if ad is already loaded
+    return () => { }; // No new listeners to cleanup if ad is already loaded
   }
   if (isRewardedAdLoading) {
     console.log('Rewarded ad: Already in the process of loading.');
-    return () => {}; // Don't attach new listeners or create new ad object if already loading
+    return () => { }; // Don't attach new listeners or create new ad object if already loading
   }
 
   console.log('Rewarded ad: Attempting to load a new ad...');
@@ -272,15 +268,15 @@ const loadRewardedAd = () => {
     // Clean up these specific listeners as this ad instance failed to load
     if (typeof unsubscribeLoaded === 'function') unsubscribeLoaded();
     if (typeof unsubscribeLoadError === 'function') unsubscribeLoadError();
-    
+
     // Retry loading after a delay.
     console.log(`Rewarded ad: Scheduling retry load for ${adUnitId} in 7 seconds due to load error.`);
     setTimeout(() => {
       if (!isRewardedAdLoading) { // Check flag again before retrying
-         console.log(`Rewarded ad: Retrying load for ${adUnitId} after previous load-time error (7s passed).`);
-         loadRewardedAd(); // This will call the main loadRewardedAd function again
+        console.log(`Rewarded ad: Retrying load for ${adUnitId} after previous load-time error (7s passed).`);
+        loadRewardedAd(); // This will call the main loadRewardedAd function again
       } else {
-         console.log(`Rewarded ad: Skipping retry load for ${adUnitId} as another load is already in progress.`);
+        console.log(`Rewarded ad: Skipping retry load for ${adUnitId} as another load is already in progress.`);
       }
     }, 7000); // Retry after 7 seconds
   });
@@ -295,7 +291,7 @@ const loadRewardedAd = () => {
     // Clean up listeners if .load() itself throws an immediate error
     if (typeof unsubscribeLoaded === 'function') unsubscribeLoaded();
     if (typeof unsubscribeLoadError === 'function') unsubscribeLoadError();
-    return () => {}; // Return an empty cleanup
+    return () => { }; // Return an empty cleanup
   }
 
   // Return a cleanup function for these load-time listeners.
@@ -318,7 +314,7 @@ const showRewardedAd = async (): Promise<ShowRewardedAdResult> => {
     console.log('Rewarded ad not available or not loaded yet.');
     // Attempt to load an ad for the next opportunity if not already loading
     if (!isRewardedAdLoading) {
-        loadRewardedAd();
+      loadRewardedAd();
     }
     return { shown: false, rewardEarned: false };
   }
@@ -362,7 +358,7 @@ const showRewardedAd = async (): Promise<ShowRewardedAdResult> => {
 
       setTimeout(() => {
         loadRewardedAd();
-      }, 1000); 
+      }, 1000);
     });
 
     try {
@@ -376,7 +372,7 @@ const showRewardedAd = async (): Promise<ShowRewardedAdResult> => {
       unsubscribeClosed();
       unsubscribeError();
       resolve({ shown: false, rewardEarned: false, error: showError });
-      
+
       setTimeout(() => {
         loadRewardedAd();
       }, 1000);
