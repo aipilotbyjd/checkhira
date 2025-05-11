@@ -41,7 +41,24 @@
         "distribution": "store"
       },
       "env": {
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "${secrets.PROD_API_URL}",
+        "EXPO_PUBLIC_ONESIGNAL_APP_ID": "${secrets.PROD_ONESIGNAL_APP_ID}",
+        "EXPO_PUBLIC_APP_STORE_ID": "${secrets.PROD_APP_STORE_ID}",
+        "EXPO_PUBLIC_PLAY_STORE_ID": "com.jaydeepdhrangiya.checkhira",
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "${secrets.PROD_SUPPORT_EMAIL}",
+        "EXPO_PUBLIC_AD_BANNER_ANDROID": "${secrets.PROD_AD_BANNER_ANDROID}",
+        "EXPO_PUBLIC_AD_BANNER_IOS": "${secrets.PROD_AD_BANNER_IOS}",
+        "EXPO_PUBLIC_AD_INTERSTITIAL_ANDROID": "${secrets.PROD_AD_INTERSTITIAL_ANDROID}",
+        "EXPO_PUBLIC_AD_INTERSTITIAL_IOS": "${secrets.PROD_AD_INTERSTITIAL_IOS}",
+        "EXPO_PUBLIC_AD_REWARDED_ANDROID": "${secrets.PROD_AD_REWARDED_ANDROID}",
+        "EXPO_PUBLIC_AD_REWARDED_IOS": "${secrets.PROD_AD_REWARDED_IOS}",
+        "EXPO_PUBLIC_AD_APP_OPEN_ANDROID": "${secrets.PROD_AD_APP_OPEN_ANDROID}",
+        "EXPO_PUBLIC_AD_APP_OPEN_IOS": "${secrets.PROD_AD_APP_OPEN_IOS}",
+        "EXPO_PUBLIC_AD_NATIVE_ANDROID": "${secrets.PROD_AD_NATIVE_ANDROID}",
+        "EXPO_PUBLIC_AD_NATIVE_IOS": "${secrets.PROD_AD_NATIVE_IOS}",
+        "PROD_GOOGLE_SERVICES_JSON_BASE64": "${secrets.PROD_GOOGLE_SERVICES_JSON_BASE64}",
+        "PROD_GOOGLE_SERVICE_INFO_PLIST_BASE64": "${secrets.PROD_GOOGLE_SERVICE_INFO_PLIST_BASE64}"
       },
       "channel": "production",
       "cache": {
