@@ -66,7 +66,7 @@ export class ApiClient {
     private cache = new SimpleCache();
 
     constructor(
-        baseURL: string = environment.apiUrl,
+        baseURL: string | undefined = environment.apiUrl,
         tokenKey: string = 'token',
         defaultTimeout: number = 30000
     ) {

@@ -108,7 +108,11 @@ export default function About() {
               {socialLinks.map((link, index) => (
                 <TouchableOpacity
                   key={index}
-                  onPress={() => Linking.openURL(link.url)}
+                  onPress={() => {
+                    if (link.url) {
+                      Linking.openURL(link.url);
+                    }
+                  }}
                   className="items-center mb-3 mx-2">
                   <MaterialCommunityIcons name={link.icon as any} size={24} color={COLORS.primary} />
                   <Text className="mt-1 text-sm" style={{ color: COLORS.gray[600] }}>
