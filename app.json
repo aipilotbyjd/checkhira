@@ -57,14 +57,14 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.195151324772-4gc4nhb0ou80sij272shuaa512irgap8"
+          "iosUrlScheme": "com.googleusercontent.apps.${process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID_NUMBER}"
         }
       ],
       [
         "react-native-google-mobile-ads",
         {
-          "androidAppId": "ca-app-pub-6156225952846626~9565432583",
-          "iosAppId": "ca-app-pub-6156225952846626~9565432583",
+          "androidAppId": "${process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID}",
+          "iosAppId": "${process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID}",
           "userTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you and help improve the app experience.",
           "delayAppMeasurementInit": false,
           "includeAdapterImplementations": [
@@ -126,14 +126,7 @@
       },
       "eas": {
         "projectId": "bdc9fac3-4aa5-4a0d-b73a-65a15e901bf4"
-      },
-      "oneSignalAppId": "9b67efd6-0e42-4f80-88c7-74b79b0efac7",
-      "apiUrl": "https://api.hirabook.icu/api/v1",
-      "supportEmail": "support@checkhira.com",
-      "privacyPolicyUrl": "https://checkhira.com/privacy",
-      "termsUrl": "https://checkhira.com/terms",
-      "appStoreId": "1234567890",
-      "playStoreId": "com.jaydeepdhrangiya.checkhira"
+      }
     },
     "runtimeVersion": {
       "policy": "sdkVersion"

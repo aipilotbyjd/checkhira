@@ -29,26 +29,28 @@ interface AdUnitIds {
 }
 
 // Ad unit IDs - read from environment variables with fallback to TestIds
+// In production, use real ad unit IDs from environment variables
+// In development, use test IDs to avoid invalid activity
 const adUnitIds: AdUnitIds = {
   banner: {
-    android: environment.adBannerAndroid || TestIds.BANNER,
-    ios: environment.adBannerIos || TestIds.BANNER,
+    android: environment.production ? environment.adBannerAndroid || TestIds.BANNER : TestIds.BANNER,
+    ios: environment.production ? environment.adBannerIos || TestIds.BANNER : TestIds.BANNER,
   },
   interstitial: {
-    android: environment.adInterstitialAndroid || TestIds.INTERSTITIAL,
-    ios: environment.adInterstitialIos || TestIds.INTERSTITIAL,
+    android: environment.production ? environment.adInterstitialAndroid || TestIds.INTERSTITIAL : TestIds.INTERSTITIAL,
+    ios: environment.production ? environment.adInterstitialIos || TestIds.INTERSTITIAL : TestIds.INTERSTITIAL,
   },
   rewarded: {
-    android: environment.adRewardedAndroid || TestIds.REWARDED,
-    ios: environment.adRewardedIos || TestIds.REWARDED,
+    android: environment.production ? environment.adRewardedAndroid || TestIds.REWARDED : TestIds.REWARDED,
+    ios: environment.production ? environment.adRewardedIos || TestIds.REWARDED : TestIds.REWARDED,
   },
   appOpen: {
-    android: environment.adAppOpenAndroid || TestIds.APP_OPEN,
-    ios: environment.adAppOpenIos || TestIds.APP_OPEN,
+    android: environment.production ? environment.adAppOpenAndroid || TestIds.APP_OPEN : TestIds.APP_OPEN,
+    ios: environment.production ? environment.adAppOpenIos || TestIds.APP_OPEN : TestIds.APP_OPEN,
   },
   native: {
-    android: environment.adNativeAndroid || TestIds.NATIVE,
-    ios: environment.adNativeIos || TestIds.NATIVE,
+    android: environment.production ? environment.adNativeAndroid || TestIds.NATIVE : TestIds.NATIVE,
+    ios: environment.production ? environment.adNativeIos || TestIds.NATIVE : TestIds.NATIVE,
   },
 };
 

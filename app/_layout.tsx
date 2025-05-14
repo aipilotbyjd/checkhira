@@ -85,11 +85,18 @@ export default function RootLayout() {
         // Initialize Analytics - only for native platforms
         if (Platform.OS !== 'web') {
           try {
-            // Use the modular API
-            await analytics().setAnalyticsCollectionEnabled(environment.production);
+            // Check if analytics is supported before initializing
+            const isAnalyticsSupported = await analytics().isSupported();
 
-            if (!environment.production) {
-              console.log('Firebase Analytics initialized in development mode');
+            if (isAnalyticsSupported) {
+              // Use the modular API
+              await analytics().setAnalyticsCollectionEnabled(environment.production);
+
+              if (!environment.production) {
+                console.log('Firebase Analytics initialized in development mode');
+              }
+            } else {
+              console.log('Firebase Analytics is not supported on this device');
             }
           } catch (analyticsError) {
             console.error('Failed to initialize Firebase Analytics:', analyticsError);
@@ -174,10 +181,11 @@ export default function RootLayout() {
 
     initializeOneSignal();
 
-    //google login configare
+    // Google login configuration using environment variables
     GoogleSignin.configure({
-      iosClientId: '195151324772-4gc4nhb0ou80sij272shuaa512irgap8.apps.googleusercontent.com',
-      webClientId: '195151324772-tpq4g2ctsltd8gd1on3e3nt3vlgbi33c.apps.googleusercontent.com',
+      iosClientId: environment.googleIosClientId,
+      webClientId: environment.googleWebClientId,
+      androidClientId: environment.googleAndroidClientId,
       profileImageSize: 150,
       offlineAccess: true,
       scopes: ['profile', 'email']

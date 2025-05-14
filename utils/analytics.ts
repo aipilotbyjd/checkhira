@@ -1,5 +1,43 @@
-import analytics from '@react-native-firebase/analytics';
+import { Platform } from 'react-native';
 import { environment } from '~/config/environment';
+
+// Import Firebase Analytics based on platform
+// For native platforms, we'll use the Firebase modular SDK
+let analyticsInstance: any = null;
+let isAnalyticsSupported = false;
+
+// Initialize analytics based on platform
+const initializeAnalytics = async () => {
+    try {
+        if (Platform.OS === 'web') {
+            // For web, we'll use the web implementation
+            // This is handled in analytics.web.ts
+            return;
+        } else {
+            // For native platforms, use the Firebase modular SDK
+            const { default: analytics } = await import('@react-native-firebase/analytics');
+
+            // Check if analytics is supported
+            isAnalyticsSupported = await analytics().isSupported();
+
+            if (isAnalyticsSupported) {
+                analyticsInstance = analytics();
+                await analyticsInstance.setAnalyticsCollectionEnabled(environment.production);
+
+                if (!environment.production) {
+                    console.log('Firebase Analytics initialized successfully');
+                }
+            } else {
+                console.log('Firebase Analytics is not supported on this device');
+            }
+        }
+    } catch (error) {
+        console.error('Failed to initialize Firebase Analytics:', error);
+    }
+};
+
+// Initialize analytics immediately
+initializeAnalytics();
 
 /**
  * Utility class for Firebase Analytics
@@ -12,7 +50,9 @@ class AnalyticsService {
      */
     async logEvent(eventName: string, params?: Record<string, any>): Promise<void> {
         try {
-            await analytics().logEvent(eventName, params);
+            if (analyticsInstance && isAnalyticsSupported) {
+                await analyticsInstance.logEvent(eventName, params);
+            }
 
             // Log in development mode for debugging
             if (!environment.production) {
@@ -29,7 +69,9 @@ class AnalyticsService {
      */
     async setUserId(userId: string): Promise<void> {
         try {
-            await analytics().setUserId(userId);
+            if (analyticsInstance && isAnalyticsSupported) {
+                await analyticsInstance.setUserId(userId);
+            }
         } catch (error) {
             console.error('Failed to set analytics user ID:', error);
         }
@@ -42,10 +84,12 @@ class AnalyticsService {
      */
     async setCurrentScreen(screenName: string, screenClass?: string): Promise<void> {
         try {
-            await analytics().logScreenView({
-                screen_name: screenName,
-                screen_class: screenClass || screenName,
-            });
+            if (analyticsInstance && isAnalyticsSupported) {
+                await analyticsInstance.logScreenView({
+                    screen_name: screenName,
+                    screen_class: screenClass || screenName,
+                });
+            }
         } catch (error) {
             console.error(`Failed to log screen view ${screenName}:`, error);
         }
@@ -67,7 +111,9 @@ class AnalyticsService {
      */
     async setUserProperty(name: string, value: string): Promise<void> {
         try {
-            await analytics().setUserProperty(name, value);
+            if (analyticsInstance && isAnalyticsSupported) {
+                await analyticsInstance.setUserProperty(name, value);
+            }
 
             // Log in development mode for debugging
             if (!environment.production) {
