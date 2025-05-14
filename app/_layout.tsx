@@ -82,21 +82,11 @@ export default function RootLayout() {
   useEffect(() => {
     const initializeFirebaseServices = async () => {
       try {
-        // Initialize Analytics - only for native platforms
         if (Platform.OS !== 'web') {
           try {
-            // Check if analytics is supported before initializing
-            const isAnalyticsSupported = await analytics().isSupported();
-
-            if (isAnalyticsSupported) {
-              // Use the modular API
-              await analytics().setAnalyticsCollectionEnabled(environment.production);
-
-              if (!environment.production) {
-                console.log('Firebase Analytics initialized in development mode');
-              }
-            } else {
-              console.log('Firebase Analytics is not supported on this device');
+            await analytics().setAnalyticsCollectionEnabled(true);
+            if (!environment.production) {
+              console.log('Firebase Analytics initialized in development mode');
             }
           } catch (analyticsError) {
             console.error('Failed to initialize Firebase Analytics:', analyticsError);
@@ -185,7 +175,6 @@ export default function RootLayout() {
     GoogleSignin.configure({
       iosClientId: environment.googleIosClientId,
       webClientId: environment.googleWebClientId,
-      androidClientId: environment.googleAndroidClientId,
       profileImageSize: 150,
       offlineAccess: true,
       scopes: ['profile', 'email']

@@ -17,18 +17,11 @@ const initializeAnalytics = async () => {
             // For native platforms, use the Firebase modular SDK
             const { default: analytics } = await import('@react-native-firebase/analytics');
 
-            // Check if analytics is supported
-            isAnalyticsSupported = await analytics().isSupported();
+            analyticsInstance = analytics();
+            await analyticsInstance.setAnalyticsCollectionEnabled(environment.production);
 
-            if (isAnalyticsSupported) {
-                analyticsInstance = analytics();
-                await analyticsInstance.setAnalyticsCollectionEnabled(environment.production);
-
-                if (!environment.production) {
-                    console.log('Firebase Analytics initialized successfully');
-                }
-            } else {
-                console.log('Firebase Analytics is not supported on this device');
+            if (!environment.production) {
+                console.log('Firebase Analytics initialized successfully');
             }
         }
     } catch (error) {
