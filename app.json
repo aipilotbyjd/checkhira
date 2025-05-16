@@ -57,14 +57,14 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.${process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID_NUMBER}"
+          "iosUrlScheme": "195151324772-4gc4nhb0ou80sij272shuaa512irgap8.apps.googleusercontent.com"
         }
       ],
       [
         "react-native-google-mobile-ads",
         {
-          "androidAppId": "${process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID}",
-          "iosAppId": "${process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID}",
+          "androidAppId": "ca-app-pub-6156225952846626~9565432583",
+          "iosAppId": "ca-app-pub-6156225952846626~9565432583",
           "userTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you and help improve the app experience.",
           "delayAppMeasurementInit": false,
           "includeAdapterImplementations": [
