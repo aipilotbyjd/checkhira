@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "CheckHira",
-    "slug": "checkhira",
+    "slug": "hirabook",
     "version": "1.0.1",
     "owner": "aicopilotideas",
     "scheme": "checkhira",
@@ -117,7 +117,8 @@
       },
       "permissions": [
         "android.permission.VIBRATE",
-        "android.permission.POST_NOTIFICATIONS"
+        "android.permission.POST_NOTIFICATIONS",
+        "com.google.android.gms.permission.AD_ID"
       ]
     },
     "extra": {
@@ -125,7 +126,24 @@
         "origin": false
       },
       "eas": {
-        "projectId": "bdc9fac3-4aa5-4a0d-b73a-65a15e901bf4"
+        "projectId": "fee078aa-672f-49cd-bea3-689e0c473c5b",
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "OneSignalNotificationServiceExtension",
+                  "bundleIdentifier": "com.jaydeepdhrangiya.checkhira.OneSignalNotificationServiceExtension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.jaydeepdhrangiya.checkhira.onesignal"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
       }
     },
     "runtimeVersion": {
