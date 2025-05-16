@@ -3,7 +3,7 @@
     "name": "CheckHira",
     "slug": "checkhira",
     "version": "1.0.1",
-    "owner": "jaydeepdhrangiya",
+    "owner": "aicopilotideas",
     "scheme": "checkhira",
     "newArchEnabled": true,
     "jsEngine": "hermes",
