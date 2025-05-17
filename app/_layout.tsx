@@ -171,6 +171,9 @@ export default function RootLayout() {
 
     initializeOneSignal();
 
+    console.log(environment.googleWebClientId);
+    console.log(environment.googleIosClientId);
+
     // Google login configuration using environment variables
     GoogleSignin.configure({
       iosClientId: environment.googleIosClientId,
