@@ -179,7 +179,12 @@ export default function Home() {
 
       {/* Sponsored Ads Carousel */}
       {sponsoredAds && sponsoredAds.length > 0 && (
-        <View className="mt-2 mb-2">
+        <View className="mt-2 mb-4">
+          <View className="px-4 mb-2">
+            <Text className="text-sm font-medium" style={{ color: COLORS.gray[400] }}>
+              Sponsored Partners
+            </Text>
+          </View>
           <SponsoredAdsCarousel
             ads={sponsoredAds}
             height={180}
