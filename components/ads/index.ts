@@ -5,3 +5,4 @@ export * from './AppOpenAdComponent';
 export * from './AppStartAdManager';
 export * from './NativeAdComponent';
 export * from '../TrackingPermissionExample';
+export * from './SponsoredAdsCarousel';

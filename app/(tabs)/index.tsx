@@ -19,9 +19,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAnalytics } from '../../hooks/useAnalytics';
-import { BannerAdComponent, NativeAdComponent } from '../../components/ads';
+import { BannerAdComponent, NativeAdComponent, SponsoredAdsCarousel } from '../../components/ads';
 import { useInterstitialAd } from '../../components/ads/InterstitialAdComponent';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
+import { useSponsoredAds } from '../../hooks/useSponsoredAds';
 
 // Add this type definition above the Home component
 interface Activity {
@@ -53,6 +54,7 @@ export default function Home() {
   const { refreshUnreadCount } = useNotification();
   const { t } = useLanguage();
   const { showInterstitialAd } = useInterstitialAd();
+  const { ads: sponsoredAds, handleAdClick } = useSponsoredAds();
 
   const fetchActivities = async () => {
     try {
@@ -175,6 +177,24 @@ export default function Home() {
         </Pressable>
       </View>
 
+      {/* Sponsored Ads Carousel */}
+      {sponsoredAds && sponsoredAds.length > 0 && (
+        <View className="mt-2 mb-2">
+          <SponsoredAdsCarousel
+            ads={sponsoredAds}
+            height={180}
+            onAdPress={handleAdClick}
+            autoPlay={true}
+            autoPlayInterval={5000}
+            showIndicator={true}
+            containerStyle={{
+              marginHorizontal: 0,
+              borderRadius: 12,
+            }}
+          />
+        </View>
+      )}
+
       {/* Work Dashboard */}
       <View className="mt-6 px-6">
         <Text className="text-lg font-semibold" style={{ color: COLORS.secondary }}>
@@ -218,7 +238,7 @@ export default function Home() {
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
                 {t('works')}: {stats.weekly?.works || 0}
               </Text>
-            </View>
+            </View>r
           </View>
 
           {/* Monthly Work Stats */}
@@ -445,7 +465,7 @@ export default function Home() {
             </Text>
           </View>
         ) : (
-          recentActivities.map((activity: Activity, index: number) => (
+          recentActivities.map((activity: Activity) => (
             <Pressable
               key={`${activity.id}-${activity.time.getTime()}`}
               onPress={async () => handleQuickActionPress(activity.type, activity.id)}
