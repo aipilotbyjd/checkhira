@@ -4,7 +4,7 @@ module.exports = function (api) {
   // Define plugins array
   const plugins = [
     'react-native-reanimated/plugin',
-    'transform-remove-console'
+    // 'transform-remove-console'
   ];
 
   return {

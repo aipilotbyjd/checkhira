@@ -1,7 +1,17 @@
 import { Platform, AppState, AppStateStatus } from 'react-native';
 import { environment } from '../config/environment';
 
-// Import types only to reduce bundle size
+// Import directly to ensure they're available immediately
+import {
+  TestIds,
+  AdEventType,
+  RewardedAdEventType,
+  MobileAds,
+  MaxAdContentRating,
+  AdsConsentStatus,
+} from 'react-native-google-mobile-ads';
+
+// Import types to maintain type safety
 import type {
   InterstitialAd,
   RewardedAd,
@@ -9,29 +19,13 @@ import type {
   RequestConfiguration,
 } from 'react-native-google-mobile-ads';
 
-// Lazy imports for actual implementations
-let TestIds: any;
-let AdEventType: any;
-let RewardedAdEventType: any;
-let MobileAds: any;
-let MaxAdContentRating: any;
-let AdsConsentStatus: any;
+// Only lazy load TrackingTransparency since it's platform-specific
 let TrackingTransparency: any;
 
-// Lazy load the ad modules only when needed
+// Simplified module loader that only loads platform-specific modules
 const loadAdModules = async () => {
-  if (!TestIds) {
-    const ads = await import('react-native-google-mobile-ads');
-    TestIds = ads.TestIds;
-    AdEventType = ads.AdEventType;
-    RewardedAdEventType = ads.RewardedAdEventType;
-    MobileAds = ads.MobileAds;
-    MaxAdContentRating = ads.MaxAdContentRating;
-    AdsConsentStatus = ads.AdsConsentStatus;
-
-    if (Platform.OS === 'ios') {
-      TrackingTransparency = await import('expo-tracking-transparency');
-    }
+  if (Platform.OS === 'ios' && !TrackingTransparency) {
+    TrackingTransparency = await import('expo-tracking-transparency');
   }
 };
 
@@ -49,34 +43,41 @@ interface AdUnitIds {
   native: PlatformSpecificAdUnitId;
 }
 
-// Ad unit IDs - read from environment variables with fallback to TestIds
-// In production, use real ad unit IDs from environment variables
-// In development, use test IDs to avoid invalid activity
-const adUnitIds: AdUnitIds = {
-  banner: {
-    android: environment.production ? environment.adBannerAndroid || TestIds.BANNER : TestIds.BANNER,
-    ios: environment.production ? environment.adBannerIos || TestIds.BANNER : TestIds.BANNER,
-  },
-  interstitial: {
-    android: environment.production ? environment.adInterstitialAndroid || TestIds.INTERSTITIAL : TestIds.INTERSTITIAL,
-    ios: environment.production ? environment.adInterstitialIos || TestIds.INTERSTITIAL : TestIds.INTERSTITIAL,
-  },
-  rewarded: {
-    android: environment.production ? environment.adRewardedAndroid || TestIds.REWARDED : TestIds.REWARDED,
-    ios: environment.production ? environment.adRewardedIos || TestIds.REWARDED : TestIds.REWARDED,
-  },
-  appOpen: {
-    android: environment.production ? environment.adAppOpenAndroid || TestIds.APP_OPEN : TestIds.APP_OPEN,
-    ios: environment.production ? environment.adAppOpenIos || TestIds.APP_OPEN : TestIds.APP_OPEN,
-  },
-  native: {
-    android: environment.production ? environment.adNativeAndroid || TestIds.NATIVE : TestIds.NATIVE,
-    ios: environment.production ? environment.adNativeIos || TestIds.NATIVE : TestIds.NATIVE,
-  },
+// Function to get ad unit IDs with fallback to test IDs
+const getAdUnitIds = (): AdUnitIds => {
+  return {
+    banner: {
+      android: environment.production ? environment.adBannerAndroid || TestIds.BANNER : TestIds.BANNER,
+      ios: environment.production ? environment.adBannerIos || TestIds.BANNER : TestIds.BANNER,
+    },
+    interstitial: {
+      android: environment.production ? environment.adInterstitialAndroid || TestIds.INTERSTITIAL : TestIds.INTERSTITIAL,
+      ios: environment.production ? environment.adInterstitialIos || TestIds.INTERSTITIAL : TestIds.INTERSTITIAL,
+    },
+    rewarded: {
+      android: environment.production ? environment.adRewardedAndroid || TestIds.REWARDED : TestIds.REWARDED,
+      ios: environment.production ? environment.adRewardedIos || TestIds.REWARDED : TestIds.REWARDED,
+    },
+    appOpen: {
+      android: environment.production ? environment.adAppOpenAndroid || TestIds.APP_OPEN : TestIds.APP_OPEN,
+      ios: environment.production ? environment.adAppOpenIos || TestIds.APP_OPEN : TestIds.APP_OPEN,
+    },
+    native: {
+      android: environment.production ? environment.adNativeAndroid || TestIds.NATIVE : TestIds.NATIVE,
+      ios: environment.production ? environment.adNativeIos || TestIds.NATIVE : TestIds.NATIVE,
+    },
+  };
 };
+
+// Initialize with empty values, will be populated in getAdUnitId
+let adUnitIds: AdUnitIds;
 
 // Get the correct ad unit ID based on platform
 const getAdUnitId = (adType: keyof AdUnitIds): string => {
+  // Initialize adUnitIds if not already done
+  if (!adUnitIds) {
+    adUnitIds = getAdUnitIds();
+  }
   return Platform.OS === 'ios' ? adUnitIds[adType].ios : adUnitIds[adType].android;
 };
 
@@ -115,7 +116,7 @@ const loadAppOpenAd = async () => {
     const adUnitId = getAdUnitId('appOpen');
     console.log('Using app open ad unit ID:', adUnitId);
 
-    // Create the ad with non-personalized option to avoid consent issues
+    // Import is no longer needed as we're importing at the top level
     const { AppOpenAd } = await import('react-native-google-mobile-ads');
     appOpenAd = AppOpenAd.createForAdRequest(adUnitId, {
       requestNonPersonalizedAdsOnly: true,
@@ -219,7 +220,7 @@ const loadInterstitialAd = async () => {
   try {
     const adUnitId = getAdUnitId('interstitial');
 
-    // Import InterstitialAd dynamically
+    // Import is no longer needed as we're importing at the top level
     const { InterstitialAd } = await import('react-native-google-mobile-ads');
     interstitialAd = InterstitialAd.createForAdRequest(adUnitId);
 
@@ -303,7 +304,7 @@ const loadRewardedAd = async () => {
     // react-native-google-mobile-ads recommends creating a new instance for each load.
     const adUnitId = getAdUnitId('rewarded');
 
-    // Import RewardedAd dynamically
+    // Import is no longer needed as we're importing at the top level
     const { RewardedAd } = await import('react-native-google-mobile-ads');
     rewardedAd = RewardedAd.createForAdRequest(adUnitId, {
       requestNonPersonalizedAdsOnly: true,
@@ -574,8 +575,7 @@ const initializeAds = async (): Promise<void> => {
 
     AppState.addEventListener('change', appStateChangeListener);
   } catch (error) {
-
-      console.error('Failed to initialize Mobile Ads SDK:', error);
+    console.error('Failed to initialize Mobile Ads SDK:', error);
 
 
     // Try to recover by loading ads anyway with minimal initialization
