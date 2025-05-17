@@ -19,7 +19,7 @@ import { OfflineScreen } from '../components/OfflineScreen';
 import { RatingProvider } from '../contexts/RatingContext';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
-import analytics from '@react-native-firebase/analytics';
+import { getAnalytics, isSupported } from '@react-native-firebase/analytics';
 import { analyticsService } from '../utils/analytics';
 import { crashlyticsService } from '../utils/crashlytics';
 import { adService } from '../services/adService';
@@ -84,9 +84,21 @@ export default function RootLayout() {
       try {
         if (Platform.OS !== 'web') {
           try {
-            await analytics().setAnalyticsCollectionEnabled(true);
-            if (!environment.production) {
-              console.log('Firebase Analytics initialized in development mode');
+            // Check if analytics is supported first
+            const analyticsSupported = await isSupported();
+
+            if (analyticsSupported) {
+              // Get analytics instance using the modular API
+              const analyticsInstance = getAnalytics();
+
+              // Set analytics collection based on environment
+              await analyticsInstance.setAnalyticsCollectionEnabled(environment.production);
+
+              if (!environment.production) {
+                console.log('Firebase Analytics initialized in development mode');
+              }
+            } else {
+              console.log('Firebase Analytics is not supported in this environment');
             }
           } catch (analyticsError) {
             console.error('Failed to initialize Firebase Analytics:', analyticsError);

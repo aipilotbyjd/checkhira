@@ -93,9 +93,14 @@ const isAppOpenAdAvailable = (): boolean => {
 };
 
 // Load an app open ad
-const loadAppOpenAd = async () => {
+const loadAppOpenAd = async (): Promise<() => void> => {
   // Ensure ad modules are loaded
-  await loadAdModules();
+  try {
+    await loadAdModules();
+  } catch (error) {
+    console.error('Error loading ad modules:', error);
+    return () => { }; // Return empty function on error
+  }
 
   // Don't try to load if already loading
   if (isAppOpenAdLoading) {
@@ -122,33 +127,44 @@ const loadAppOpenAd = async () => {
       requestNonPersonalizedAdsOnly: true,
     });
 
-    const unsubscribeLoaded = appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
-      console.log('App open ad loaded successfully');
-      appOpenAdLoadTime = Date.now();
-      isAppOpenAdLoaded = true;
+    // Define unsubscribe functions with default empty functions
+    let unsubscribeLoaded = () => {};
+    let unsubscribeClosed = () => {};
+    let unsubscribeError = () => {};
+
+    try {
+      unsubscribeLoaded = appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
+        console.log('App open ad loaded successfully');
+        appOpenAdLoadTime = Date.now();
+        isAppOpenAdLoaded = true;
+        isAppOpenAdLoading = false;
+      });
+
+      unsubscribeClosed = appOpenAd.addAdEventListener(AdEventType.CLOSED, () => {
+        console.log('App open ad closed');
+        isAppOpenAdLoaded = false;
+        // Reload the ad for next time after a short delay
+        setTimeout(() => {
+          loadAppOpenAd();
+        }, 1000);
+      });
+
+      unsubscribeError = appOpenAd.addAdEventListener(AdEventType.ERROR, (error) => {
+        console.error('App open ad error:', error);
+        appOpenAd = null;
+        isAppOpenAdLoaded = false;
+        isAppOpenAdLoading = false;
+
+        // Retry loading after error with a delay
+        setTimeout(() => {
+          loadAppOpenAd();
+        }, 5000); // Wait 5 seconds before retry
+      });
+    } catch (eventError) {
+      console.error('Error setting up ad event listeners:', eventError);
       isAppOpenAdLoading = false;
-    });
-
-    const unsubscribeClosed = appOpenAd.addAdEventListener(AdEventType.CLOSED, () => {
-      console.log('App open ad closed');
-      isAppOpenAdLoaded = false;
-      // Reload the ad for next time after a short delay
-      setTimeout(() => {
-        loadAppOpenAd();
-      }, 1000);
-    });
-
-    const unsubscribeError = appOpenAd.addAdEventListener(AdEventType.ERROR, (error) => {
-      console.error('App open ad error:', error);
-      appOpenAd = null;
-      isAppOpenAdLoaded = false;
-      isAppOpenAdLoading = false;
-
-      // Retry loading after error with a delay
-      setTimeout(() => {
-        loadAppOpenAd();
-      }, 5000); // Wait 5 seconds before retry
-    });
+      return () => { }; // Return empty function on error
+    }
 
     // Start loading with error handling
     try {
@@ -159,15 +175,20 @@ const loadAppOpenAd = async () => {
       isAppOpenAdLoading = false;
     }
 
+    // Return a cleanup function that handles potential errors
     return () => {
-      unsubscribeLoaded();
-      unsubscribeClosed();
-      unsubscribeError();
+      try {
+        if (typeof unsubscribeLoaded === 'function') unsubscribeLoaded();
+        if (typeof unsubscribeClosed === 'function') unsubscribeClosed();
+        if (typeof unsubscribeError === 'function') unsubscribeError();
+      } catch (cleanupError) {
+        console.error('Error during ad event listener cleanup:', cleanupError);
+      }
     };
   } catch (error) {
     console.error('Error setting up app open ad:', error);
     isAppOpenAdLoading = false;
-    return () => { };
+    return () => { }; // Return empty function on error
   }
 };
 
@@ -213,9 +234,14 @@ const showAppOpenAd = async (): Promise<boolean> => {
 // Interstitial ad management
 let interstitialAd: InterstitialAd | null = null;
 
-const loadInterstitialAd = async () => {
+const loadInterstitialAd = async (): Promise<() => void> => {
   // Ensure ad modules are loaded
-  await loadAdModules();
+  try {
+    await loadAdModules();
+  } catch (error) {
+    console.error('Error loading ad modules for interstitial ad:', error);
+    return () => {}; // Return empty function on error
+  }
 
   try {
     const adUnitId = getAdUnitId('interstitial');
@@ -224,31 +250,55 @@ const loadInterstitialAd = async () => {
     const { InterstitialAd } = await import('react-native-google-mobile-ads');
     interstitialAd = InterstitialAd.createForAdRequest(adUnitId);
 
-    const unsubscribeLoaded = interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
-      console.log('Interstitial ad loaded');
-    });
+    // Define unsubscribe functions with default empty functions
+    let unsubscribeLoaded = () => {};
+    let unsubscribeClosed = () => {};
+    let unsubscribeError = () => {};
 
-    const unsubscribeClosed = interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
-      console.log('Interstitial ad closed');
-      // Reload the ad for next time
-      interstitialAd?.load();
-    });
+    try {
+      unsubscribeLoaded = interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
+        console.log('Interstitial ad loaded');
+      });
 
-    const unsubscribeError = interstitialAd.addAdEventListener(AdEventType.ERROR, (error) => {
-      console.error('Interstitial ad error:', error);
-    });
+      unsubscribeClosed = interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
+        console.log('Interstitial ad closed');
+        // Reload the ad for next time
+        try {
+          interstitialAd?.load();
+        } catch (loadError) {
+          console.error('Error reloading interstitial ad after close:', loadError);
+        }
+      });
 
-    // Start loading
-    interstitialAd.load();
+      unsubscribeError = interstitialAd.addAdEventListener(AdEventType.ERROR, (error) => {
+        console.error('Interstitial ad error:', error);
+      });
+    } catch (eventError) {
+      console.error('Error setting up interstitial ad event listeners:', eventError);
+      return () => {}; // Return empty function on error
+    }
 
+    // Start loading with error handling
+    try {
+      console.log('Calling load() on interstitial ad');
+      interstitialAd.load();
+    } catch (loadError) {
+      console.error('Error initiating interstitial ad load:', loadError);
+    }
+
+    // Return a cleanup function that handles potential errors
     return () => {
-      unsubscribeLoaded();
-      unsubscribeClosed();
-      unsubscribeError();
+      try {
+        if (typeof unsubscribeLoaded === 'function') unsubscribeLoaded();
+        if (typeof unsubscribeClosed === 'function') unsubscribeClosed();
+        if (typeof unsubscribeError === 'function') unsubscribeError();
+      } catch (cleanupError) {
+        console.error('Error during interstitial ad event listener cleanup:', cleanupError);
+      }
     };
   } catch (error) {
     console.error('Error setting up interstitial ad:', error);
-    return () => {};
+    return () => {}; // Return empty function on error
   }
 };
 
@@ -282,9 +332,14 @@ const showInterstitialAd = async (): Promise<boolean> => {
 let rewardedAd: RewardedAd | null = null;
 let isRewardedAdLoading = false;
 
-const loadRewardedAd = async () => {
+const loadRewardedAd = async (): Promise<() => void> => {
   // Ensure ad modules are loaded
-  await loadAdModules();
+  try {
+    await loadAdModules();
+  } catch (error) {
+    console.error('Error loading ad modules for rewarded ad:', error);
+    return () => {}; // Return empty function on error
+  }
 
   if (isRewardedAdLoading && rewardedAd && rewardedAd.loaded) {
     console.log('Rewarded ad: Already loaded and ready.');
@@ -312,36 +367,46 @@ const loadRewardedAd = async () => {
 
     console.log(`Rewarded ad: Created new instance for unit ID: ${adUnitId}`);
 
-    // Define a variable to hold the unsubscribe function for LOADED event
-    let unsubscribeLoaded: undefined | (() => void);
-    // Define a variable to hold the unsubscribe function for ERROR event
-    let unsubscribeLoadError: undefined | (() => void);
+    // Define unsubscribe functions with default empty functions
+    let unsubscribeLoaded = () => {};
+    let unsubscribeLoadError = () => {};
 
-    // Listener for when the ad is loaded successfully
-    unsubscribeLoaded = rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
-      console.log('Rewarded ad: Loaded successfully (event listener in loadRewardedAd).');
-      isRewardedAdLoading = false;
-    });
+    try {
+      // Listener for when the ad is loaded successfully
+      unsubscribeLoaded = rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
+        console.log('Rewarded ad: Loaded successfully (event listener in loadRewardedAd).');
+        isRewardedAdLoading = false;
+      });
 
-    // Listener for errors specifically during the ad loading process
-    unsubscribeLoadError = rewardedAd.addAdEventListener(AdEventType.ERROR, (error) => {
-      console.error(`Rewarded ad: Load-time error for ad unit ${adUnitId} (event listener in loadRewardedAd):`, error);
-      isRewardedAdLoading = false;
-      // Clean up these specific listeners as this ad instance failed to load
-      if (typeof unsubscribeLoaded === 'function') unsubscribeLoaded();
-      if (typeof unsubscribeLoadError === 'function') unsubscribeLoadError();
+      // Listener for errors specifically during the ad loading process
+      unsubscribeLoadError = rewardedAd.addAdEventListener(AdEventType.ERROR, (error) => {
+        console.error(`Rewarded ad: Load-time error for ad unit ${adUnitId} (event listener in loadRewardedAd):`, error);
+        isRewardedAdLoading = false;
 
-      // Retry loading after a delay.
-      console.log(`Rewarded ad: Scheduling retry load for ${adUnitId} in 7 seconds due to load error.`);
-      setTimeout(() => {
-        if (!isRewardedAdLoading) { // Check flag again before retrying
-          console.log(`Rewarded ad: Retrying load for ${adUnitId} after previous load-time error (7s passed).`);
-          loadRewardedAd(); // This will call the main loadRewardedAd function again
-        } else {
-          console.log(`Rewarded ad: Skipping retry load for ${adUnitId} as another load is already in progress.`);
+        // Clean up these specific listeners as this ad instance failed to load
+        try {
+          if (typeof unsubscribeLoaded === 'function') unsubscribeLoaded();
+          if (typeof unsubscribeLoadError === 'function') unsubscribeLoadError();
+        } catch (cleanupError) {
+          console.error('Error cleaning up rewarded ad listeners after error:', cleanupError);
         }
-      }, 7000); // Retry after 7 seconds
-    });
+
+        // Retry loading after a delay.
+        console.log(`Rewarded ad: Scheduling retry load for ${adUnitId} in 7 seconds due to load error.`);
+        setTimeout(() => {
+          if (!isRewardedAdLoading) { // Check flag again before retrying
+            console.log(`Rewarded ad: Retrying load for ${adUnitId} after previous load-time error (7s passed).`);
+            loadRewardedAd(); // This will call the main loadRewardedAd function again
+          } else {
+            console.log(`Rewarded ad: Skipping retry load for ${adUnitId} as another load is already in progress.`);
+          }
+        }, 7000); // Retry after 7 seconds
+      });
+    } catch (eventError) {
+      console.error('Error setting up rewarded ad event listeners:', eventError);
+      isRewardedAdLoading = false;
+      return () => {}; // Return empty function on error
+    }
 
     // Start loading the ad
     try {
@@ -350,22 +415,32 @@ const loadRewardedAd = async () => {
     } catch (loadCatchError) {
       console.error('Rewarded ad: Critical error during .load() call (in loadRewardedAd):', loadCatchError);
       isRewardedAdLoading = false;
+
       // Clean up listeners if .load() itself throws an immediate error
-      if (typeof unsubscribeLoaded === 'function') unsubscribeLoaded();
-      if (typeof unsubscribeLoadError === 'function') unsubscribeLoadError();
-      return () => { }; // Return an empty cleanup
+      try {
+        if (typeof unsubscribeLoaded === 'function') unsubscribeLoaded();
+        if (typeof unsubscribeLoadError === 'function') unsubscribeLoadError();
+      } catch (cleanupError) {
+        console.error('Error cleaning up rewarded ad listeners after load error:', cleanupError);
+      }
+
+      return () => {}; // Return an empty cleanup
     }
 
     // Return a cleanup function for these load-time listeners.
     return () => {
-      console.log('Rewarded ad: Cleaning up load-time listeners (from loadRewardedAd).');
-      if (typeof unsubscribeLoaded === 'function') unsubscribeLoaded();
-      if (typeof unsubscribeLoadError === 'function') unsubscribeLoadError();
+      try {
+        console.log('Rewarded ad: Cleaning up load-time listeners (from loadRewardedAd).');
+        if (typeof unsubscribeLoaded === 'function') unsubscribeLoaded();
+        if (typeof unsubscribeLoadError === 'function') unsubscribeLoadError();
+      } catch (cleanupError) {
+        console.error('Error during rewarded ad event listener cleanup:', cleanupError);
+      }
     };
   } catch (error) {
     console.error('Error setting up rewarded ad:', error);
     isRewardedAdLoading = false;
-    return () => {};
+    return () => {}; // Return empty function on error
   }
 };
 

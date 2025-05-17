@@ -30,22 +30,32 @@ const initializeAnalytics = async (): Promise<void> => {
 
             // For native platforms, use the Firebase modular SDK
             try {
-                const { default: analytics } = await import('@react-native-firebase/analytics');
+                // Import the modular Firebase Analytics API
+                const { getAnalytics, isSupported } = await import('@react-native-firebase/analytics');
 
-                // Initialize analytics directly without checking isSupported
+                // Check if analytics is supported
                 try {
-                    analyticsInstance = analytics();
-                    isAnalyticsSupported = true;
+                    // Safely check if analytics is supported
+                    const supported = await isSupported();
 
-                    // Set analytics collection based on environment
-                    await analyticsInstance.setAnalyticsCollectionEnabled(environment.production);
+                    if (supported) {
+                        // Get analytics instance
+                        analyticsInstance = getAnalytics();
+                        isAnalyticsSupported = true;
 
-                    if (!environment.production) {
-                        console.log('Firebase Analytics initialized successfully');
+                        // Set analytics collection based on environment
+                        await analyticsInstance.setAnalyticsCollectionEnabled(environment.production);
+
+                        if (!environment.production) {
+                            console.log('Firebase Analytics initialized successfully');
+                        }
+                    } else {
+                        console.log('Firebase Analytics is not supported in this environment');
+                        analyticsInstance = null;
+                        isAnalyticsSupported = false;
                     }
-                } catch (initError) {
-                    // Handle initialization error
-                    console.error('Error initializing Firebase Analytics:', initError);
+                } catch (supportError) {
+                    console.error('Error checking if Firebase Analytics is supported:', supportError);
                     analyticsInstance = null;
                     isAnalyticsSupported = false;
                 }
@@ -82,6 +92,7 @@ class AnalyticsService {
             await initializeAnalytics();
 
             if (analyticsInstance && isAnalyticsSupported) {
+                // Use the modular API
                 await analyticsInstance.logEvent(eventName, params);
             }
 
@@ -104,6 +115,7 @@ class AnalyticsService {
             await initializeAnalytics();
 
             if (analyticsInstance && isAnalyticsSupported) {
+                // Use the modular API
                 await analyticsInstance.setUserId(userId);
             }
         } catch (error) {
@@ -122,6 +134,7 @@ class AnalyticsService {
             await initializeAnalytics();
 
             if (analyticsInstance && isAnalyticsSupported) {
+                // Use the modular API with logScreenView
                 await analyticsInstance.logScreenView({
                     screen_name: screenName,
                     screen_class: screenClass || screenName,
@@ -152,6 +165,7 @@ class AnalyticsService {
             await initializeAnalytics();
 
             if (analyticsInstance && isAnalyticsSupported) {
+                // Use the modular API
                 await analyticsInstance.setUserProperty(name, value);
             }
 

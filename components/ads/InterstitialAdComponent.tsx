@@ -12,10 +12,25 @@ export const InterstitialAdComponent = ({ onAdClosed }: InterstitialAdComponentP
 
   useEffect(() => {
     // Always keep an interstitial ad loaded and ready
-    const unsubscribe = adService.loadInterstitialAd();
+    let unsubscribeFunc: (() => void) | null = null;
+
+    // Call loadInterstitialAd and store the unsubscribe function
+    const loadAd = async () => {
+      try {
+        unsubscribeFunc = await adService.loadInterstitialAd();
+      } catch (error) {
+        console.error('Error loading interstitial ad:', error);
+      }
+    };
+
+    // Load the ad
+    loadAd();
 
     return () => {
-      unsubscribe();
+      // Check if unsubscribeFunc is a function before calling it
+      if (unsubscribeFunc && typeof unsubscribeFunc === 'function') {
+        unsubscribeFunc();
+      }
     };
   }, []);
 
@@ -40,10 +55,25 @@ export const useInterstitialAd = () => {
 
   useEffect(() => {
     // Always keep an interstitial ad loaded and ready
-    const unsubscribe = adService.loadInterstitialAd();
+    let unsubscribeFunc: (() => void) | null = null;
+
+    // Call loadInterstitialAd and store the unsubscribe function
+    const loadAd = async () => {
+      try {
+        unsubscribeFunc = await adService.loadInterstitialAd();
+      } catch (error) {
+        console.error('Error loading interstitial ad in useInterstitialAd hook:', error);
+      }
+    };
+
+    // Load the ad
+    loadAd();
 
     return () => {
-      unsubscribe();
+      // Check if unsubscribeFunc is a function before calling it
+      if (unsubscribeFunc && typeof unsubscribeFunc === 'function') {
+        unsubscribeFunc();
+      }
     };
   }, []);
 

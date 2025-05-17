@@ -13,10 +13,25 @@ export const RewardedAdComponent = ({ onRewarded, onAdClosed }: RewardedAdCompon
 
   useEffect(() => {
     // Always keep a rewarded ad loaded and ready
-    const unsubscribe = adService.loadRewardedAd();
+    let unsubscribeFunc: (() => void) | null = null;
+
+    // Call loadRewardedAd and store the unsubscribe function
+    const loadAd = async () => {
+      try {
+        unsubscribeFunc = await adService.loadRewardedAd();
+      } catch (error) {
+        console.error('Error loading rewarded ad:', error);
+      }
+    };
+
+    // Load the ad
+    loadAd();
 
     return () => {
-      unsubscribe();
+      // Check if unsubscribeFunc is a function before calling it
+      if (unsubscribeFunc && typeof unsubscribeFunc === 'function') {
+        unsubscribeFunc();
+      }
     };
   }, []);
 
@@ -41,10 +56,25 @@ export const useRewardedAd = () => {
 
   useEffect(() => {
     // Always keep a rewarded ad loaded and ready
-    const unsubscribe = adService.loadRewardedAd();
+    let unsubscribeFunc: (() => void) | null = null;
+
+    // Call loadRewardedAd and store the unsubscribe function
+    const loadAd = async () => {
+      try {
+        unsubscribeFunc = await adService.loadRewardedAd();
+      } catch (error) {
+        console.error('Error loading rewarded ad in useRewardedAd hook:', error);
+      }
+    };
+
+    // Load the ad
+    loadAd();
 
     return () => {
-      unsubscribe();
+      // Check if unsubscribeFunc is a function before calling it
+      if (unsubscribeFunc && typeof unsubscribeFunc === 'function') {
+        unsubscribeFunc();
+      }
     };
   }, []);
 
@@ -78,7 +108,7 @@ export const useRewardedAd = () => {
         // adService.loadRewardedAd() is already called by adManager/adService internally on failures/closes.
         // However, an explicit call here can sometimes help if the ad pool was exhausted.
         // For now, let's trust the internal reloading logic of adService.
-        // adService.loadRewardedAd(); 
+        // adService.loadRewardedAd();
         // await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for potential load
 
         return tryShowAd(); // Recursive call to retry

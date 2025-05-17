@@ -47,21 +47,38 @@ const initializeWebAnalytics = async (): Promise<void> => {
 
         // Then check if analytics is supported in this environment
         try {
-            // Safely check if analytics is supported
-            analyticsSupported = await Promise.resolve(isSupported())
-                .then(result => {
-                    // Handle both boolean and object returns
-                    if (typeof result === 'boolean') {
-                        return result;
-                    } else {
-                        console.warn('isSupported() returned a non-boolean value:', result);
-                        return false;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error checking if Firebase Analytics is supported:', error);
-                    return false;
+            // Create a promise that will resolve with the result of isSupported()
+            // or reject after a timeout
+            const checkSupported = async () => {
+                return new Promise<boolean>((resolve) => {
+                    // Set a timeout to prevent hanging
+                    const timeoutId = setTimeout(() => {
+                        console.warn('isSupported() check timed out');
+                        resolve(false);
+                    }, 5000);
+
+                    // Try to check if analytics is supported
+                    isSupported()
+                        .then(result => {
+                            clearTimeout(timeoutId);
+                            // Handle both boolean and object returns
+                            if (typeof result === 'boolean') {
+                                resolve(result);
+                            } else {
+                                console.warn('isSupported() returned a non-boolean value:', result);
+                                resolve(false);
+                            }
+                        })
+                        .catch(error => {
+                            clearTimeout(timeoutId);
+                            console.error('Error checking if Firebase Analytics is supported:', error);
+                            resolve(false);
+                        });
                 });
+            };
+
+            // Check if analytics is supported
+            analyticsSupported = await checkSupported();
         } catch (error) {
             console.error('Error checking if Firebase Analytics is supported:', error);
             analyticsSupported = false;

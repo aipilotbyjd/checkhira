@@ -45,7 +45,19 @@ export const AppOpenAdComponent = ({ onAdClosed }: AppOpenAdComponentProps) => {
 
   useEffect(() => {
     // Load the ad when component mounts
-    const unsubscribe = adService.loadAppOpenAd();
+    let unsubscribeFunc: (() => void) | null = null;
+
+    // Call loadAppOpenAd and store the unsubscribe function
+    const loadAd = async () => {
+      try {
+        unsubscribeFunc = await adService.loadAppOpenAd();
+      } catch (error) {
+        console.error('Error loading app open ad:', error);
+      }
+    };
+
+    // Load the ad
+    loadAd();
 
     // Try to show the ad after a delay
     const showAdWithRetry = async () => {
@@ -69,7 +81,10 @@ export const AppOpenAdComponent = ({ onAdClosed }: AppOpenAdComponentProps) => {
     }
 
     return () => {
-      unsubscribe();
+      // Check if unsubscribeFunc is a function before calling it
+      if (unsubscribeFunc && typeof unsubscribeFunc === 'function') {
+        unsubscribeFunc();
+      }
     };
   }, [onAdClosed]);
 
@@ -83,10 +98,25 @@ export const useAppOpenAd = () => {
   const maxAdLoadAttempts = 3;
 
   useEffect(() => {
-    const unsubscribe = adService.loadAppOpenAd();
+    let unsubscribeFunc: (() => void) | null = null;
+
+    // Call loadAppOpenAd and store the unsubscribe function
+    const loadAd = async () => {
+      try {
+        unsubscribeFunc = await adService.loadAppOpenAd();
+      } catch (error) {
+        console.error('Error loading app open ad in useAppOpenAd hook:', error);
+      }
+    };
+
+    // Load the ad
+    loadAd();
 
     return () => {
-      unsubscribe();
+      // Check if unsubscribeFunc is a function before calling it
+      if (unsubscribeFunc && typeof unsubscribeFunc === 'function') {
+        unsubscribeFunc();
+      }
     };
   }, []);
 
