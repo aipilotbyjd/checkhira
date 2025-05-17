@@ -26,6 +26,7 @@ import { adService } from '../services/adService';
 import { AppStartAdManager } from '../components/ads';
 
 export const unstable_settings = {
+  // initialRouteName: 'onboarding',
   initialRouteName: '(tabs)',
 };
 
@@ -54,6 +55,7 @@ function RootLayoutNav() {
 
   return (
     <Stack>
+      {/* <Stack.Screen name="onboarding" options={{ headerShown: false }} /> */}
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="auth/google-login" options={{ headerShown: false }} />
       <Stack.Screen name="auth/phone-login" options={{ headerShown: false }} />

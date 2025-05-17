@@ -55,21 +55,61 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
   showIndicator = true,
   containerStyle,
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // For the extended data array, we start at index 1 (after the duplicated last item)
+  const [currentIndex, setCurrentIndex] = useState(1);
   const flatListRef = useRef<FlatList>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
   const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Create a modified array with duplicated first and last items for infinite loop effect
+  // Create a modified array with duplicated items for true infinite loop effect
   const getExtendedData = useCallback(() => {
     if (!ads || ads.length === 0) return [];
     if (ads.length === 1) return [...ads];
 
-    // Return the original array for normal scrolling
-    return [...ads];
+    // For proper infinite looping, we duplicate the first item at the end
+    // and the last item at the beginning to create a seamless transition
+    // This creates a structure like: [lastItem, ...originalItems, firstItem]
+    // We need to modify the ids to make them unique to avoid React key warnings
+    const lastItem = { ...ads[ads.length - 1], id: `${ads[ads.length - 1].id}_clone_start` };
+    const firstItem = { ...ads[0], id: `${ads[0].id}_clone_end` };
+
+    return [lastItem, ...ads, firstItem];
   }, [ads]);
 
   const extendedData = getExtendedData();
+
+  // This function is used for direct navigation (e.g., from dot indicators)
+  // and is called from the handleDotPress function
+  const scrollToIndex = useCallback((index: number) => {
+    if (flatListRef.current) {
+      // Convert the real index to the extended data index (add 1 because of the duplicated last item at the start)
+      const extendedIndex = index + 1;
+
+      // Scroll to the specified index with animation
+      flatListRef.current.scrollToIndex({
+        index: extendedIndex,
+        animated: true,
+        viewPosition: 0.5,
+      });
+
+      // Update the current index state
+      setCurrentIndex(extendedIndex);
+    }
+  }, []);
+
+  // Initialize the carousel at the correct position
+  useEffect(() => {
+    // Small delay to ensure the FlatList is properly rendered
+    const timer = setTimeout(() => {
+      if (ads.length > 1) {
+        // Start at the first real item (index 0 in the original array)
+        // This will be converted to index 1 in the extended array by scrollToIndex
+        scrollToIndex(0);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [ads.length, scrollToIndex]);
 
   // Handle auto-play functionality with improved looping
   useEffect(() => {
@@ -82,7 +122,7 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
         clearInterval(autoPlayTimerRef.current);
       }
     };
-  }, [autoPlay, ads.length, currentIndex]);
+  }, [autoPlay, ads.length, currentIndex, extendedData.length]);
 
   const startAutoPlay = () => {
     if (autoPlayTimerRef.current) {
@@ -92,20 +132,36 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
     autoPlayTimerRef.current = setInterval(() => {
       if (ads.length <= 1) return;
 
-      const nextIndex = (currentIndex + 1) % ads.length;
-      scrollToIndex(nextIndex);
-    }, autoPlayInterval);
-  };
+      // Calculate the next index in the extended data array
+      let nextIndex = currentIndex + 1;
 
-  const scrollToIndex = (index: number) => {
-    if (flatListRef.current && index >= 0 && index < ads.length) {
-      flatListRef.current.scrollToIndex({
-        index,
-        animated: true,
-        viewPosition: 0.5,
-      });
-      setCurrentIndex(index);
-    }
+      // If we're at the duplicated first item at the end, loop back to the real first item
+      if (nextIndex >= extendedData.length) {
+        // First scroll to the duplicated first item with animation
+        if (flatListRef.current) {
+          flatListRef.current.scrollToIndex({
+            index: extendedData.length - 1,
+            animated: true,
+          });
+
+          // Then after a short delay, jump to the real first item without animation
+          setTimeout(() => {
+            if (flatListRef.current) {
+              flatListRef.current.scrollToIndex({
+                index: 1,
+                animated: false,
+              });
+            }
+            setCurrentIndex(1);
+          }, 100);
+        }
+      } else {
+        // Normal progression - just scroll to the next item
+        // Convert from extended index to real index (subtract 1)
+        const realIndex = nextIndex - 1;
+        scrollToIndex(realIndex);
+      }
+    }, autoPlayInterval);
   };
 
   const handleAdPress = (ad: SponsoredAd) => {
@@ -141,9 +197,35 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
     const slideWidth = ITEM_WIDTH + ITEM_SPACING * 2;
     const newIndex = Math.round(contentOffsetX / slideWidth);
 
-    // Ensure the index is within bounds
-    const boundedIndex = Math.max(0, Math.min(newIndex, ads.length - 1));
-    setCurrentIndex(boundedIndex);
+    // Handle infinite looping for manual scrolling
+    if (newIndex === 0) {
+      // We scrolled to the duplicated last item (at position 0)
+      // Jump to the actual last item without animation
+      setTimeout(() => {
+        if (flatListRef.current) {
+          flatListRef.current.scrollToIndex({
+            index: ads.length,
+            animated: false,
+          });
+        }
+        setCurrentIndex(ads.length);
+      }, 10);
+    } else if (newIndex === extendedData.length - 1) {
+      // We scrolled to the duplicated first item (at the end)
+      // Jump to the actual first item without animation
+      setTimeout(() => {
+        if (flatListRef.current) {
+          flatListRef.current.scrollToIndex({
+            index: 1,
+            animated: false,
+          });
+        }
+        setCurrentIndex(1);
+      }, 10);
+    } else {
+      // Normal scrolling within the bounds
+      setCurrentIndex(newIndex);
+    }
 
     // Restart autoplay after manual scrolling
     if (autoPlay && ads.length > 1) {
@@ -223,6 +305,24 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
     </TouchableOpacity>
   );
 
+  // Handle dot indicator press to navigate directly to a specific ad
+  const handleDotPress = (index: number) => {
+    // Pause autoplay temporarily
+    if (autoPlayTimerRef.current) {
+      clearInterval(autoPlayTimerRef.current);
+    }
+
+    // Use the scrollToIndex function to navigate to the selected ad
+    scrollToIndex(index);
+
+    // Restart autoplay after a short delay
+    setTimeout(() => {
+      if (autoPlay && ads.length > 1) {
+        startAutoPlay();
+      }
+    }, 500);
+  };
+
   const renderDotIndicator = () => {
     if (!showIndicator || ads.length <= 1) return null;
 
@@ -232,10 +332,14 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
           // Calculate the slide width including margins
           const slideWidth = ITEM_WIDTH + ITEM_SPACING * 2;
 
+          // Adjust the input range for the extended data array
+          // We need to offset by 1 because of the duplicated last item at the start
+          const adjustedIndex = index + 1;
+
           const inputRange = [
-            (index - 1) * slideWidth,
-            index * slideWidth,
-            (index + 1) * slideWidth,
+            (adjustedIndex - 1) * slideWidth,
+            adjustedIndex * slideWidth,
+            (adjustedIndex + 1) * slideWidth,
           ];
 
           const dotWidth = scrollX.interpolate({
@@ -261,17 +365,22 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
           });
 
           return (
-            <Animated.View
+            <TouchableOpacity
               key={`dot-${index}`}
-              style={[
-                styles.dot,
-                {
-                  width: dotWidth,
-                  opacity,
-                  backgroundColor,
-                },
-              ]}
-            />
+              onPress={() => handleDotPress(index)}
+              activeOpacity={0.7}
+            >
+              <Animated.View
+                style={[
+                  styles.dot,
+                  {
+                    width: dotWidth,
+                    opacity,
+                    backgroundColor,
+                  },
+                ]}
+              />
+            </TouchableOpacity>
           );
         })}
       </View>
@@ -285,6 +394,12 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
   return (
     <SafeAreaView style={[styles.safeContainer, containerStyle]}>
       <View style={styles.container}>
+        {/*
+          FlatList with auto-looping functionality:
+          - Automatically scrolls through all items
+          - When reaching the end, loops back to the first item
+          - Supports both auto-play and manual scrolling
+        */}
         <FlatList
           ref={flatListRef}
           data={extendedData}
@@ -294,13 +409,13 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
           showsHorizontalScrollIndicator={false}
           onScroll={handleScroll}
           onMomentumScrollEnd={handleMomentumScrollEnd}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id} // Each item has a unique ID, including cloned items
           scrollEventThrottle={16}
           snapToInterval={ITEM_WIDTH + ITEM_SPACING * 2}
           snapToAlignment="center"
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
-          initialScrollIndex={0}
+          initialScrollIndex={1} // Start at index 1 (after the duplicated last item)
           getItemLayout={(_, index) => ({
             length: ITEM_WIDTH + ITEM_SPACING * 2,
             offset: (ITEM_WIDTH + ITEM_SPACING * 2) * index,
