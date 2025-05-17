@@ -179,22 +179,22 @@ export default function Home() {
 
       {/* Sponsored Ads Carousel */}
       {sponsoredAds && sponsoredAds.length > 0 && (
-        <View className="mt-2 mb-4">
-          <View className="px-4 mb-2">
-            <Text className="text-sm font-medium" style={{ color: COLORS.gray[400] }}>
+        <View className="mt-4 mb-6">
+          <View className="px-6 mb-3">
+            <Text className="text-base font-semibold" style={{ color: COLORS.secondary }}>
               Sponsored Partners
             </Text>
           </View>
           <SponsoredAdsCarousel
             ads={sponsoredAds}
-            height={180}
+            height={200}
             onAdPress={handleAdClick}
             autoPlay={true}
             autoPlayInterval={5000}
             showIndicator={true}
             containerStyle={{
               marginHorizontal: 0,
-              borderRadius: 12,
+              borderRadius: 16,
             }}
           />
         </View>

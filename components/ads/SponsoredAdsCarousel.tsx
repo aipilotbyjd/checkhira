@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,9 @@ import {
   FlatList,
   Animated,
   Linking,
-  Platform,
   ImageBackground,
+  SafeAreaView,
+  ViewStyle,
 } from 'react-native';
 import { COLORS } from '../../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -36,10 +37,14 @@ interface SponsoredAdsCarouselProps {
   height?: number;
   onAdPress?: (ad: SponsoredAd) => void;
   showIndicator?: boolean;
-  containerStyle?: any;
+  containerStyle?: ViewStyle;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Calculate the actual item width to ensure it fits within the screen
+const ITEM_WIDTH = SCREEN_WIDTH - 32; // 16px padding on each side
+const ITEM_SPACING = 8;
 
 export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
   ads,
@@ -55,7 +60,18 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
   const scrollX = useRef(new Animated.Value(0)).current;
   const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Handle auto-play functionality
+  // Create a modified array with duplicated first and last items for infinite loop effect
+  const getExtendedData = useCallback(() => {
+    if (!ads || ads.length === 0) return [];
+    if (ads.length === 1) return [...ads];
+
+    // Return the original array for normal scrolling
+    return [...ads];
+  }, [ads]);
+
+  const extendedData = getExtendedData();
+
+  // Handle auto-play functionality with improved looping
   useEffect(() => {
     if (autoPlay && ads.length > 1) {
       startAutoPlay();
@@ -74,6 +90,8 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
     }
 
     autoPlayTimerRef.current = setInterval(() => {
+      if (ads.length <= 1) return;
+
       const nextIndex = (currentIndex + 1) % ads.length;
       scrollToIndex(nextIndex);
     }, autoPlayInterval);
@@ -84,12 +102,18 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
       flatListRef.current.scrollToIndex({
         index,
         animated: true,
+        viewPosition: 0.5,
       });
       setCurrentIndex(index);
     }
   };
 
   const handleAdPress = (ad: SponsoredAd) => {
+    // Pause autoplay when ad is pressed
+    if (autoPlayTimerRef.current) {
+      clearInterval(autoPlayTimerRef.current);
+    }
+
     if (onAdPress) {
       onAdPress(ad);
     } else {
@@ -98,6 +122,13 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
         console.error('Error opening sponsored ad URL:', err)
       );
     }
+
+    // Resume autoplay after a short delay
+    setTimeout(() => {
+      if (autoPlay && ads.length > 1) {
+        startAutoPlay();
+      }
+    }, 1000);
   };
 
   const handleScroll = Animated.event(
@@ -107,20 +138,36 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
 
   const handleMomentumScrollEnd = (event: any) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
-    const newIndex = Math.round(contentOffsetX / SCREEN_WIDTH);
-    setCurrentIndex(newIndex);
+    const slideWidth = ITEM_WIDTH + ITEM_SPACING * 2;
+    const newIndex = Math.round(contentOffsetX / slideWidth);
+
+    // Ensure the index is within bounds
+    const boundedIndex = Math.max(0, Math.min(newIndex, ads.length - 1));
+    setCurrentIndex(boundedIndex);
+
+    // Restart autoplay after manual scrolling
+    if (autoPlay && ads.length > 1) {
+      startAutoPlay();
+    }
   };
 
-  const renderItem = ({ item }: { item: SponsoredAd }) => (
+  const renderItem = ({ item }: { item: SponsoredAd; index: number }) => (
     <TouchableOpacity
       activeOpacity={0.9}
-      style={[styles.adItem, { width: SCREEN_WIDTH, height }]}
+      style={[
+        styles.adItem,
+        {
+          width: ITEM_WIDTH,
+          height,
+          marginHorizontal: ITEM_SPACING,
+        }
+      ]}
       onPress={() => handleAdPress(item)}
     >
       <ImageBackground
         source={{ uri: item.imageUrl }}
         style={styles.adImage}
-        imageStyle={{ borderRadius: 12 }}
+        imageStyle={styles.adImageStyle}
         resizeMode="cover"
       >
         {/* Gradient overlay for better text visibility */}
@@ -139,7 +186,7 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
               </View>
             )}
             {item.sponsorName && (
-              <Text style={styles.sponsorName}>
+              <Text style={styles.sponsorName} numberOfLines={1}>
                 {item.sponsorName}
               </Text>
             )}
@@ -182,10 +229,13 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
     return (
       <View style={styles.indicatorContainer}>
         {ads.map((_, index) => {
+          // Calculate the slide width including margins
+          const slideWidth = ITEM_WIDTH + ITEM_SPACING * 2;
+
           const inputRange = [
-            (index - 1) * SCREEN_WIDTH,
-            index * SCREEN_WIDTH,
-            (index + 1) * SCREEN_WIDTH,
+            (index - 1) * slideWidth,
+            index * slideWidth,
+            (index + 1) * slideWidth,
           ];
 
           const dotWidth = scrollX.interpolate({
@@ -200,6 +250,16 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
             extrapolate: 'clamp',
           });
 
+          const backgroundColor = scrollX.interpolate({
+            inputRange,
+            outputRange: [
+              COLORS.gray[400],
+              COLORS.primary,
+              COLORS.gray[400],
+            ],
+            extrapolate: 'clamp',
+          });
+
           return (
             <Animated.View
               key={`dot-${index}`}
@@ -208,7 +268,7 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
                 {
                   width: dotWidth,
                   opacity,
-                  backgroundColor: currentIndex === index ? COLORS.primary : COLORS.gray[400],
+                  backgroundColor,
                 },
               ]}
             />
@@ -223,49 +283,70 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
   }
 
   return (
-    <View style={[styles.container, containerStyle]}>
-      <FlatList
-        ref={flatListRef}
-        data={ads}
-        renderItem={renderItem}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        onMomentumScrollEnd={handleMomentumScrollEnd}
-        keyExtractor={(item) => item.id}
-        scrollEventThrottle={16}
-      />
-      {renderDotIndicator()}
-    </View>
+    <SafeAreaView style={[styles.safeContainer, containerStyle]}>
+      <View style={styles.container}>
+        <FlatList
+          ref={flatListRef}
+          data={extendedData}
+          renderItem={renderItem}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={handleScroll}
+          onMomentumScrollEnd={handleMomentumScrollEnd}
+          keyExtractor={(item) => item.id}
+          scrollEventThrottle={16}
+          snapToInterval={ITEM_WIDTH + ITEM_SPACING * 2}
+          snapToAlignment="center"
+          decelerationRate="fast"
+          contentContainerStyle={styles.listContent}
+          initialScrollIndex={0}
+          getItemLayout={(_, index) => ({
+            length: ITEM_WIDTH + ITEM_SPACING * 2,
+            offset: (ITEM_WIDTH + ITEM_SPACING * 2) * index,
+            index,
+          })}
+        />
+        {renderDotIndicator()}
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeContainer: {
+    width: '100%',
+  },
   container: {
     width: '100%',
     overflow: 'hidden',
   },
+  listContent: {
+    paddingHorizontal: 8,
+  },
   adItem: {
     position: 'relative',
-    margin: 10,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
-    elevation: 5,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    backgroundColor: '#fff',
   },
   adImage: {
     width: '100%',
     height: '100%',
     justifyContent: 'space-between',
   },
+  adImageStyle: {
+    borderRadius: 16,
+  },
   gradientOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    borderRadius: 16,
     padding: 16,
     justifyContent: 'space-between',
   },
@@ -276,31 +357,40 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   sponsorLogo: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     marginRight: 8,
     backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   sponsorBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   sponsorName: {
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
     flex: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   sponsoredBadge: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   sponsoredText: {
     color: '#FFFFFF',
@@ -336,6 +426,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignSelf: 'flex-start',
     marginTop: 8,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
   ctaText: {
     color: '#FFFFFF',
@@ -348,7 +443,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'absolute',
-    bottom: 10,
+    bottom: 16,
     left: 0,
     right: 0,
     zIndex: 10,
@@ -357,5 +452,7 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
 });
