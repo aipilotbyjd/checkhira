@@ -10,19 +10,26 @@ let initializationPromise: Promise<void> | null = null;
 
 // Initialize analytics based on platform - but only when needed
 const initializeAnalytics = async (): Promise<void> => {
-    // If already initialized or initializing, return existing promise
+    // If already initialized, return immediately
     if (analyticsInstance) return Promise.resolve();
+
+    // If initialization is in progress, wait for it to complete
     if (isInitializing && initializationPromise) return initializationPromise;
 
     isInitializing = true;
-    initializationPromise = (async () => {
+
+    // Create a new promise for initialization
+    initializationPromise = new Promise<void>(async (resolve) => {
         try {
             if (Platform.OS === 'web') {
                 // For web, we'll use the web implementation
                 // This is handled in analytics.web.ts
+                resolve();
                 return;
-            } else {
-                // For native platforms, use the Firebase modular SDK
+            }
+
+            // For native platforms, use the Firebase modular SDK
+            try {
                 const { default: analytics } = await import('@react-native-firebase/analytics');
 
                 // Initialize analytics directly without checking isSupported
@@ -32,23 +39,30 @@ const initializeAnalytics = async (): Promise<void> => {
 
                     // Set analytics collection based on environment
                     await analyticsInstance.setAnalyticsCollectionEnabled(environment.production);
+
+                    if (!environment.production) {
+                        console.log('Firebase Analytics initialized successfully');
+                    }
                 } catch (initError) {
                     // Handle initialization error
                     console.error('Error initializing Firebase Analytics:', initError);
                     analyticsInstance = null;
                     isAnalyticsSupported = false;
                 }
-
-                if (!environment.production && analyticsInstance && isAnalyticsSupported) {
-                    console.log('Firebase Analytics initialized successfully');
-                }
+            } catch (error) {
+                console.error('Failed to import Firebase Analytics:', error);
+                analyticsInstance = null;
+                isAnalyticsSupported = false;
             }
         } catch (error) {
             console.error('Failed to initialize Firebase Analytics:', error);
+            analyticsInstance = null;
+            isAnalyticsSupported = false;
         } finally {
             isInitializing = false;
+            resolve(); // Always resolve the promise, even on error
         }
-    })();
+    });
 
     return initializationPromise;
 };

@@ -20,19 +20,17 @@ const isBrowser = typeof window !== 'undefined';
 let webAnalytics: Analytics | null = null;
 let analyticsSupported = false;
 
-// Immediately invoked async function to check if analytics is supported
-(async () => {
+// Create a function to initialize analytics that can be called when needed
+const initializeWebAnalytics = async (): Promise<void> => {
+    // If already initialized, return
+    if (webAnalytics !== null) {
+        return;
+    }
+
     try {
         // First check if we're in a browser environment
         if (!isBrowser) {
             console.log('Firebase Analytics: Not initializing in non-browser environment');
-            return;
-        }
-
-        // Then check if analytics is supported in this environment
-        analyticsSupported = await isSupported();
-        if (!analyticsSupported) {
-            console.log('Firebase Analytics is not supported in this environment');
             return;
         }
 
@@ -42,21 +40,58 @@ let analyticsSupported = false;
             firebaseConfig.projectId &&
             firebaseConfig.projectId === process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
 
-        if (isConfigured) {
+        if (!isConfigured) {
+            console.warn('Firebase web configuration is not set. Web analytics will be disabled.');
+            return;
+        }
+
+        // Then check if analytics is supported in this environment
+        try {
+            // Safely check if analytics is supported
+            analyticsSupported = await Promise.resolve(isSupported())
+                .then(result => {
+                    // Handle both boolean and object returns
+                    if (typeof result === 'boolean') {
+                        return result;
+                    } else {
+                        console.warn('isSupported() returned a non-boolean value:', result);
+                        return false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking if Firebase Analytics is supported:', error);
+                    return false;
+                });
+        } catch (error) {
+            console.error('Error checking if Firebase Analytics is supported:', error);
+            analyticsSupported = false;
+        }
+
+        if (!analyticsSupported) {
+            console.log('Firebase Analytics is not supported in this environment');
+            return;
+        }
+
+        // Initialize Firebase and Analytics
+        try {
             const app = initializeApp(firebaseConfig);
             webAnalytics = getAnalytics(app);
             console.log('Firebase Analytics for web initialized successfully');
-        } else {
-            console.warn('Firebase web configuration is not set. Web analytics will be disabled.');
+        } catch (initError) {
+            console.error('Failed to initialize Firebase Analytics:', initError);
+            webAnalytics = null;
         }
     } catch (error) {
         console.error('Failed to initialize Firebase Analytics for web:', error);
     }
-})();
+};
 
 class AnalyticsService {
     async logEvent(eventName: string, params?: Record<string, any>): Promise<void> {
         try {
+            // Initialize analytics if not already initialized
+            await initializeWebAnalytics();
+
             if (webAnalytics && isBrowser && analyticsSupported) {
                 logEvent(webAnalytics, eventName, params);
             }
@@ -70,6 +105,9 @@ class AnalyticsService {
 
     async setUserId(userId: string): Promise<void> {
         try {
+            // Initialize analytics if not already initialized
+            await initializeWebAnalytics();
+
             if (webAnalytics && isBrowser && analyticsSupported) {
                 setAnalyticsUserId(webAnalytics, userId);
             }
@@ -80,6 +118,9 @@ class AnalyticsService {
 
     async setCurrentScreen(screenName: string, screenClass?: string): Promise<void> {
         try {
+            // Initialize analytics if not already initialized
+            await initializeWebAnalytics();
+
             if (webAnalytics && isBrowser && analyticsSupported) {
                 // Use a custom event name that's allowed by Firebase
                 // 'page_view' is a standard GA4 event
@@ -108,6 +149,9 @@ class AnalyticsService {
 
     async setUserProperty(name: string, value: string): Promise<void> {
         try {
+            // Initialize analytics if not already initialized
+            await initializeWebAnalytics();
+
             if (webAnalytics && isBrowser && analyticsSupported) {
                 // For web, we need to use setUserProperties with an object
                 setUserProperties(webAnalytics, { [name]: value });
