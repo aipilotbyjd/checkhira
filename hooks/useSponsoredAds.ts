@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Linking, Alert } from 'react-native';
 import { SponsoredAd } from '../components/ads/SponsoredAdsCarousel';
 import { sponsoredAdsService } from '../services/sponsoredAdsService';
 
@@ -34,8 +35,31 @@ export function useSponsoredAds() {
   }, [loadAds]);
 
   // Handle ad click
-  const handleAdClick = useCallback((ad: SponsoredAd) => {
-    sponsoredAdsService.trackClick(ad.id);
+  const handleAdClick = useCallback(async (ad: SponsoredAd) => {
+    try {
+      // Track the click event
+      await sponsoredAdsService.trackClick(ad.id);
+
+      // Open the target URL
+      const canOpen = await Linking.canOpenURL(ad.targetUrl);
+
+      if (canOpen) {
+        await Linking.openURL(ad.targetUrl);
+      } else {
+        Alert.alert(
+          'Cannot Open Link',
+          'Unable to open the sponsor link. Please try again later.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error handling ad click:', error);
+      Alert.alert(
+        'Error',
+        'Something went wrong. Please try again later.',
+        [{ text: 'OK' }]
+      );
+    }
   }, []);
 
   return {
