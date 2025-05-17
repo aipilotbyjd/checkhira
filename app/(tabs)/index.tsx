@@ -243,7 +243,7 @@ export default function Home() {
               <Text className="text-xs" style={{ color: COLORS.gray[400] }}>
                 {t('works')}: {stats.weekly?.works || 0}
               </Text>
-            </View>r
+            </View>
           </View>
 
           {/* Monthly Work Stats */}
