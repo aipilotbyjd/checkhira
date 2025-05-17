@@ -23,6 +23,7 @@ export const productionEnvironment: Environment = {
   googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
   googleAndroidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
   firebaseApiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  // Ad unit IDs
   adBannerAndroid: process.env.EXPO_PUBLIC_AD_BANNER_ANDROID,
   adBannerIos: process.env.EXPO_PUBLIC_AD_BANNER_IOS,
   adInterstitialAndroid: process.env.EXPO_PUBLIC_AD_INTERSTITIAL_ANDROID,
@@ -33,6 +34,10 @@ export const productionEnvironment: Environment = {
   adAppOpenIos: process.env.EXPO_PUBLIC_AD_APP_OPEN_IOS,
   adNativeAndroid: process.env.EXPO_PUBLIC_AD_NATIVE_ANDROID,
   adNativeIos: process.env.EXPO_PUBLIC_AD_NATIVE_IOS,
+
+  // Ad configuration
+  enableAdsInDevelopment: true,
+  preloadAllAdTypes: true,
   websiteUrl: process.env.EXPO_PUBLIC_WEBSITE_URL,
   twitterUrl: process.env.EXPO_PUBLIC_TWITTER_URL,
   instagramUrl: process.env.EXPO_PUBLIC_INSTAGRAM_URL,

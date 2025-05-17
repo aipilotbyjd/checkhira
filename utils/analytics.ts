@@ -5,32 +5,53 @@ import { environment } from '~/config/environment';
 // For native platforms, we'll use the Firebase modular SDK
 let analyticsInstance: any = null;
 let isAnalyticsSupported = false;
+let isInitializing = false;
+let initializationPromise: Promise<void> | null = null;
 
-// Initialize analytics based on platform
-const initializeAnalytics = async () => {
-    try {
-        if (Platform.OS === 'web') {
-            // For web, we'll use the web implementation
-            // This is handled in analytics.web.ts
-            return;
-        } else {
-            // For native platforms, use the Firebase modular SDK
-            const { default: analytics } = await import('@react-native-firebase/analytics');
+// Initialize analytics based on platform - but only when needed
+const initializeAnalytics = async (): Promise<void> => {
+    // If already initialized or initializing, return existing promise
+    if (analyticsInstance) return Promise.resolve();
+    if (isInitializing && initializationPromise) return initializationPromise;
 
-            analyticsInstance = analytics();
-            await analyticsInstance.setAnalyticsCollectionEnabled(environment.production);
+    isInitializing = true;
+    initializationPromise = (async () => {
+        try {
+            if (Platform.OS === 'web') {
+                // For web, we'll use the web implementation
+                // This is handled in analytics.web.ts
+                return;
+            } else {
+                // For native platforms, use the Firebase modular SDK
+                const { default: analytics } = await import('@react-native-firebase/analytics');
 
-            if (!environment.production) {
-                console.log('Firebase Analytics initialized successfully');
+                // Initialize analytics directly without checking isSupported
+                try {
+                    analyticsInstance = analytics();
+                    isAnalyticsSupported = true;
+
+                    // Set analytics collection based on environment
+                    await analyticsInstance.setAnalyticsCollectionEnabled(environment.production);
+                } catch (initError) {
+                    // Handle initialization error
+                    console.error('Error initializing Firebase Analytics:', initError);
+                    analyticsInstance = null;
+                    isAnalyticsSupported = false;
+                }
+
+                if (!environment.production && analyticsInstance && isAnalyticsSupported) {
+                    console.log('Firebase Analytics initialized successfully');
+                }
             }
+        } catch (error) {
+            console.error('Failed to initialize Firebase Analytics:', error);
+        } finally {
+            isInitializing = false;
         }
-    } catch (error) {
-        console.error('Failed to initialize Firebase Analytics:', error);
-    }
-};
+    })();
 
-// Initialize analytics immediately
-initializeAnalytics();
+    return initializationPromise;
+};
 
 /**
  * Utility class for Firebase Analytics
@@ -43,6 +64,9 @@ class AnalyticsService {
      */
     async logEvent(eventName: string, params?: Record<string, any>): Promise<void> {
         try {
+            // Initialize analytics if not already initialized
+            await initializeAnalytics();
+
             if (analyticsInstance && isAnalyticsSupported) {
                 await analyticsInstance.logEvent(eventName, params);
             }
@@ -62,6 +86,9 @@ class AnalyticsService {
      */
     async setUserId(userId: string): Promise<void> {
         try {
+            // Initialize analytics if not already initialized
+            await initializeAnalytics();
+
             if (analyticsInstance && isAnalyticsSupported) {
                 await analyticsInstance.setUserId(userId);
             }
@@ -77,6 +104,9 @@ class AnalyticsService {
      */
     async setCurrentScreen(screenName: string, screenClass?: string): Promise<void> {
         try {
+            // Initialize analytics if not already initialized
+            await initializeAnalytics();
+
             if (analyticsInstance && isAnalyticsSupported) {
                 await analyticsInstance.logScreenView({
                     screen_name: screenName,
@@ -104,6 +134,9 @@ class AnalyticsService {
      */
     async setUserProperty(name: string, value: string): Promise<void> {
         try {
+            // Initialize analytics if not already initialized
+            await initializeAnalytics();
+
             if (analyticsInstance && isAnalyticsSupported) {
                 await analyticsInstance.setUserProperty(name, value);
             }

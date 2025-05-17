@@ -95,7 +95,13 @@
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
-      "**/*"
+      "assets/images/*",
+      "assets/fonts/*",
+      "assets/icon.png",
+      "assets/splash.png",
+      "assets/adaptive-icon.png",
+      "assets/favicon.png",
+      "assets/notification_icon.png"
     ],
     "ios": {
       "googleServicesFile": "./GoogleService-Info.plist",

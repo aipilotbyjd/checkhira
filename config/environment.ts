@@ -20,6 +20,8 @@ export interface Environment {
   firebaseApiKey?: string | undefined;
   privacyPolicyUrl?: string | undefined;
   termsUrl?: string | undefined;
+
+  // Ad unit IDs
   adBannerAndroid?: string | undefined;
   adBannerIos?: string | undefined;
   adInterstitialAndroid?: string | undefined;
@@ -30,6 +32,12 @@ export interface Environment {
   adAppOpenIos?: string | undefined;
   adNativeAndroid?: string | undefined;
   adNativeIos?: string | undefined;
+
+  // Ad configuration
+  enableAdsInDevelopment?: boolean;
+  preloadAllAdTypes?: boolean;
+
+  // Social media URLs
   websiteUrl?: string | undefined;
   twitterUrl?: string | undefined;
   instagramUrl?: string | undefined;
