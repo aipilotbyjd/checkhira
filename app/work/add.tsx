@@ -14,7 +14,6 @@ import { MaterialCommunityIcons, Ionicons, Octicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { DeleteConfirmationModal } from '../../components/DeleteConfirmationModal';
 import { useRouter } from 'expo-router';
-import { useWorkOperations } from '../../hooks/useWorkOperations';
 import { formatDateForAPI } from '../../utils/dateFormatter';
 import { DefaultPrice, WorkEntry, WorkFormData } from '../../types/work';
 import { useRewardedAd } from '../../components/ads/RewardedAdComponent';

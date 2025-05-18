@@ -72,7 +72,6 @@
     "react-native-actions-sheet": "^0.9.7",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-google-mobile-ads": "^15.1.0",
-    "react-native-month-selector": "^1.4.0",
     "react-native-onesignal": "^5.2.9",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
