@@ -1,16 +1,17 @@
 import { SponsoredAd } from '../components/ads/SponsoredAdsCarousel';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL } from '../constants/config';
+import { STORAGE_KEYS, TIMEOUTS } from '../constants/config';
+import { api } from './api';
 
 // Storage keys
-const SPONSORED_ADS_STORAGE_KEY = 'sponsored_ads_data';
-const SPONSORED_ADS_TIMESTAMP_KEY = 'sponsored_ads_timestamp';
+const SPONSORED_ADS_STORAGE_KEY = STORAGE_KEYS.SPONSORED_ADS;
+const SPONSORED_ADS_TIMESTAMP_KEY = STORAGE_KEYS.SPONSORED_ADS_TIMESTAMP;
 
 // Cache expiration time (1 hour in milliseconds)
-const CACHE_EXPIRATION_TIME = 60 * 60 * 1000;
+const CACHE_EXPIRATION_TIME = TIMEOUTS.CACHE_EXPIRATION;
 
 // API endpoint for sponsored ads
-const SPONSORED_ADS_API_ENDPOINT = `${API_BASE_URL}/sponsored-ads`;
+const SPONSORED_ADS_API_ENDPOINT = '/sponsored-ads';
 
 // Fallback sample ads in case the API fails
 const FALLBACK_ADS: SponsoredAd[] = [
@@ -35,6 +36,28 @@ const FALLBACK_ADS: SponsoredAd[] = [
     sponsorLogo: 'https://ui-avatars.com/api/?name=SF&background=4CAF50&color=fff',
     ctaText: 'View Collection',
     backgroundColor: '#4CAF50',
+  },
+  {
+    id: '3',
+    title: 'Construction Management Software',
+    description: 'Streamline your projects with our easy-to-use software',
+    imageUrl: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=800&q=80',
+    targetUrl: 'https://example.com/management-software',
+    sponsorName: 'BuildTrack Solutions',
+    sponsorLogo: 'https://ui-avatars.com/api/?name=BT&background=2196F3&color=fff',
+    ctaText: 'Try Free Demo',
+    backgroundColor: '#2196F3',
+  },
+  {
+    id: '4',
+    title: 'Heavy Equipment Rental',
+    description: 'Rent high-quality construction equipment at competitive prices',
+    imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80',
+    targetUrl: 'https://example.com/equipment-rental',
+    sponsorName: 'MegaRent Equipment',
+    sponsorLogo: 'https://ui-avatars.com/api/?name=MR&background=FFC107&color=fff',
+    ctaText: 'Get a Quote',
+    backgroundColor: '#FFC107',
   }
 ];
 
@@ -53,28 +76,49 @@ class SponsoredAdsService {
         return cachedAds;
       }
 
-      // Fetch ads from the API
-      const response = await fetch(SPONSORED_ADS_API_ENDPOINT, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      });
+      // Try to fetch ads from the API using the API service
+      try {
+        // Use the API service with authentication
+        const response = await api.request<{ data: SponsoredAd[] }>(SPONSORED_ADS_API_ENDPOINT, {
+          method: 'GET',
+          // No special options needed - will use auth token if available
+        });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        const ads = response.data || [];
+
+        // Cache the ads
+        if (ads.length > 0) {
+          await this.cacheAds(ads);
+        }
+
+        return ads;
+      } catch (apiError) {
+        console.error('API error fetching sponsored ads:', apiError);
+
+        // If we have a network error or API error, try a direct fetch as fallback
+        // This is useful for public endpoints that don't require authentication
+        const response = await fetch(`${api.baseUrl}${SPONSORED_ADS_API_ENDPOINT}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Direct API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const ads: SponsoredAd[] = data.data || [];
+
+        // Cache the ads
+        if (ads.length > 0) {
+          await this.cacheAds(ads);
+        }
+
+        return ads;
       }
-
-      const data = await response.json();
-      const ads: SponsoredAd[] = data.data || [];
-
-      // Cache the ads
-      if (ads.length > 0) {
-        await this.cacheAds(ads);
-      }
-
-      return ads;
     } catch (error) {
       console.error('Error fetching sponsored ads:', error);
 
@@ -127,16 +171,24 @@ class SponsoredAdsService {
    */
   async trackImpression(adId: string): Promise<void> {
     try {
-      // Send impression event to the API
-      await fetch(`${SPONSORED_ADS_API_ENDPOINT}/${adId}/impression`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      });
+      // Try to use the API service first
+      try {
+        await api.request(`${SPONSORED_ADS_API_ENDPOINT}/${adId}/impression`, {
+          method: 'POST',
+        });
+      } catch (apiError) {
+        // Fallback to direct fetch if API service fails
+        await fetch(`${api.baseUrl}${SPONSORED_ADS_API_ENDPOINT}/${adId}/impression`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
+      }
       console.log(`Ad impression tracked for ad ID: ${adId}`);
     } catch (error) {
+      // Just log the error but don't throw - tracking failures shouldn't affect the user experience
       console.error('Error tracking ad impression:', error);
     }
   }
@@ -146,16 +198,24 @@ class SponsoredAdsService {
    */
   async trackClick(adId: string): Promise<void> {
     try {
-      // Send click event to the API
-      await fetch(`${SPONSORED_ADS_API_ENDPOINT}/${adId}/click`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      });
+      // Try to use the API service first
+      try {
+        await api.request(`${SPONSORED_ADS_API_ENDPOINT}/${adId}/click`, {
+          method: 'POST',
+        });
+      } catch (apiError) {
+        // Fallback to direct fetch if API service fails
+        await fetch(`${api.baseUrl}${SPONSORED_ADS_API_ENDPOINT}/${adId}/click`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
+      }
       console.log(`Ad click tracked for ad ID: ${adId}`);
     } catch (error) {
+      // Just log the error but don't throw - tracking failures shouldn't affect the user experience
       console.error('Error tracking ad click:', error);
     }
   }
