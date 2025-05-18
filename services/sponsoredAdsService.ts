@@ -10,7 +10,7 @@ const SPONSORED_ADS_TIMESTAMP_KEY = 'sponsored_ads_timestamp';
 const CACHE_EXPIRATION_TIME = 60 * 60 * 1000;
 
 // API endpoint for sponsored ads
-const SPONSORED_ADS_API_ENDPOINT = `${API_BASE_URL}/api/sponsored-ads`;
+const SPONSORED_ADS_API_ENDPOINT = `${API_BASE_URL}/sponsored-ads`;
 
 // Fallback sample ads in case the API fails
 const FALLBACK_ADS: SponsoredAd[] = [
