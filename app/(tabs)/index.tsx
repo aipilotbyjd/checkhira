@@ -54,7 +54,7 @@ export default function Home() {
   const { refreshUnreadCount } = useNotification();
   const { t } = useLanguage();
   const { showInterstitialAd } = useInterstitialAd();
-  const { ads: sponsoredAds, handleAdClick } = useSponsoredAds();
+  const { ads: sponsoredAds, handleAdClick, refreshAds } = useSponsoredAds();
 
   const fetchActivities = async () => {
     try {
@@ -137,11 +137,14 @@ export default function Home() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchStats();
-    await fetchActivities();
-    await refreshUnreadCount();
+    await Promise.all([
+      fetchStats(),
+      fetchActivities(),
+      refreshUnreadCount(),
+      refreshAds(), // Refresh sponsored ads
+    ]);
     setRefreshing(false);
-  }, []);
+  }, [refreshAds]);
 
   return (
     <ScrollView
@@ -189,9 +192,11 @@ export default function Home() {
             ads={sponsoredAds}
             height={200}
             onAdPress={handleAdClick}
+            onRefresh={refreshAds}
             autoPlay={true}
             autoPlayInterval={5000}
             showIndicator={true}
+            showRefreshButton={true}
             containerStyle={{
               marginHorizontal: 0,
               borderRadius: 16,

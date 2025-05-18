@@ -9,15 +9,22 @@ export function useSponsoredAds() {
   const [error, setError] = useState<string | null>(null);
 
   // Load sponsored ads
-  const loadAds = useCallback(async () => {
+  const loadAds = useCallback(async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
+
+      // Clear cache if force refresh is requested
+      if (forceRefresh) {
+        console.log('Force refreshing sponsored ads - clearing cache');
+        await sponsoredAdsService.clearCache();
+      }
 
       const sponsoredAds = await sponsoredAdsService.getSponsoredAds();
 
       // Only set ads if we got some valid data
       if (sponsoredAds && sponsoredAds.length > 0) {
+        console.log(`Setting ${sponsoredAds.length} sponsored ads in state`);
         setAds(sponsoredAds);
 
         // Track impressions for all ads
@@ -29,10 +36,21 @@ export function useSponsoredAds() {
         }, 500);
       } else {
         console.warn('No sponsored ads returned from service');
+        // If we got no ads and weren't already forcing a refresh, try again with force refresh
+        if (!forceRefresh) {
+          console.log('Retrying with force refresh');
+          return loadAds(true);
+        }
       }
     } catch (err) {
       console.error('Error loading sponsored ads:', err);
       setError('Failed to load sponsored ads');
+
+      // If we got an error and weren't already forcing a refresh, try again with force refresh
+      if (!forceRefresh) {
+        console.log('Error occurred, retrying with force refresh');
+        return loadAds(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -105,11 +123,17 @@ export function useSponsoredAds() {
     }
   }, []);
 
+  // Function to manually refresh ads with forced cache clearing
+  const refreshAds = useCallback(() => {
+    console.log('Manually refreshing sponsored ads with forced cache clearing');
+    return loadAds(true); // Pass true to force a refresh
+  }, [loadAds]);
+
   return {
     ads,
     loading,
     error,
-    refreshAds: loadAds,
+    refreshAds,
     handleAdClick,
   };
 }

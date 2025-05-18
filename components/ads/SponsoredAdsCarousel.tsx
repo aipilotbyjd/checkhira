@@ -36,7 +36,9 @@ interface SponsoredAdsCarouselProps {
   autoPlayInterval?: number;
   height?: number;
   onAdPress?: (ad: SponsoredAd) => void;
+  onRefresh?: () => void;
   showIndicator?: boolean;
+  showRefreshButton?: boolean;
   containerStyle?: ViewStyle;
 }
 
@@ -52,7 +54,9 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
   autoPlayInterval = 5000,
   height = 180,
   onAdPress,
+  onRefresh,
   showIndicator = true,
+  showRefreshButton = true,
   containerStyle,
 }) => {
   // For the extended data array, we start at index 1 (after the duplicated last item)
@@ -323,66 +327,100 @@ export const SponsoredAdsCarousel: React.FC<SponsoredAdsCarouselProps> = ({
     }, 500);
   };
 
+  // Handle refresh button press
+  const handleRefreshPress = () => {
+    // Pause autoplay temporarily
+    if (autoPlayTimerRef.current) {
+      clearInterval(autoPlayTimerRef.current);
+    }
+
+    // Call the onRefresh callback if provided
+    if (onRefresh) {
+      onRefresh();
+    }
+
+    // Restart autoplay after a short delay
+    setTimeout(() => {
+      if (autoPlay && ads.length > 1) {
+        startAutoPlay();
+      }
+    }, 500);
+  };
+
   const renderDotIndicator = () => {
     if (!showIndicator || ads.length <= 1) return null;
 
     return (
       <View style={styles.indicatorContainer}>
-        {ads.map((_, index) => {
-          // Calculate the slide width including margins
-          const slideWidth = ITEM_WIDTH + ITEM_SPACING * 2;
+        {/* Refresh button */}
+        {showRefreshButton && onRefresh && (
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={handleRefreshPress}
+            activeOpacity={0.7}
+          >
+            <MaterialCommunityIcons name="refresh" size={16} color={COLORS.primary} />
+          </TouchableOpacity>
+        )}
 
-          // Adjust the input range for the extended data array
-          // We need to offset by 1 because of the duplicated last item at the start
-          const adjustedIndex = index + 1;
+        {/* Dots */}
+        <View style={styles.dotsContainer}>
+          {ads.map((_, index) => {
+            // Calculate the slide width including margins
+            const slideWidth = ITEM_WIDTH + ITEM_SPACING * 2;
 
-          const inputRange = [
-            (adjustedIndex - 1) * slideWidth,
-            adjustedIndex * slideWidth,
-            (adjustedIndex + 1) * slideWidth,
-          ];
+            // Adjust the input range for the extended data array
+            // We need to offset by 1 because of the duplicated last item at the start
+            const adjustedIndex = index + 1;
 
-          const dotWidth = scrollX.interpolate({
-            inputRange,
-            outputRange: [8, 16, 8],
-            extrapolate: 'clamp',
-          });
+            const inputRange = [
+              (adjustedIndex - 1) * slideWidth,
+              adjustedIndex * slideWidth,
+              (adjustedIndex + 1) * slideWidth,
+            ];
 
-          const opacity = scrollX.interpolate({
-            inputRange,
-            outputRange: [0.4, 1, 0.4],
-            extrapolate: 'clamp',
-          });
+            const dotWidth = scrollX.interpolate({
+              inputRange,
+              outputRange: [8, 16, 8],
+              extrapolate: 'clamp',
+            });
 
-          const backgroundColor = scrollX.interpolate({
-            inputRange,
-            outputRange: [
-              COLORS.gray[400],
-              COLORS.primary,
-              COLORS.gray[400],
-            ],
-            extrapolate: 'clamp',
-          });
+            const opacity = scrollX.interpolate({
+              inputRange,
+              outputRange: [0.4, 1, 0.4],
+              extrapolate: 'clamp',
+            });
 
-          return (
-            <TouchableOpacity
-              key={`dot-${index}`}
-              onPress={() => handleDotPress(index)}
-              activeOpacity={0.7}
-            >
-              <Animated.View
-                style={[
-                  styles.dot,
-                  {
-                    width: dotWidth,
-                    opacity,
-                    backgroundColor,
-                  },
-                ]}
-              />
-            </TouchableOpacity>
-          );
-        })}
+            const backgroundColor = scrollX.interpolate({
+              inputRange,
+              outputRange: [
+                COLORS.gray[400],
+                COLORS.primary,
+                COLORS.gray[400],
+              ],
+              extrapolate: 'clamp',
+            });
+
+            return (
+              <TouchableOpacity
+                key={`dot-${index}`}
+                onPress={() => handleDotPress(index)}
+                activeOpacity={0.7}
+              >
+                <Animated.View
+                  style={[
+                    styles.dot,
+                    {
+                      width: dotWidth,
+                      opacity,
+                      backgroundColor,
+                    },
+                  ]}
+                />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
     );
   };
@@ -563,11 +601,32 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 10,
   },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   dot: {
     height: 8,
     borderRadius: 4,
     marginHorizontal: 4,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  refreshButton: {
+    position: 'absolute',
+    right: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+    zIndex: 10,
   },
 });
