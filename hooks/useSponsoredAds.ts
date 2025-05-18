@@ -22,7 +22,7 @@ export function useSponsoredAds() {
 
       const sponsoredAds = await sponsoredAdsService.getSponsoredAds();
 
-      // Only set ads if we got some valid data
+      // Only set ads if we got some valid data from the API
       if (sponsoredAds && sponsoredAds.length > 0) {
         console.log(`Setting ${sponsoredAds.length} sponsored ads in state`);
         setAds(sponsoredAds);
@@ -36,6 +36,9 @@ export function useSponsoredAds() {
         }, 500);
       } else {
         console.warn('No sponsored ads returned from service');
+        // Clear the ads state to hide the component
+        setAds([]);
+
         // If we got no ads and weren't already forcing a refresh, try again with force refresh
         if (!forceRefresh) {
           console.log('Retrying with force refresh');
@@ -45,6 +48,8 @@ export function useSponsoredAds() {
     } catch (err) {
       console.error('Error loading sponsored ads:', err);
       setError('Failed to load sponsored ads');
+      // Clear the ads state to hide the component
+      setAds([]);
 
       // If we got an error and weren't already forcing a refresh, try again with force refresh
       if (!forceRefresh) {

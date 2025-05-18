@@ -180,7 +180,7 @@ export default function Home() {
         </Pressable>
       </View>
 
-      {/* Sponsored Ads Carousel */}
+      {/* Sponsored Ads Carousel - Only shown when ads are fetched from API */}
       {sponsoredAds && sponsoredAds.length > 0 && (
         <View className="mt-4 mb-6">
           <View className="px-6 mb-3">

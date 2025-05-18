@@ -13,54 +13,6 @@ const CACHE_EXPIRATION_TIME = TIMEOUTS.CACHE_EXPIRATION;
 // API endpoint for sponsored ads
 const SPONSORED_ADS_API_ENDPOINT = '/sponsored-ads';
 
-// Fallback sample ads in case the API fails
-const FALLBACK_ADS: SponsoredAd[] = [
-  {
-    id: '1',
-    title: 'Premium Construction Tools',
-    description: 'Get 20% off on all premium construction tools this month',
-    imageUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80',
-    targetUrl: 'https://example.com/construction-tools',
-    sponsorName: 'ToolMaster Pro',
-    sponsorLogo: 'https://ui-avatars.com/api/?name=TM&background=FF5722&color=fff',
-    ctaText: 'Shop Now',
-    backgroundColor: '#FF5722',
-  },
-  {
-    id: '2',
-    title: 'Professional Work Gear',
-    description: 'Durable work clothes for construction professionals',
-    imageUrl: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=800&q=80',
-    targetUrl: 'https://example.com/work-gear',
-    sponsorName: 'SafetyFirst Apparel',
-    sponsorLogo: 'https://ui-avatars.com/api/?name=SF&background=4CAF50&color=fff',
-    ctaText: 'View Collection',
-    backgroundColor: '#4CAF50',
-  },
-  {
-    id: '3',
-    title: 'Construction Management Software',
-    description: 'Streamline your projects with our easy-to-use software',
-    imageUrl: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=800&q=80',
-    targetUrl: 'https://example.com/management-software',
-    sponsorName: 'BuildTrack Solutions',
-    sponsorLogo: 'https://ui-avatars.com/api/?name=BT&background=2196F3&color=fff',
-    ctaText: 'Try Free Demo',
-    backgroundColor: '#2196F3',
-  },
-  {
-    id: '4',
-    title: 'Heavy Equipment Rental',
-    description: 'Rent high-quality construction equipment at competitive prices',
-    imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80',
-    targetUrl: 'https://example.com/equipment-rental',
-    sponsorName: 'MegaRent Equipment',
-    sponsorLogo: 'https://ui-avatars.com/api/?name=MR&background=FFC107&color=fff',
-    ctaText: 'Get a Quote',
-    backgroundColor: '#FFC107',
-  }
-];
-
 /**
  * Service to manage sponsored ads
  */
@@ -202,11 +154,11 @@ class SponsoredAdsService {
         }
       }
     } catch (error) {
-      console.error('Error fetching sponsored ads, returning fallback ads:', error);
+      console.error('Error fetching sponsored ads:', error);
 
-      // Return fallback ads in case of API failure
-      console.log(`Returning ${FALLBACK_ADS.length} fallback ads`);
-      return FALLBACK_ADS;
+      // Don't return fallback ads, return empty array instead
+      console.log('API failure, returning empty array instead of fallback ads');
+      return [];
     }
   }
 
