@@ -99,6 +99,7 @@
       }
     },
     "android": {
+      "enableProguardInReleaseBuilds": true,
       "googleServicesFile": "./google-services.json",
       "package": "com.jaydeepdhrangiya.checkhira",
       "adaptiveIcon": {
