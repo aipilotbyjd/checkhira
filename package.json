@@ -60,7 +60,6 @@
     "expo-system-ui": "~5.0.7",
     "expo-tracking-transparency": "~5.2.4",
     "expo-updates": "~0.28.12",
-    "install": "^0.13.0",
     "metro": "^0.82.0",
     "metro-config": "^0.81.4",
     "metro-resolver": "^0.81.4",
