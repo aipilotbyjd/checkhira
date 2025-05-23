@@ -7,7 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { MaterialCommunityIcons, Ionicons, Octicons } from '@expo/vector-icons';
@@ -24,6 +24,41 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { api, ApiError } from '../../services/axiosClient';
 import { useLanguage } from '../../contexts/LanguageContext';
+import WorkEntryFormItem from '../../components/WorkEntryFormItem';
+
+// Moved getNextType outside the component
+const getNextType = (currentType: string) => {
+  const types = [
+    'A',
+    'B',
+    'C',
+    'D',
+    'E',
+    'F',
+    'G',
+    'H',
+    'I',
+    'J',
+    'K',
+    'L',
+    'M',
+    'N',
+    'O',
+    'P',
+    'Q',
+    'R',
+    'S',
+    'T',
+    'U',
+    'V',
+    'W',
+    'X',
+    'Y',
+    'Z',
+  ];
+  const currentIndex = types.indexOf(currentType);
+  return types[(currentIndex + 1) % types.length];
+};
 
 export default function AddWork() {
   const router = useRouter();
@@ -49,47 +84,16 @@ export default function AddWork() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<WorkEntry | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [defaultPrices, setDefaultPrices] = useState<DefaultPrice[] | null>(null);
 
-  const calculateTotal = () => {
+  // Memoized calculateTotal as 'total'
+  const total = useMemo(() => {
     return formData.entries.reduce((sum, entry) => {
       const diamond = Number(entry.diamond) || 0;
       const price = Number(entry.price) || 0;
       return sum + diamond * price;
     }, 0);
-  };
-
-  const getNextType = (currentType: string) => {
-    const types = [
-      'A',
-      'B',
-      'C',
-      'D',
-      'E',
-      'F',
-      'G',
-      'H',
-      'I',
-      'J',
-      'K',
-      'L',
-      'M',
-      'N',
-      'O',
-      'P',
-      'Q',
-      'R',
-      'S',
-      'T',
-      'U',
-      'V',
-      'W',
-      'X',
-      'Y',
-      'Z',
-    ];
-    const currentIndex = types.indexOf(currentType);
-    return types[(currentIndex + 1) % types.length];
-  };
+  }, [formData.entries]);
 
   useEffect(() => {
     initializeEntriesFromDefaults();
@@ -97,89 +101,63 @@ export default function AddWork() {
 
   const initializeEntriesFromDefaults = async () => {
     try {
-      const savedPrices = await AsyncStorage.getItem('defaultPrices');
-      if (savedPrices) {
-        const prices = JSON.parse(savedPrices);
-        const initialEntries = prices
-          .filter((price: DefaultPrice) => price.price.trim() !== '')
-          .map((price: DefaultPrice, index: number) => ({
-            id: Date.now() + index,
-            type: price.type,
-            diamond: '',
-            price: price.price,
-          }));
-
-        if (initialEntries.length > 0) {
-          setFormData((prev) => ({
-            ...prev,
-            entries: initialEntries,
-          }));
-        } else {
-          setFormData((prev) => ({
-            ...prev,
-            entries: [{ id: Date.now(), type: 'A', diamond: '', price: '' }],
-          }));
-        }
+      const savedPricesString = await AsyncStorage.getItem('defaultPrices');
+      let parsedPrices: DefaultPrice[] = [];
+      if (savedPricesString) {
+        parsedPrices = JSON.parse(savedPricesString);
+        setDefaultPrices(parsedPrices);
       } else {
-        setFormData((prev) => ({
-          ...prev,
-          entries: [{ id: Date.now(), type: 'A', diamond: '', price: '' }],
+        setDefaultPrices([]);
+      }
+
+      const initialEntries = parsedPrices
+        .filter((price: DefaultPrice) => price.price.trim() !== '')
+        .map((price: DefaultPrice, index: number) => ({
+          id: Date.now() + index,
+          type: price.type,
+          diamond: '',
+          price: price.price,
         }));
+
+      if (initialEntries.length > 0) {
+        setFormData((prev) => ({ ...prev, entries: initialEntries }));
+      } else {
+        setFormData((prev) => ({ ...prev, entries: [{ id: Date.now(), type: 'A', diamond: '', price: '' }] }));
       }
     } catch (error) {
       console.error('Failed to load default prices:', error);
-      setFormData((prev) => ({
-        ...prev,
-        entries: [{ id: Date.now(), type: 'A', diamond: '', price: '' }],
-      }));
+      setDefaultPrices([]);
+      setFormData((prev) => ({ ...prev, entries: [{ id: Date.now(), type: 'A', diamond: '', price: '' }] }));
     }
   };
 
-  const addEntry = async () => {
+  const addEntry = () => {
     if (formData.entries.length >= 10) {
       showToast('You can add up to 10 entries only.', 'error');
       return;
     }
 
-    try {
-      const savedPrices = await AsyncStorage.getItem('defaultPrices');
-      if (savedPrices) {
-        const prices = JSON.parse(savedPrices).filter(
-          (price: DefaultPrice) => price.price.trim() !== ''
-        );
-        const unusedPrice = prices.find(
-          (price: DefaultPrice) => !formData.entries.some((entry) => entry.type === price.type)
-        );
+    if (defaultPrices && defaultPrices.length > 0) {
+      const filteredPrices = defaultPrices.filter(
+        (price: DefaultPrice) => price.price.trim() !== ''
+      );
+      const unusedPrice = filteredPrices.find(
+        (price: DefaultPrice) => !formData.entries.some((entry) => entry.type === price.type)
+      );
 
-        if (unusedPrice) {
-          setFormData({
-            ...formData,
-            entries: [
-              ...formData.entries,
-              {
-                id: Date.now(),
-                type: unusedPrice.type,
-                diamond: '',
-                price: unusedPrice.price,
-              },
-            ],
-          });
-        } else {
-          const lastEntry = formData.entries[formData.entries.length - 1];
-          const nextType = getNextType(lastEntry.type);
-          setFormData({
-            ...formData,
-            entries: [
-              ...formData.entries,
-              {
-                id: Date.now(),
-                type: nextType,
-                diamond: '',
-                price: '',
-              },
-            ],
-          });
-        }
+      if (unusedPrice) {
+        setFormData({
+          ...formData,
+          entries: [
+            ...formData.entries,
+            {
+              id: Date.now(),
+              type: unusedPrice.type,
+              diamond: '',
+              price: unusedPrice.price,
+            },
+          ],
+        });
       } else {
         const lastEntry = formData.entries[formData.entries.length - 1];
         const nextType = getNextType(lastEntry.type);
@@ -187,54 +165,64 @@ export default function AddWork() {
           ...formData,
           entries: [
             ...formData.entries,
-            {
-              id: Date.now(),
-              type: nextType,
-              diamond: '',
-              price: '',
-            },
+            { id: Date.now(), type: nextType, diamond: '', price: '' },
           ],
         });
       }
-    } catch (error) {
-      console.error('Failed to load default prices:', error);
+    } else {
       const lastEntry = formData.entries[formData.entries.length - 1];
       const nextType = getNextType(lastEntry.type);
       setFormData({
         ...formData,
         entries: [
           ...formData.entries,
-          {
-            id: Date.now(),
-            type: nextType,
-            diamond: '',
-            price: '',
-          },
+          { id: Date.now(), type: nextType, diamond: '', price: '' },
         ],
       });
     }
   };
 
-  const removeEntry = (entryId?: number) => {
+  const removeEntry = useCallback((entryId?: number) => {
     if (formData.entries.length === 1) {
       showToast('At least one entry is required.', 'error');
       return;
     }
-    const entryToDelete = entryId
+    const entry = entryId
       ? formData.entries.find((e) => e.id === entryId)
       : formData.entries[formData.entries.length - 1];
-    setShowDeleteModal(true);
-    setEntryToDelete(entryToDelete || null);
-  };
 
-  const updateEntry = (id: number, field: keyof WorkEntry, value: string) => {
-    setFormData({
-      ...formData,
-      entries: formData.entries.map((entry) =>
+    if (entry) {
+      setEntryToDelete(entry);
+      setShowDeleteModal(true);
+    } else if (!entryId) {
+      showToast('No entry to remove.', 'error');
+    }
+  }, [formData.entries, setShowDeleteModal, setEntryToDelete, showToast, t]);
+
+  const handleRemoveSpecificEntry = useCallback((entryId: number) => {
+    if (formData.entries.length === 1) {
+      showToast('At least one entry is required.', 'error');
+      return;
+    }
+    const entry = formData.entries.find((e) => e.id === entryId);
+    if (entry) {
+      setEntryToDelete(entry);
+      setShowDeleteModal(true);
+    }
+  }, [formData.entries, showToast, t, setEntryToDelete, setShowDeleteModal]);
+
+  const updateEntry = useCallback((id: number, field: keyof WorkEntry, value: string) => {
+    setFormData(prevFormData => ({
+      ...prevFormData,
+      entries: prevFormData.entries.map((entry) =>
         entry.id === id ? { ...entry, [field]: value } : entry
       ),
-    });
-  };
+    }));
+  }, []);
+
+  const handleNameChange = useCallback((name: string) => {
+    setFormData(prev => ({ ...prev, name }));
+  }, []);
 
   const validateForm = (): boolean => {
     if (!formData.name.trim()) {
@@ -259,7 +247,7 @@ export default function AddWork() {
       date: formatDateForAPI(formData.date),
       name: formData.name.trim(),
       entries: formData.entries,
-      total: calculateTotal(),
+      total: total,
       user_id: user?.id,
     };
 
@@ -335,7 +323,7 @@ export default function AddWork() {
             color: COLORS.secondary,
           }}
           value={formData.name}
-          onChangeText={(text) => setFormData({ ...formData, name: text })}
+          onChangeText={handleNameChange}
           placeholder={t('enterName')}
           placeholderTextColor={COLORS.gray[400]}
         />
@@ -364,88 +352,15 @@ export default function AddWork() {
         </View>
 
         {formData.entries.map((entry, index) => (
-          <View
+          <WorkEntryFormItem
             key={entry.id}
-            className="mb-4 rounded-2xl p-4"
-            style={{ backgroundColor: COLORS.background.secondary }}>
-            {/* Entry Header */}
-            <View className="mb-3 flex-row items-center justify-between">
-              <View className="flex-row items-center">
-                <Text className="text-sm" style={{ color: COLORS.gray[400] }}>
-                  {t('workItemDetails')} {index + 1}
-                </Text>
-                <View
-                  className="ml-2 rounded-full px-3 py-1"
-                  style={{ backgroundColor: COLORS.primary + '15' }}>
-                  <Text style={{ color: COLORS.primary }}>{entry.type}</Text>
-                </View>
-              </View>
-              {index !== 0 && (
-                <Pressable
-                  onPress={() => removeEntry(entry.id)}
-                  className="rounded-lg p-2"
-                  style={{ backgroundColor: COLORS.error + '15' }}>
-                  <Octicons name="trash" size={16} color={COLORS.error} />
-                </Pressable>
-              )}
-            </View>
-
-            {/* Entry Fields */}
-            <View className="flex-row space-x-3">
-              <View className="mr-2 flex-1">
-                <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
-                  {t('diamondWeight')}
-                </Text>
-                <TextInput
-                  className="rounded-xl border p-3"
-                  style={{
-                    backgroundColor: COLORS.white,
-                    borderColor: COLORS.gray[200],
-                    color: COLORS.secondary,
-                  }}
-                  value={entry.diamond}
-                  placeholder={t('enterWeight')}
-                  keyboardType="numeric"
-                  onChangeText={(text) => {
-                    const numericText = text.replace(/[^0-9]/g, '');
-                    updateEntry(entry.id, 'diamond', numericText);
-                  }}
-                />
-              </View>
-              <View className="mr-2 flex-1">
-                <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
-                  {t('price')}
-                </Text>
-                <TextInput
-                  className="rounded-xl border p-3"
-                  style={{
-                    backgroundColor: COLORS.white,
-                    borderColor: COLORS.gray[200],
-                    color: COLORS.secondary,
-                  }}
-                  value={entry.price}
-                  placeholder={t('enterPrice')}
-                  keyboardType="numeric"
-                  onChangeText={(text) => {
-                    const numericText = text.replace(/[^0-9.]/g, '');
-                    updateEntry(entry.id, 'price', numericText);
-                  }}
-                />
-              </View>
-              <View className="flex-1">
-                <Text className="mb-1 text-sm" style={{ color: COLORS.gray[400] }}>
-                  {t('total')}
-                </Text>
-                <View
-                  className="rounded-xl border bg-gray-200 p-3"
-                  style={{ borderColor: COLORS.gray[200] }}>
-                  <Text style={{ color: COLORS.secondary }}>
-                    ₹ {((Number(entry.diamond) || 0) * (Number(entry.price) || 0)).toFixed(2)}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
+            entry={entry}
+            index={index}
+            onUpdateEntry={updateEntry}
+            onRemoveEntry={handleRemoveSpecificEntry}
+            isFirstEntry={index === 0}
+            t={t}
+          />
         ))}
       </ScrollView>
 
@@ -460,7 +375,7 @@ export default function AddWork() {
               </Text>
             </View>
             <Text className="text-xl font-bold" style={{ color: COLORS.primary }}>
-              ₹ {calculateTotal().toFixed(2)}
+              ₹ {total.toFixed(2)}
             </Text>
           </View>
         </View>
@@ -487,15 +402,17 @@ export default function AddWork() {
           setEntryToDelete(null);
         }}
         onConfirm={() => {
-          setFormData({
-            ...formData,
-            entries: formData.entries.filter((e) => e.id !== entryToDelete?.id),
-          });
+          setFormData(prevFormData => ({
+            ...prevFormData,
+            entries: prevFormData.entries.filter((e) => e.id !== entryToDelete?.id),
+          }));
           setShowDeleteModal(false);
           setEntryToDelete(null);
         }}
-        message={`${t('deleteConfirmation')} ${formData.entries.findIndex((e) => e.id === entryToDelete?.id) + 1
-          } (Type ${entryToDelete?.type})?`}
+        message={entryToDelete
+          ? `Are you sure you want to delete item #${formData.entries.findIndex((e) => e.id === entryToDelete.id) + 1} (Type ${entryToDelete.type})?`
+          : 'Are you sure you want to delete this item?'
+        }
       />
     </View>
   );

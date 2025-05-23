@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Text, View, Pressable, ScrollView, TextInput, Alert, Modal } from 'react-native';
 import { Octicons, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../../constants/theme';
@@ -19,6 +19,7 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { BannerAdComponent } from '../../../components/ads';
 import { useRewardedAd } from '../../../components/ads/RewardedAdComponent';
 
+// TODO: Review this local Payment interface. Consider using the global one from types/payment.ts if applicable.
 interface Payment {
   id: number;
   amount: string;
@@ -27,7 +28,31 @@ interface Payment {
   description?: string;
   source_id: number;
   user_id?: number;
+  // date?: string; // The global type might have a date field, ensure consistency or reason for difference
 }
+
+// Moved renderPaymentSourcesSkeleton outside the component
+const renderPaymentSourcesSkeleton = () => (
+  <View className="flex-row flex-wrap gap-2">
+    {[1, 2, 3, 4, 5, 6].map((i) => (
+      <View
+        key={i}
+        className="flex-row items-center rounded-full px-4 py-2"
+        style={{
+          backgroundColor: COLORS.gray[100],
+          width: 100,
+          height: 40,
+        }}
+      />
+    ))}
+  </View>
+);
+
+// Define getLocalizedName outside the component (if needed for payment source display)
+const getLocalizedName = (source: PaymentSource, currentLocale: string): string => {
+  const key = `name_${currentLocale}` as keyof PaymentSource;
+  return (source[key] as string) || source.name;
+};
 
 export default function EditPayment() {
   const router = useRouter();
@@ -53,7 +78,7 @@ export default function EditPayment() {
   const { showToast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { showRewardedAd } = useRewardedAd();
 
   const { execute, isLoading: isApiLoading } = useApi({
@@ -103,6 +128,25 @@ export default function EditPayment() {
 
     loadData();
   }, [id]);
+
+  const handleInputChange = useCallback((field: keyof Payment, value: string) => {
+    setPayment(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleSourceChange = useCallback((sourceId: number) => {
+    setPayment(prev => ({ ...prev, source_id: sourceId }));
+  }, []);
+
+  const handleAmountChange = useCallback((text: string) => {
+    const numericText = text.replace(/[^0-9.]/g, '');
+    // Allow only one decimal point
+    const parts = numericText.split('.');
+    let processedText = numericText;
+    if (parts.length > 2) {
+      processedText = parts[0] + '.' + parts.slice(1).join('');
+    }
+    setPayment(prev => ({ ...prev, amount: processedText }));
+  }, []);
 
   const handleUpdate = async () => {
     if (!payment.from || !payment.description || !payment.amount) {
@@ -167,22 +211,6 @@ export default function EditPayment() {
     }
   };
 
-  const renderPaymentSourcesSkeleton = () => (
-    <View className="flex-row flex-wrap gap-2">
-      {[1, 2, 3, 4, 5, 6].map((i) => (
-        <View
-          key={i}
-          className="flex-row items-center rounded-full px-4 py-2"
-          style={{
-            backgroundColor: COLORS.gray[100],
-            width: 100,
-            height: 40,
-          }}
-        />
-      ))}
-    </View>
-  );
-
   if (isLoading) {
     return <PaymentFormSkeleton />;
   }
@@ -231,7 +259,7 @@ export default function EditPayment() {
                 placeholder="e.g., John Doe, Company Inc"
                 placeholderTextColor={COLORS.gray[300]}
                 value={payment.from}
-                onChangeText={(text) => setPayment({ ...payment, from: text })}
+                onChangeText={(text) => handleInputChange('from', text)}
               />
             </View>
 
@@ -246,14 +274,8 @@ export default function EditPayment() {
                   {paymentSources.map((source) => (
                     <Pressable
                       key={source.id}
-                      onPress={() => setPayment({ ...payment, source_id: source.id })}
-                      className={`flex-row items-center rounded-full px-4 py-2 ${payment.source_id === source.id ? 'bg-primary' : 'bg-white'
-                        }`}
-                      style={{
-                        borderWidth: 1,
-                        borderColor:
-                          payment.source_id === source.id ? COLORS.primary : COLORS.gray[200],
-                      }}>
+                      onPress={() => handleSourceChange(source.id)}
+                      className={`flex-row items-center rounded-full px-4 py-2 ${payment.source_id === source.id ? 'bg-primary' : 'bg-white'}`}>
                       <MaterialCommunityIcons
                         name={source.icon as any}
                         size={20}
@@ -264,7 +286,7 @@ export default function EditPayment() {
                         style={{
                           color: payment.source_id === source.id ? COLORS.black : COLORS.secondary,
                         }}>
-                        {source.name}
+                        {getLocalizedName(source, locale)}
                       </Text>
                     </Pressable>
                   ))}
@@ -288,10 +310,7 @@ export default function EditPayment() {
                   placeholderTextColor={COLORS.gray[300]}
                   value={payment.amount}
                   keyboardType="numeric"
-                  onChangeText={(text) => {
-                    const numericText = text.replace(/[^0-9.]/g, '');
-                    setPayment({ ...payment, amount: numericText });
-                  }}
+                  onChangeText={handleAmountChange}
                 />
               </View>
               <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
@@ -316,7 +335,7 @@ export default function EditPayment() {
                 multiline={true}
                 textAlignVertical="top"
                 value={payment.description || ''}
-                onChangeText={(text) => setPayment({ ...payment, description: text })}
+                onChangeText={(text) => handleInputChange('description', text)}
               />
             </View>
           </View>

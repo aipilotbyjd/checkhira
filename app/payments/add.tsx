@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Text, View, Pressable, ScrollView, TextInput, Alert } from 'react-native';
 import { Octicons, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../../constants/theme';
@@ -15,6 +15,27 @@ import { useApi } from '../../hooks/useApi';
 import { api } from '../../services/axiosClient';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useRewardedAd } from '../../components/ads/RewardedAdComponent';
+
+const getLocalizedName = (source: PaymentSource, currentLocale: string): string => {
+  const key = `name_${currentLocale}` as keyof PaymentSource;
+  return (source[key] as string) || source.name;
+};
+
+const renderPaymentSourcesSkeleton = () => (
+  <View className="flex-row flex-wrap gap-2">
+    {[1, 2, 3, 4, 5, 6].map((i) => (
+      <View
+        key={i}
+        className="flex-row items-center rounded-full px-4 py-2"
+        style={{
+          backgroundColor: COLORS.gray[100],
+          width: 100,
+          height: 40,
+        }}
+      />
+    ))}
+  </View>
+);
 
 export default function AddPayment() {
   const router = useRouter();
@@ -55,7 +76,7 @@ export default function AddPayment() {
 
   const { settings } = useAppSettings();
   const { showToast } = useToast();
-  const { showRewardedAd } = useRewardedAd(); // Initialize the hook
+  const { showRewardedAd } = useRewardedAd();
 
   useEffect(() => {
     loadPaymentSources();
@@ -103,10 +124,9 @@ export default function AddPayment() {
       };
 
       const result = await execute(() => api.post('/payments', paymentData));
-      if (result) { // 'execute' from useApi shows success toast and throws on error
-        // Ad after successful save
+      if (result) {
         await showRewardedAd();
-        router.back(); // Navigate after ad
+        router.back();
       }
     } finally {
       setIsSaving(false);
@@ -132,27 +152,6 @@ export default function AddPayment() {
     }
   };
 
-  const getLocalizedName = (source: PaymentSource, currentLocale: string): string => {
-    const key = `name_${currentLocale}` as keyof PaymentSource;
-    return (source[key] as string) || source.name;
-  };
-
-  const renderPaymentSourcesSkeleton = () => (
-    <View className="flex-row flex-wrap gap-2">
-      {[1, 2, 3, 4, 5, 6].map((i) => (
-        <View
-          key={i}
-          className="flex-row items-center rounded-full px-4 py-2"
-          style={{
-            backgroundColor: COLORS.gray[100],
-            width: 100,
-            height: 40,
-          }}
-        />
-      ))}
-    </View>
-  );
-
   if (isSourcesLoading) {
     return <PaymentFormSkeleton />;
   }
@@ -160,7 +159,6 @@ export default function AddPayment() {
   return (
     <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
       <ScrollView className="flex-1">
-        {/* Date Picker Section */}
         <View className="px-6 pt-6">
           <Pressable
             onPress={() => setShowDatePicker(true)}
