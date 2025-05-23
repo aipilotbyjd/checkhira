@@ -83,26 +83,38 @@ export default function AddPayment() {
   }, [settings]);
 
   const validateForm = () => {
-    const errors = [];
-
     if (!payment.from?.trim()) {
-      errors.push(t('pleaseEnterFrom'));
+      showToast(t('paymentFromRequired'), 'error');
+      return false;
     }
-
+    if (payment.from.trim().length < 3) {
+      showToast(t('paymentFromTooShort'), 'error');
+      return false;
+    }
     if (!payment.description?.trim()) {
-      errors.push(t('pleaseEnterDescription'));
+      showToast(t('paymentDescriptionRequired'), 'error');
+      return false;
+    }
+    if (payment.description.trim().length < 3) {
+      showToast(t('paymentDescriptionTooShort'), 'error');
+      return false;
     }
 
     const numericAmount = typeof payment.amount === 'number'
       ? payment.amount
-      : parseFloat(payment.amount);
+      : parseFloat(String(payment.amount).replace(/[^0-9.]/g, '')); // Ensure only numeric for parsing
 
     if (isNaN(numericAmount) || numericAmount <= 0) {
-      errors.push(t('pleaseEnterValidAmount'));
+      showToast(t('invalidPaymentAmount'), 'error');
+      return false;
+    }
+    if (!String(payment.amount)?.trim()) { // Also check if amount is empty string
+      showToast(t('paymentAmountRequired'), 'error');
+      return false;
     }
 
-    if (errors.length > 0) {
-      showToast(errors[0], 'error');
+    if (payment.source_id === 0 || !payment.source_id) { // Check for 0 or undefined
+      showToast(t('paymentSourceRequired'), 'error');
       return false;
     }
 

@@ -226,14 +226,28 @@ export default function AddWork() {
 
   const validateForm = (): boolean => {
     if (!formData.name.trim()) {
-      showToast(t('enterName'), 'error');
+      showToast(t('workNameRequired'), 'error');
+      return false;
+    }
+    if (formData.name.trim().length < 3) {
+      showToast(t('workNameTooShort'), 'error');
       return false;
     }
 
-    const hasEmptyFields = formData.entries.some((entry) => !entry.diamond || !entry.price);
-    if (hasEmptyFields) {
-      showToast(t('invalidInput'), 'error');
+    if (formData.entries.length === 0) {
+      showToast(t('atLeastOneEntry'), 'error');
       return false;
+    }
+
+    for (const entry of formData.entries) {
+      if (!entry.diamond || Number(entry.diamond) <= 0) {
+        showToast(t('invalidDiamondAmount', { type: entry.type }), 'error');
+        return false;
+      }
+      if (!entry.price || Number(entry.price) <= 0) {
+        showToast(t('invalidPriceAmount', { type: entry.type }), 'error');
+        return false;
+      }
     }
 
     return true;

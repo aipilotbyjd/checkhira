@@ -149,14 +149,34 @@ export default function EditPayment() {
   }, []);
 
   const handleUpdate = async () => {
-    if (!payment.from || !payment.description || !payment.amount) {
-      showToast('Please fill in all required fields', 'error');
+    if (!payment.from?.trim()) {
+      showToast(t('paymentFromRequired'), 'error');
+      return;
+    }
+    if (payment.from.trim().length < 3) {
+      showToast(t('paymentFromTooShort'), 'error');
+      return;
+    }
+    if (!payment.description?.trim()) {
+      showToast(t('paymentDescriptionRequired'), 'error');
+      return;
+    }
+    if (payment.description.trim().length < 3) {
+      showToast(t('paymentDescriptionTooShort'), 'error');
+      return;
+    }
+    if (!payment.amount) {
+      showToast(t('paymentAmountRequired'), 'error');
       return;
     }
 
     const numericAmount = parseFloat(payment.amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
-      showToast('Please enter a valid positive number', 'error');
+      showToast(t('invalidPaymentAmount'), 'error');
+      return;
+    }
+    if (payment.source_id === 0) {
+      showToast(t('paymentSourceRequired'), 'error');
       return;
     }
 
