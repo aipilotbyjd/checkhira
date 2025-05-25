@@ -6,8 +6,10 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
+  Dimensions,
 } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { BarChart } from 'react-native-chart-kit';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
@@ -42,7 +44,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     today: { works: 0, work_amount: 0, payments: 0, total_amount: 0 },
-    weekly: { works: 0, work_amount: 0, payments: 0, total_amount: 0 },
+    weekly: { works: 0, work_amount: 0, payments: 0, total_amount: 0, dailyWorkAmountsLast7Days: [0, 0, 0, 0, 0, 0, 0] },
     monthly: { works: 0, work_amount: 0, payments: 0, total_amount: 0 },
     total_works: 0,
     total_work_amount: 0,
@@ -143,8 +145,47 @@ export default function Home() {
       refreshUnreadCount(),
       refreshAds(), // Refresh sponsored ads
     ]);
+    // Simulate fetching daily data for the chart for now
+    // Replace with actual data fetching logic later
+    setStats(prevStats => ({
+      ...prevStats,
+      weekly: {
+        ...prevStats.weekly,
+        // Mock data for the last 7 days (e.g., Mon to Sun)
+        dailyWorkAmountsLast7Days: [2500, 3000, 1500, 4000, 3200, 2800, 1000]
+      }
+    }));
     setRefreshing(false);
-  }, [refreshAds]);
+  }, [refreshAds, refreshUnreadCount]);
+
+  // Chart data and configuration
+  const screenWidth = Dimensions.get('window').width;
+  const chartData = {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], // Example labels
+    datasets: [
+      {
+        data: stats.weekly.dailyWorkAmountsLast7Days && stats.weekly.dailyWorkAmountsLast7Days.length > 0 ? stats.weekly.dailyWorkAmountsLast7Days : [0, 0, 0, 0, 0, 0, 0],
+      },
+    ],
+  };
+
+  const chartConfig = {
+    backgroundColor: COLORS.background.secondary,
+    backgroundGradientFrom: COLORS.background.secondary,
+    backgroundGradientTo: COLORS.background.secondary,
+    decimalPlaces: 0, // a
+    color: (opacity = 1) => `rgba(${parseInt(COLORS.primary.substring(1, 3), 16)}, ${parseInt(COLORS.primary.substring(3, 5), 16)}, ${parseInt(COLORS.primary.substring(5, 7), 16)}, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(100, 100, 100, ${opacity})`,
+    style: {
+      borderRadius: 16,
+    },
+    propsForDots: {
+      r: '6',
+      strokeWidth: '2',
+      stroke: COLORS.primary,
+    },
+    barPercentage: 0.7,
+  };
 
   return (
     <ScrollView
@@ -292,6 +333,32 @@ export default function Home() {
           </View>
         </View>
       </View>
+
+      {/* Weekly Work Trend Chart */}
+      {stats.weekly.dailyWorkAmountsLast7Days && stats.weekly.dailyWorkAmountsLast7Days.some(d => d > 0) && (
+        <View className="mt-2 px-6">
+          <Text className="text-lg font-semibold mb-3" style={{ color: COLORS.secondary }}>
+            {t('weeklyWorkTrend')}
+          </Text>
+          <View style={{ alignItems: 'center' }}>
+            <BarChart
+              data={chartData}
+              width={screenWidth - 48} // 24px padding on each side
+              height={220}
+              yAxisLabel="₹"
+              yAxisSuffix=""
+              chartConfig={chartConfig}
+              verticalLabelRotation={0}
+              style={{
+                marginVertical: 8,
+                borderRadius: 16,
+              }}
+              showValuesOnTopOfBars={true}
+              fromZero={true}
+            />
+          </View>
+        </View>
+      )}
 
       {/* Native Ad */}
       <View className="mt-0 px-6">

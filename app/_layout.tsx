@@ -65,6 +65,7 @@ function RootLayoutNav() {
       <Stack.Screen name="auth/register" options={{ headerShown: false }} />
       <Stack.Screen name="auth/register-password" options={{ headerShown: false }} />
       <Stack.Screen name="auth/update-profile" options={{ headerShown: false }} />
+      <Stack.Screen name="search" options={{ title: t('searchTitle') }} />
       <Stack.Screen name="payments/add" options={{ title: t('addPayment') }} />
       <Stack.Screen name="payments/[id]/edit" options={{ title: t('editPayment') }} />
       <Stack.Screen name="work/add" options={{ title: t('addWorkEntry') }} />

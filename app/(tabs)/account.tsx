@@ -18,6 +18,7 @@ import { useInterstitialAd } from '../../components/ads/InterstitialAdComponent'
 import { BannerAdComponent, NativeAdComponent } from '../../components/ads';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
 import { useRewardedAd } from '../../components/ads/RewardedAdComponent';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Account() {
   useAnalytics('AccountTabScreen');
@@ -71,6 +72,11 @@ export default function Account() {
       href: '/account/edit-profile',
     },
     {
+      title: t('reports'),
+      icon: 'chart-bar',
+      href: '/account/reports',
+    },
+    {
       title: t('defaultPrices'),
       icon: 'diamond-stone',
       href: '/account/default-prices',
@@ -80,11 +86,11 @@ export default function Account() {
       icon: 'translate',
       href: '/account/language',
     },
-    // {
-    //   title: t('themeSettings'),
-    //   icon: 'theme-light-dark',
-    //   href: '/account/theme',
-    // },
+    {
+      title: t('listPreferences'),
+      icon: 'sort-variant',
+      href: '/account/list-preferences',
+    },
     {
       title: t('rateApp'),
       icon: 'star',

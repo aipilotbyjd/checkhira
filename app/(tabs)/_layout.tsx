@@ -11,6 +11,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { SyncStatusIndicator } from '../../components/SyncStatusIndicator';
 import { useNetwork } from '../../contexts/NetworkContext';
 import { useState } from 'react';
+import { useTheme } from "../../contexts/ThemeContext";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const TAB_SCREENS = [
   {
@@ -93,6 +95,19 @@ export default function TabLayout() {
                   onPress={() => router.push('/notifications')}
                   badgeCount={unreadCount}
                 />
+                <Pressable
+                  onPress={() => router.push('/search')}
+                  style={({ pressed }) => ({
+                    opacity: pressed ? 0.7 : 1,
+                    marginRight: 15,
+                  })}
+                >
+                  <MaterialCommunityIcons
+                    name="magnify"
+                    size={24}
+                    color={COLORS.secondary}
+                  />
+                </Pressable>
               </View>
             </View>
           ),

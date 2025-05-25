@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,16 @@ import {
   Pressable,
   RefreshControl,
   ActivityIndicator,
+  Alert,
+  TextInput,
+  StyleSheet,
+  Platform,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-import { COLORS } from '../../constants/theme';
+import { COLORS, SPACING, SIZES, FONTS } from '../../constants/theme';
+// import { SPACING } from '../../constants/spacing'; // Ensure this is commented out or removed if module doesn't exist
 import { WorkListItem } from '../../components/WorkListItem';
 import { WorkSkeleton } from '../../components/WorkSkeleton';
 import { useToast } from '../../contexts/ToastContext';
@@ -23,6 +28,12 @@ import { useAnalytics } from '../../hooks/useAnalytics';
 import { analyticsService } from '../../utils/analytics';
 import { BannerAdComponent, NativeAdComponent } from '../../components/ads';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PREFERENCE_KEYS } from '../account/list-preferences';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import { HeaderButton } from '../../components/HeaderButton';
+import BulkEditWorkDateModal from '../../components/BulkEditWorkDateModal';
 
 export default function WorkListScreen() {
   useAnalytics('WorkListTabScreen');
@@ -39,17 +50,28 @@ export default function WorkListScreen() {
   const [currentFilter, setCurrentFilter] = useState('all');
   const [todayTotal, setTodayTotal] = useState(0);
   const { refreshUnreadCount } = useNotification();
+  const [searchQuery, setSearchQuery] = useState('');
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // State for sorting preferences
+  const [sortField, setSortField] = useState('date'); // Default sort field
+  const [sortDirection, setSortDirection] = useState('desc'); // Default sort direction
+
+  // State for bulk operations
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedWorkIds, setSelectedWorkIds] = useState<string[]>([]); // Assuming IDs are strings, adjust if numbers
+  const [isBulkEditDateModalVisible, setIsBulkEditDateModalVisible] = useState(false);
 
   // Use the modern API hook pattern
-  const { execute: executeGetWorks, isLoading } = useApi({
+  const { execute: executeGetWorks, isLoading: apiIsLoading } = useApi({
     showErrorToast: true,
     defaultErrorMessage: t('failedToLoadWorkEntries')
   });
 
-  const loadWork = useCallback(async ({ page = 1, isRefresh = false }) => {
+  const loadWork = useCallback(async ({ page = 1, isRefresh = false, sortBy = sortField, sortDir = sortDirection, search = searchQuery }) => {
     try {
       const response = await executeGetWorks(() =>
-        api.get('/works', { page, filter: currentFilter })
+        api.get('/works', { page, filter: currentFilter, sortBy, sortDir, search })
       );
 
       if (response?.data) {
@@ -69,24 +91,57 @@ export default function WorkListScreen() {
       setRefreshing(false);
       setIsLoadingMore(false);
     }
-  }, [currentFilter, executeGetWorks]);
+  }, [currentFilter, executeGetWorks, sortField, sortDirection, searchQuery]);
+
+  useEffect(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    debounceTimeoutRef.current = setTimeout(() => {
+      loadWork({ page: 1, isRefresh: true, search: searchQuery });
+    }, 500);
+
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [searchQuery, loadWork]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadWork({ page: 1, isRefresh: true });
-  }, [loadWork]);
+    await loadWork({ page: 1, isRefresh: true, sortBy: sortField, sortDir: sortDirection, search: searchQuery });
+  }, [loadWork, sortField, sortDirection, searchQuery]);
 
   const handleFilter = useCallback((filter: string) => {
     setCurrentFilter(filter);
     setWorkList([]);
     setCurrentPage(1);
     actionSheetRef.current?.hide();
-  }, []);
+    loadWork({ page: 1, sortBy: sortField, sortDir: sortDirection, search: searchQuery });
+  }, [loadWork, sortField, sortDirection, searchQuery]);
 
   useFocusEffect(
     useCallback(() => {
-      loadWork({ page: 1 });
-    }, [currentFilter])
+      const loadPreferencesAndFetchData = async () => {
+        let prefSortField = 'date';
+        let prefSortDirection = 'desc';
+        try {
+          const storedSortField = await AsyncStorage.getItem(PREFERENCE_KEYS.WORK_SORT_FIELD);
+          const storedSortDirection = await AsyncStorage.getItem(PREFERENCE_KEYS.WORK_SORT_DIRECTION);
+          if (storedSortField) prefSortField = storedSortField;
+          if (storedSortDirection) prefSortDirection = storedSortDirection;
+        } catch (e) {
+          console.error('Failed to load work list sort preferences', e);
+        }
+        setSortField(prefSortField);
+        setSortDirection(prefSortDirection);
+        loadWork({ page: 1, sortBy: prefSortField, sortDir: prefSortDirection, search: searchQuery });
+      };
+
+      loadPreferencesAndFetchData();
+      refreshUnreadCount();
+    }, [currentFilter, searchQuery])
   );
 
   const handleLoadMore = useCallback(async () => {
@@ -94,36 +149,193 @@ export default function WorkListScreen() {
 
     analyticsService.logEvent('load_more_work_entries', { page: currentPage + 1 });
     setIsLoadingMore(true);
-    await loadWork({ page: currentPage + 1 });
-  }, [currentPage, hasMorePages, isLoadingMore, loadWork]);
+    await loadWork({ page: currentPage + 1, sortBy: sortField, sortDir: sortDirection, search: searchQuery });
+  }, [currentPage, hasMorePages, isLoadingMore, loadWork, sortField, sortDirection, searchQuery]);
 
-  useEffect(() => {
-    refreshUnreadCount();
-  }, []);
+  const toggleWorkSelection = (workId: string) => {
+    setSelectedWorkIds(prevSelected =>
+      prevSelected.includes(workId)
+        ? prevSelected.filter(id => id !== workId)
+        : [...prevSelected, workId]
+    );
+  };
 
-  if (isLoading && currentPage === 1) {
+  const handleBulkDeleteWorkEntries = async () => {
+    if (selectedWorkIds.length === 0) return;
+
+    Alert.alert(
+      t('confirmDelete'), // Existing translation
+      t('confirmBulkDeleteMessage', { count: selectedWorkIds.length }), // New translation
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // TODO: Implement API call to backend: api.delete('/works/bulk', { data: { ids: selectedWorkIds } });
+              // For now, simulate deletion and update UI
+              setWorkList(prevList => prevList.filter(work => !selectedWorkIds.includes(String(work.id))));
+              showToast(t('itemsDeletedSuccess', { count: selectedWorkIds.length }), 'success'); // New translation
+              setIsSelectionMode(false);
+              setSelectedWorkIds([]);
+            } catch (error) {
+              console.error('Error bulk deleting work entries:', error);
+              showToast(t('bulkDeleteFailed'), 'error'); // New translation
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const generateWorkListCSV = () => {
+    const header = [
+      t('workName'),
+      t('date'),
+      t('itemDiamondWeight'),
+      t('itemPrice'),
+      t('itemTotalPrice')
+    ].join(',');
+
+    const rows = workList.flatMap(work => {
+      if (work.work_items && work.work_items.length > 0) {
+        return work.work_items.map(item => {
+          const diamondWeight = parseFloat(item.diamond || '0');
+          const pricePerDiamond = parseFloat(item.price || '0');
+          const totalPrice = diamondWeight * pricePerDiamond;
+          return [
+            `"${work.name.replace(/"/g, '""')}"`, // Escape double quotes
+            work.date,
+            item.diamond || '0',
+            item.price || '0',
+            totalPrice.toFixed(2) // Calculate and format total price
+          ].join(',');
+        });
+      }
+      // For work entries with no items, create a row with empty item details
+      return [`"${work.name.replace(/"/g, '""')}"`, work.date, '', '', ''].join(',');
+    });
+
+    return `${header}\n${rows.join('\n')}`;
+  };
+
+  const handleExportWorkListCSV = async () => {
+    if (!workList || workList.length === 0) {
+      showToast(t('noDataToExport'), 'info'); // Assuming 'noDataToExport' translation
+      return;
+    }
+    try {
+      const csvString = generateWorkListCSV();
+      const filename = `work_list_export_${new Date().toISOString().split('T')[0]}.csv`;
+      const fileUri = FileSystem.documentDirectory + filename;
+
+      await FileSystem.writeAsStringAsync(fileUri, csvString, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      if (!(await Sharing.isAvailableAsync())) {
+        showToast(t('sharingNotAvailable'), 'error'); // Assuming 'sharingNotAvailable' translation
+        return;
+      }
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'text/csv',
+        dialogTitle: t('exportWorkListCSVDialogTitle'), // Assuming translation
+        UTI: 'public.comma-separated-values-text',
+      });
+    } catch (error) {
+      console.error('Error exporting work list CSV:', error);
+      showToast(t('exportFailed'), 'error'); // Assuming 'exportFailed' translation
+    }
+  };
+
+  const handleBulkEditWorksPress = () => {
+    if (selectedWorkIds.length > 0) {
+      console.log("Opening bulk edit date modal for works: ", selectedWorkIds);
+      setIsBulkEditDateModalVisible(true);
+    } else {
+      Alert.alert(t("noItemsSelectedErrorTitle"), t("noItemsSelectedErrorDesc"));
+    }
+  };
+
+  const handleApplyBulkEditDate = async (newDate: Date) => {
+    const formattedDate = newDate.toISOString().split('T')[0];
+    console.log(
+      `Applying bulk date edit. New Date: ${formattedDate} to Work IDs: ${selectedWorkIds.join(", ")}`
+    );
+    try {
+      showToast(t('bulkEditSuccessTitle'), 'success');
+      loadWork({ page: 1, isRefresh: true });
+      setSelectedWorkIds([]);
+      setIsSelectionMode(false);
+    } catch (err) {
+      console.error("Failed to bulk edit work dates (simulated):", err);
+      showToast(t('bulkEditErrorTitle'), 'error');
+    }
+    setIsBulkEditDateModalVisible(false);
+  };
+
+  if (apiIsLoading && currentPage === 1 && workList.length === 0 && !searchQuery) {
     return (
-      <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
+      <View style={styles.screenContainer}>
         <View
-          className="border-b px-6 pb-4 pt-6"
-          style={{
-            borderColor: COLORS.gray[200],
-            backgroundColor: COLORS.background.primary,
-          }}>
+          style={styles.headerContainer}>
           <View className="flex-row items-center justify-between">
             <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-              {t('worklist')}
+              {isSelectionMode ? `${t('selected')}: ${selectedWorkIds.length}` : t('worklist')}
             </Text>
-            <View className="flex-row space-x-3">
-              <Pressable
-                onPress={() => router.push('/work/add')}
-                className="mr-2 rounded-full p-3"
-                style={{ backgroundColor: COLORS.primary }}>
-                <MaterialCommunityIcons name="plus" size={22} color="white" />
-              </Pressable>
-              <Pressable className="rounded-full p-3" style={{ backgroundColor: COLORS.gray[100] }}>
-                <MaterialCommunityIcons name="filter-variant" size={22} color={COLORS.gray[600]} />
-              </Pressable>
+            <View className="flex-row space-x-1 items-center">
+              {isSelectionMode ? (
+                <>
+                  <Pressable
+                    onPress={handleBulkDeleteWorkEntries}
+                    disabled={selectedWorkIds.length === 0}
+                    className="rounded-full p-3"
+                    style={{ backgroundColor: selectedWorkIds.length > 0 ? COLORS.error : COLORS.gray[300] }}>
+                    <MaterialCommunityIcons name="delete-sweep-outline" size={22} color="white" />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      setIsSelectionMode(false);
+                      setSelectedWorkIds([]);
+                    }}
+                    className="rounded-full p-3"
+                    style={{ backgroundColor: COLORS.gray[100] }}>
+                    <MaterialCommunityIcons name="close" size={22} color={COLORS.gray[600]} />
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <Pressable
+                    onPress={() => router.push('/work/add')}
+                    className="mr-1 rounded-full p-3"
+                    style={{ backgroundColor: COLORS.primary }}>
+                    <MaterialCommunityIcons name="plus" size={22} color="white" />
+                  </Pressable>
+                  <Pressable
+                    onPress={handleExportWorkListCSV}
+                    className="mr-1 rounded-full p-3"
+                    style={{ backgroundColor: COLORS.gray[100] }}>
+                    <MaterialCommunityIcons name="download-outline" size={22} color={COLORS.gray[600]} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => actionSheetRef.current?.show()}
+                    className="mr-1 rounded-full p-3"
+                    style={{ backgroundColor: COLORS.gray[100] }}>
+                    <MaterialCommunityIcons
+                      name="filter-variant"
+                      size={22}
+                      color={currentFilter === 'all' ? COLORS.gray[600] : COLORS.primary}
+                    />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setIsSelectionMode(true)}
+                    className="rounded-full p-3"
+                    style={{ backgroundColor: COLORS.gray[100] }}>
+                    <MaterialCommunityIcons name="checkbox-multiple-marked-outline" size={22} color={COLORS.gray[600]} />
+                  </Pressable>
+                </>
+              )}
             </View>
           </View>
         </View>
@@ -145,46 +357,82 @@ export default function WorkListScreen() {
   }
 
   return (
-    <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
-      {/* Header with shadow */}
+    <View style={styles.screenContainer}>
       <View
-        className="border-b px-6 pb-4 pt-6"
-        style={{
-          borderColor: COLORS.gray[200],
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 3,
-          elevation: 3,
-          backgroundColor: COLORS.background.primary,
-        }}>
+        style={styles.headerContainer}>
         <View className="flex-row items-center justify-between">
           <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-            {t('worklist')}
+            {isSelectionMode ? `${t('selected')}: ${selectedWorkIds.length}` : t('worklist')}
           </Text>
-          <View className="flex-row space-x-3">
-            <Pressable
-              onPress={() => router.push('/work/add')}
-              className="mr-2 rounded-full p-3"
-              style={{ backgroundColor: COLORS.primary }}>
-              <MaterialCommunityIcons name="plus" size={22} color="white" />
-            </Pressable>
-            <Pressable
-              onPress={() => actionSheetRef.current?.show()}
-              className="rounded-full p-3"
-              style={{ backgroundColor: COLORS.gray[100] }}>
-              <MaterialCommunityIcons
-                name="filter-variant"
-                size={22}
-                color={currentFilter === 'all' ? COLORS.gray[600] : COLORS.primary}
-              />
-            </Pressable>
+          <View className="flex-row space-x-1 items-center">
+            {isSelectionMode ? (
+              <>
+                <Pressable
+                  onPress={handleBulkDeleteWorkEntries}
+                  disabled={selectedWorkIds.length === 0}
+                  className="rounded-full p-3"
+                  style={{ backgroundColor: selectedWorkIds.length > 0 ? COLORS.error : COLORS.gray[300] }}>
+                  <MaterialCommunityIcons name="delete-sweep-outline" size={22} color="white" />
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setIsSelectionMode(false);
+                    setSelectedWorkIds([]);
+                  }}
+                  className="rounded-full p-3"
+                  style={{ backgroundColor: COLORS.gray[100] }}>
+                  <MaterialCommunityIcons name="close" size={22} color={COLORS.gray[600]} />
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Pressable
+                  onPress={() => router.push('/work/add')}
+                  className="mr-1 rounded-full p-3"
+                  style={{ backgroundColor: COLORS.primary }}>
+                  <MaterialCommunityIcons name="plus" size={22} color="white" />
+                </Pressable>
+                <Pressable
+                  onPress={handleExportWorkListCSV}
+                  className="mr-1 rounded-full p-3"
+                  style={{ backgroundColor: COLORS.gray[100] }}>
+                  <MaterialCommunityIcons name="download-outline" size={22} color={COLORS.gray[600]} />
+                </Pressable>
+                <Pressable
+                  onPress={() => actionSheetRef.current?.show()}
+                  className="mr-1 rounded-full p-3"
+                  style={{ backgroundColor: COLORS.gray[100] }}>
+                  <MaterialCommunityIcons
+                    name="filter-variant"
+                    size={22}
+                    color={currentFilter === 'all' ? COLORS.gray[600] : COLORS.primary}
+                  />
+                </Pressable>
+                <Pressable
+                  onPress={() => setIsSelectionMode(true)}
+                  className="rounded-full p-3"
+                  style={{ backgroundColor: COLORS.gray[100] }}>
+                  <MaterialCommunityIcons name="checkbox-multiple-marked-outline" size={22} color={COLORS.gray[600]} />
+                </Pressable>
+              </>
+            )}
           </View>
         </View>
       </View>
 
+      <View style={styles.searchBarContainer}>
+        <TextInput
+          style={styles.searchBarInput}
+          placeholder={t('searchWorkListPlaceholder') || 'Search by work name, client...'}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholderTextColor={COLORS.gray[500]}
+          clearButtonMode="while-editing"
+        />
+      </View>
+
       <ScrollView
-        className="flex-1 px-4"
+        style={styles.scrollViewStyle}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -204,7 +452,6 @@ export default function WorkListScreen() {
           }
         }}
         scrollEventThrottle={16}>
-        {/* Today's total section */}
         <View className="my-6 rounded-xl p-4" style={{ backgroundColor: COLORS.primary + '15' }}>
           <Text className="text-sm font-medium" style={{ color: COLORS.gray[600] }}>
             {t('todayTotal')}
@@ -214,12 +461,9 @@ export default function WorkListScreen() {
           </Text>
         </View>
 
-        {/* Banner Ad at the top of the list */}
         <BannerAdComponent size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} containerStyle={{ marginTop: -10 }} />
 
-        {/* Work list with native ads */}
         {workList.map((item: Work, index: number) => {
-          // Insert a native ad after every 8 items (reduced from 4)
           const showNativeAd = index > 0 && index % 8 === 0;
 
           return (
@@ -231,33 +475,52 @@ export default function WorkListScreen() {
               )}
               <Pressable
                 onPress={async () => {
-                  router.push(`/work/${item.id}/edit`);
+                  if (isSelectionMode) {
+                    toggleWorkSelection(String(item.id));
+                  } else {
+                    router.push(`/work/${item.id}/edit`);
+                  }
                 }}
+                style={[
+                  isSelectionMode && selectedWorkIds.includes(String(item.id)) &&
+                  { backgroundColor: COLORS.primary + '20' },
+                  { borderRadius: 12 }
+                ]}
               >
-                <WorkListItem item={item} />
+                <View className="flex-row items-center">
+                  {isSelectionMode && (
+                    <View className="p-3">
+                      <MaterialCommunityIcons
+                        name={selectedWorkIds.includes(String(item.id)) ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                        size={24}
+                        color={COLORS.primary}
+                      />
+                    </View>
+                  )}
+                  <View className={`flex-1 ${isSelectionMode ? 'pl-0' : ''}`}>
+                    <WorkListItem item={item} />
+                  </View>
+                </View>
               </Pressable>
             </React.Fragment>
           );
         })}
 
-        {/* Loading more indicator */}
         {isLoadingMore && (
           <View className="py-4 items-center">
             <ActivityIndicator size="small" color={COLORS.primary} />
           </View>
         )}
 
-        {/* Empty state */}
-        {!isLoading && workList.length === 0 && (
-          <View className="items-center justify-center py-8">
+        {!apiIsLoading && workList.length === 0 && (
+          <View style={styles.emptyStateContainer}>
             <MaterialCommunityIcons name="file-document-outline" size={48} color={COLORS.gray[400]} />
-            <Text className="mt-2 text-base" style={{ color: COLORS.gray[600] }}>
-              {t('noWorkEntries')}
+            <Text style={styles.emptyStateText}>
+              {searchQuery ? (t('noSearchResultsFound') || 'No results found for your search.') : t('noWorkEntries')}
             </Text>
           </View>
         )}
 
-        {/* Banner ad at the bottom of the list */}
         <View className="mb-2">
           <BannerAdComponent size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
         </View>
@@ -299,6 +562,66 @@ export default function WorkListScreen() {
           ))}
         </View>
       </ActionSheet>
+
+      <BulkEditWorkDateModal
+        visible={isBulkEditDateModalVisible}
+        onClose={() => setIsBulkEditDateModalVisible(false)}
+        onApply={handleApplyBulkEditDate}
+        currentSelectedCount={selectedWorkIds.length}
+      />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    backgroundColor: COLORS.background.primary,
+  },
+  headerContainer: {
+    borderBottomWidth: 1,
+    borderColor: COLORS.gray[200],
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.md,
+    paddingTop: Platform.OS === 'ios' ? SPACING.xl : SPACING.lg,
+    backgroundColor: COLORS.background.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  searchBarContainer: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.background.primary,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[100],
+  },
+  searchBarInput: {
+    backgroundColor: COLORS.background.secondary,
+    borderColor: COLORS.gray[300],
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: Platform.OS === 'ios' ? SPACING.md : SPACING.sm,
+    fontSize: SIZES.body,
+    color: COLORS.secondary,
+    height: 44,
+  },
+  scrollViewStyle: {
+    flex: 1,
+    paddingHorizontal: SPACING.lg,
+  },
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl * 2,
+  },
+  emptyStateText: {
+    marginTop: SPACING.md,
+    fontSize: SIZES.body,
+    color: COLORS.gray[600],
+    textAlign: 'center',
+  },
+});
