@@ -1,4 +1,4 @@
-import { Text, View, Pressable, ScrollView, ActivityIndicator, RefreshControl, NativeScrollEvent, Alert, StyleSheet, Platform, TextInput } from 'react-native';
+import { Text, View, Pressable, ScrollView, ActivityIndicator, RefreshControl, NativeScrollEvent, Alert, StyleSheet, Platform } from 'react-native';
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { COLORS, SPACING, SIZES, FONTS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
@@ -23,28 +23,10 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import BulkEditPaymentMethodModal from "../../components/BulkEditPaymentMethodModal";
 
-// Helper function to highlight search term
-const HighlightedText = ({ text, highlight }: { text: string; highlight: string }) => {
+// Helper function to render text (no highlighting)
+const HighlightedText = ({ text }: { text: string }) => {
   if (!text) return null;
-  if (!highlight.trim()) {
-    return <Text>{text}</Text>;
-  }
-  const regex = new RegExp(`(${highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-  const parts = text.split(regex);
-
-  return (
-    <Text>
-      {parts.map((part, i) =>
-        regex.test(part) ? (
-          <Text key={i} style={{ fontFamily: FONTS.bold, color: COLORS.primary }}>
-            {part}
-          </Text>
-        ) : (
-          <Text key={i}>{part}</Text>
-        )
-      )}
-    </Text>
-  );
+  return <Text>{text}</Text>;
 };
 
 export default function PaymentsList() {
@@ -100,7 +82,7 @@ export default function PaymentsList() {
 
       loadPreferencesAndFetchData();
       refreshUnreadCount();
-    }, [currentFilter]) // Only depend on filter changes
+    }, [currentFilter])
   );
 
   const loadPayments = async ({ page = 1, sortBy = sortField, sortDir = sortDirection }: { page?: number, sortBy?: string, sortDir?: string }) => {
@@ -194,7 +176,6 @@ export default function PaymentsList() {
       setCurrentFilter(filter);
       setCurrentPage(1);
       setPaymentsList([]);
-      // Reload payments with current sort parameters when filter changes
       loadPayments({ page: 1, sortBy: sortField, sortDir: sortDirection });
     }
     actionSheetRef.current?.hide();
@@ -203,19 +184,16 @@ export default function PaymentsList() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     setCurrentPage(1);
-    // Pass current sort parameters
     await loadPayments({ page: 1, sortBy: sortField, sortDir: sortDirection });
-  }, [currentFilter, sortField, sortDirection]); // Added sortField and sortDirection to dependencies
+  }, [currentFilter, sortField, sortDirection]);
 
   const handleLoadMore = useCallback(async () => {
     if (!hasMorePages || isLoadingMore || isLoadingSub) return;
 
-    // Log analytics event for loading more payments
     console.log('Loading more payments...');
     analyticsService.logEvent('load_more_payments', { page: currentPage + 1 });
-    // Pass current sort parameters
     await loadPayments({ page: currentPage + 1, sortBy: sortField, sortDir: sortDirection });
-  }, [currentPage, hasMorePages, isLoadingMore, isLoadingSub, sortField, sortDirection]); // Added sortField and sortDirection
+  }, [currentPage, hasMorePages, isLoadingMore, isLoadingSub, sortField, sortDirection]);
 
   const displayTotal = useMemo((): number => {
     return Number(total);
@@ -497,13 +475,13 @@ export default function PaymentsList() {
                             {item.from && (
                               <View style={styles.highlightableTextContainer}>
                                 <Text style={styles.itemTextLabel}>From: </Text>
-                                <HighlightedText text={item.from} highlight={searchQuery} />
+                                <HighlightedText text={item.from} />
                               </View>
                             )}
                             {item.description && (
                               <View style={styles.highlightableTextContainer}>
                                 <Text style={styles.itemTextLabel}>Desc: </Text>
-                                <HighlightedText text={item.description} highlight={searchQuery} />
+                                <HighlightedText text={item.description} />
                               </View>
                             )}
                           </View>
