@@ -2,12 +2,10 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useMe
 import * as Localization from 'expo-localization';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import en from '../locales/en.json';
-import hi from '../locales/hi.json';
-import gu from '../locales/gu.json';
 
 // Define types for translations
 type TranslationKey = keyof typeof en;
-type PartialTranslations = Partial<typeof en>;
+type ImportedTranslationsType = any;
 
 interface LanguageContextType {
     locale: string;
@@ -18,10 +16,10 @@ interface LanguageContextType {
     loading: boolean;
 }
 
-const translations: Record<string, PartialTranslations> = {
-    en,
-    hi,
-    gu,
+const translationsImporter: Record<string, () => Promise<{ default: ImportedTranslationsType }>> = {
+    en: () => import('../locales/en.json'),
+    hi: () => import('../locales/hi.json'),
+    gu: () => import('../locales/gu.json'),
 };
 
 const availableLocales = [
@@ -50,42 +48,60 @@ interface LanguageProviderProps {
 export const LanguageProvider = ({ children }: LanguageProviderProps) => {
     const [locale, setLocaleState] = useState<string>('en');
     const [loading, setLoading] = useState(true);
+    const [currentTranslations, setCurrentTranslations] = useState<Partial<typeof en>>(en);
 
     useEffect(() => {
-        const loadSavedLocale = async () => {
+        const loadInitialLocaleAndTranslations = async () => {
+            setLoading(true);
             try {
                 const savedLocale = await AsyncStorage.getItem('userLocale');
                 const deviceLocale = Localization.locale.split('-')[0];
-                const initialLocale = savedLocale || (translations[deviceLocale] ? deviceLocale : 'en');
+                let initialLocale = savedLocale || (translationsImporter[deviceLocale] ? deviceLocale : 'en');
 
+                if (!translationsImporter[initialLocale]) {
+                    console.warn(`Unsupported locale "${initialLocale}" detected, defaulting to 'en'.`);
+                    initialLocale = 'en';
+                }
+
+                const langModule = await translationsImporter[initialLocale]();
+                setCurrentTranslations(langModule.default as Partial<typeof en>);
                 setLocaleState(initialLocale);
+
                 if (!savedLocale) {
                     await AsyncStorage.setItem('userLocale', initialLocale);
                 }
             } catch (error) {
-                console.error('Locale loading error:', error);
+                console.error('Initial locale/translation loading error:', error);
+                setCurrentTranslations(en);
+                setLocaleState('en');
             } finally {
                 setLoading(false);
             }
         };
 
-        loadSavedLocale();
+        loadInitialLocaleAndTranslations();
     }, []);
 
     const setLocale = async (newLocale: string) => {
+        if (newLocale === locale || !translationsImporter[newLocale]) return;
+
+        setLoading(true);
         try {
+            const langModule = await translationsImporter[newLocale]();
             await AsyncStorage.setItem('userLocale', newLocale);
+            setCurrentTranslations(langModule.default as Partial<typeof en>);
             setLocaleState(newLocale);
         } catch (error) {
-            console.error('Failed to save locale:', error);
+            console.error(`Failed to load translations for ${newLocale} or save locale:`, error);
+        } finally {
+            setLoading(false);
         }
     };
 
     const t = useMemo(() => {
         return (key: TranslationKey, variables?: Record<string, any>) => {
-            const currentTranslations = translations[locale] || translations.en;
-            let translation = (currentTranslations[key] as string) || translations.en[key] || key;
-            
+            let translation = (currentTranslations[key] as string) || (en[key] as string) || key;
+
             if (variables) {
                 Object.entries(variables).forEach(([key, value]) => {
                     translation = translation.replace(`{{${key}}}`, String(value));
@@ -93,7 +109,7 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
             }
             return translation;
         };
-    }, [locale]);
+    }, [locale, currentTranslations]);
 
     const isRTL = rtlLocales.includes(locale);
 
@@ -104,7 +120,7 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
         isRTL,
         availableLocales,
         loading,
-    }), [locale, t, isRTL, loading]);
+    }), [locale, t, isRTL, loading, currentTranslations]);
 
     return (
         <LanguageContext.Provider value={contextValue}>
