@@ -1,9 +1,9 @@
 import { Text, View, Pressable, ScrollView, ActivityIndicator, RefreshControl, NativeScrollEvent, Alert, StyleSheet, Platform } from 'react-native';
-import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SPACING, SIZES, FONTS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-import React, { useState, useRef, useCallback, useMemo, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { format } from 'date-fns';
 import { PaymentSkeleton } from '../../components/PaymentSkeleton';
@@ -22,12 +22,6 @@ import { PREFERENCE_KEYS } from '../account/list-preferences';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import BulkEditPaymentMethodModal from "../../components/BulkEditPaymentMethodModal";
-
-// Helper function to render text (no highlighting)
-const HighlightedText = ({ text }: { text: string }) => {
-  if (!text) return null;
-  return <Text>{text}</Text>;
-};
 
 export default function PaymentsList() {
   useAnalytics('PaymentsTabScreen');
@@ -475,13 +469,7 @@ export default function PaymentsList() {
                             {item.from && (
                               <View style={styles.highlightableTextContainer}>
                                 <Text style={styles.itemTextLabel}>From: </Text>
-                                <HighlightedText text={item.from} />
-                              </View>
-                            )}
-                            {item.description && (
-                              <View style={styles.highlightableTextContainer}>
-                                <Text style={styles.itemTextLabel}>Desc: </Text>
-                                <HighlightedText text={item.description} />
+                                <Text style={styles.itemTextValue}>{item.from}</Text>
                               </View>
                             )}
                           </View>
@@ -613,40 +601,6 @@ const styles = StyleSheet.create({
   headerButtonDisabled: {
     backgroundColor: COLORS.gray[300],
   },
-  searchBarContainer: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    backgroundColor: COLORS.background.primary,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray[100],
-  },
-  searchBarInputWrapper: { // New style for the wrapper
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.background.secondary,
-    borderColor: COLORS.gray[300],
-    borderWidth: 1,
-    borderRadius: 8,
-  },
-  searchBarInput: {
-    flex: 1, // Allow input to take available space
-    paddingHorizontal: SPACING.md,
-    paddingVertical: Platform.OS === 'ios' ? SPACING.md : SPACING.sm,
-    fontSize: SIZES.body,
-    color: COLORS.secondary,
-    height: 44,
-    // Removed background, border, and borderRadius as they are now on the wrapper
-  },
-  clearButton: { // New style for the clear button on Android
-    padding: SPACING.sm,
-    position: 'absolute',
-    right: SPACING.xs,
-  },
-  searchBarInputSkeleton: {
-    backgroundColor: COLORS.gray[200],
-    borderRadius: 8,
-    height: 44,
-  },
   skeletonListContainer: {
     paddingHorizontal: SPACING.lg,
   },
@@ -751,5 +705,9 @@ const styles = StyleSheet.create({
     fontSize: SIZES.caption,
     color: COLORS.gray[400],
     fontFamily: FONTS.medium,
+  },
+  itemTextValue: {
+    fontSize: SIZES.body,
+    color: COLORS.secondary,
   },
 });
