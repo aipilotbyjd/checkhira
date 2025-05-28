@@ -304,5 +304,8 @@
     "asc": "ચડતા ક્રમમાં",
     "desc": "ઉતરતા ક્રમમાં"
   },
-  "searchTitle": "શોધ"
+  "searchTitle": "શોધ",
+  "monthlyEarnings": "માસિક આવક",
+  "monthlyEarningsTrend": "માસિક આવકનો ટ્રેન્ડ",
+  "paymentSourcesDistribution": "ચુકવણી સ્ત્રોત વિતરણ"
 }

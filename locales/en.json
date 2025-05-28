@@ -528,5 +528,8 @@
     "asc": "Ascending",
     "desc": "Descending"
   },
-  "searchTitle": "Search"
+  "searchTitle": "Search",
+  "monthlyEarnings": "Monthly Earnings",
+  "monthlyEarningsTrend": "Monthly Earnings Trend",
+  "paymentSourcesDistribution": "Payment Sources Distribution"
 }

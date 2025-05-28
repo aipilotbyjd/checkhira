@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import { BarChart } from 'react-native-chart-kit';
+import { BarChart, LineChart, PieChart } from 'react-native-chart-kit';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
@@ -50,6 +50,16 @@ export default function Home() {
     total_work_amount: 0,
     total_payments: 0,
     total_amount: 0,
+    monthlyEarningsChart: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+      data: [50000, 75000, 60000, 80000, 70000, 90000],
+    },
+    paymentSourcesChart: [
+      { name: 'Cash', amount: 22000, color: COLORS.primary, legendFontColor: '#7F7F7F', legendFontSize: 12 },
+      { name: 'UPI', amount: 50000, color: COLORS.success, legendFontColor: '#7F7F7F', legendFontSize: 12 },
+      { name: 'Bank', amount: 30000, color: '#FF6B6B', legendFontColor: '#7F7F7F', legendFontSize: 12 },
+      { name: 'Other', amount: 8000, color: '#4ECDC4', legendFontColor: '#7F7F7F', legendFontSize: 12 },
+    ],
   });
   const [user, setUser] = useState<any | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -145,16 +155,6 @@ export default function Home() {
       refreshUnreadCount(),
       refreshAds(), // Refresh sponsored ads
     ]);
-    // Simulate fetching daily data for the chart for now
-    // Replace with actual data fetching logic later
-    setStats(prevStats => ({
-      ...prevStats,
-      weekly: {
-        ...prevStats.weekly,
-        // Mock data for the last 7 days (e.g., Mon to Sun)
-        dailyWorkAmountsLast7Days: [2500, 3000, 1500, 4000, 3200, 2800, 1000]
-      }
-    }));
     setRefreshing(false);
   }, [refreshAds, refreshUnreadCount]);
 
@@ -186,6 +186,26 @@ export default function Home() {
     },
     barPercentage: 0.7,
   };
+
+  // Data for Monthly Earnings Line Chart
+  const monthlyEarningsChartData = {
+    labels: stats.monthlyEarningsChart.labels,
+    datasets: [
+      {
+        data: stats.monthlyEarningsChart.data,
+        color: (opacity = 1) => `rgba(${parseInt(COLORS.success.substring(1, 3), 16)}, ${parseInt(COLORS.success.substring(3, 5), 16)}, ${parseInt(COLORS.success.substring(5, 7), 16)}, ${opacity})`, // optional
+        strokeWidth: 2, // optional
+      },
+    ],
+    legend: [t('monthlyEarnings')], // optional
+  };
+
+  // Data for Payment Sources Pie Chart
+  // react-native-chart-kit PieChart expects `population` key for values.
+  const paymentSourcesPieChartData = stats.paymentSourcesChart.map(source => ({
+    ...source,
+    population: source.amount, // Map amount to population
+  }));
 
   return (
     <ScrollView
@@ -455,6 +475,58 @@ export default function Home() {
           </View>
         </View>
       </View>
+
+      {/* --- Monthly Earnings Line Chart --- */}
+      {stats.monthlyEarningsChart &&
+        Array.isArray(stats.monthlyEarningsChart.labels) &&
+        Array.isArray(stats.monthlyEarningsChart.data) &&
+        stats.monthlyEarningsChart.labels.length > 0 &&
+        stats.monthlyEarningsChart.data.length > 0 &&
+        stats.monthlyEarningsChart.labels.length === stats.monthlyEarningsChart.data.length &&
+        stats.monthlyEarningsChart.data.some(d => typeof d === 'number' && d > 0) && (
+          <View className="mt-6 px-6">
+            <Text className="text-lg font-semibold mb-3" style={{ color: COLORS.secondary }}>
+              {t('monthlyEarningsTrend')}
+            </Text>
+            <View style={{ alignItems: 'center' }}>
+              <LineChart
+                data={monthlyEarningsChartData}
+                width={screenWidth - 48}
+                height={220}
+                yAxisLabel="₹"
+                chartConfig={chartConfig}
+                bezier
+                style={{
+                  marginVertical: 8,
+                  borderRadius: 16,
+                }}
+              />
+            </View>
+          </View>
+        )}
+
+      {/* --- Payment Sources Pie Chart --- */}
+      {paymentSourcesPieChartData && paymentSourcesPieChartData.some(d => d.population > 0) && (
+        <View className="mt-6 px-6">
+          <Text className="text-lg font-semibold mb-3" style={{ color: COLORS.secondary }}>
+            {t('paymentSourcesDistribution')}
+          </Text>
+          <View style={{ alignItems: 'center' }}>
+            <PieChart
+              data={paymentSourcesPieChartData}
+              width={screenWidth - 48}
+              height={220}
+              chartConfig={chartConfig}
+              accessor={"population"}
+              backgroundColor={"transparent"}
+              paddingLeft={"15"}
+              center={[10, 0]}
+              absolute
+              hasLegend={true}
+            />
+          </View>
+        </View>
+      )}
 
       {/* Native Ad */}
       <View className="mt-0 px-6">

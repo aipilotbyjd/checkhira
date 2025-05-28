@@ -314,5 +314,8 @@
         "asc": "आरोही",
         "desc": "अवरोही"
     },
-    "searchTitle": "खोज"
+    "searchTitle": "खोज",
+    "monthlyEarnings": "मासिक आय",
+    "monthlyEarningsTrend": "मासिक आय प्रवृत्ति",
+    "paymentSourcesDistribution": "भुगतान स्रोत वितरण"
 }
