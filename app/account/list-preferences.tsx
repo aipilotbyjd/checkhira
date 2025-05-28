@@ -41,6 +41,51 @@ const CustomSegmentedControl: React.FC<CustomSegmentedControlProps> = ({ options
   );
 };
 
+// --- START: New SelectableChip and SelectableChipGroup Components ---
+interface SelectableChipProps {
+  label: string;
+  value: string;
+  isSelected: boolean;
+  onPress: (value: string) => void;
+}
+
+const SelectableChip: React.FC<SelectableChipProps> = ({ label, value, isSelected, onPress }) => (
+  <Pressable
+    style={[styles.chip, isSelected && styles.chipSelected]}
+    onPress={() => onPress(value)}
+    testID={`chip-${value}${isSelected ? '-selected' : ''}`}
+  >
+    <Text style={[styles.chipLabel, isSelected && styles.chipLabelSelected]}>{label}</Text>
+  </Pressable>
+);
+
+interface SelectableChipGroupProps {
+  options: Array<{ label: string; value: string }>;
+  selectedValue: string;
+  onValueChange: (value: string) => void;
+  layout?: 'row' | 'column';
+}
+
+const SelectableChipGroup: React.FC<SelectableChipGroupProps> = ({
+  options,
+  selectedValue,
+  onValueChange,
+  layout = 'row',
+}) => (
+  <View style={[styles.chipGroupContainer, layout === 'column' && styles.chipGroupColumn]}>
+    {options.map((option) => (
+      <SelectableChip
+        key={option.value}
+        label={option.label}
+        value={option.value}
+        isSelected={selectedValue === option.value}
+        onPress={onValueChange}
+      />
+    ))}
+  </View>
+);
+// --- END: New SelectableChip and SelectableChipGroup Components ---
+
 export default function ListPreferencesScreen() {
   useAnalytics('ListPreferencesScreen');
   const { t } = useLanguage();
@@ -103,18 +148,15 @@ export default function ListPreferencesScreen() {
         <Text style={styles.header}>{t('workListSortSettings')}</Text>
         <View style={styles.preferenceItem}>
           <Text style={styles.label}>{t('sortBy')}</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={workSortField}
-              style={styles.picker}
-              onValueChange={handleWorkSortFieldChange}
-              dropdownIconColor={COLORS.secondary}
-            >
-              <Picker.Item label={t('date')} value="date" />
-              <Picker.Item label={t('name')} value="name" />
-              <Picker.Item label={t('totalAmount')} value="total_amount" />
-            </Picker>
-          </View>
+          <SelectableChipGroup
+            options={[
+              { label: t('date'), value: 'date' },
+              { label: t('name'), value: 'name' },
+              { label: t('totalAmount'), value: 'total_amount' },
+            ]}
+            selectedValue={workSortField}
+            onValueChange={handleWorkSortFieldChange}
+          />
         </View>
         <View style={styles.preferenceItem}>
           <Text style={styles.label}>{t('sortDirection')}</Text>
@@ -130,18 +172,15 @@ export default function ListPreferencesScreen() {
         <Text style={styles.header}>{t('paymentListSortSettings')}</Text>
         <View style={styles.preferenceItem}>
           <Text style={styles.label}>{t('sortBy')}</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={paymentSortField}
-              style={styles.picker}
-              onValueChange={handlePaymentSortFieldChange}
-              dropdownIconColor={COLORS.secondary}
-            >
-              <Picker.Item label={t('date')} value="date" />
-              <Picker.Item label={t('from')} value="from" />
-              <Picker.Item label={t('amount')} value="amount" />
-            </Picker>
-          </View>
+          <SelectableChipGroup
+            options={[
+              { label: t('date'), value: 'date' },
+              { label: t('from'), value: 'from' },
+              { label: t('amount'), value: 'amount' },
+            ]}
+            selectedValue={paymentSortField}
+            onValueChange={handlePaymentSortFieldChange}
+          />
         </View>
         <View style={styles.preferenceItem}>
           <Text style={styles.label}>{t('sortDirection')}</Text>
@@ -236,4 +275,39 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semibold,
     fontWeight: '600',
   },
+  // --- START: Styles for SelectableChipGroup ---
+  chipGroupContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap', // Allow chips to wrap if they don't fit in one line
+    alignItems: 'flex-start',
+    // Removed fixed height to allow content to define height
+  },
+  chipGroupColumn: {
+    flexDirection: 'column',
+    alignItems: 'stretch', // Stretch chips to full width in column layout
+  },
+  chip: {
+    backgroundColor: COLORS.gray[100], // Lighter background for unselected chips
+    borderRadius: SIZES.borderRadius * 2, // More rounded
+    paddingVertical: SPACING.sm, // CORRECTED
+    paddingHorizontal: SPACING.md, // CORRECTED
+    marginRight: SPACING.sm, // Spacing between chips in a row - CORRECTED
+    marginBottom: SPACING.sm, // Spacing for wrapped chips or chips in a column - CORRECTED
+    borderWidth: 1,
+    borderColor: COLORS.gray[300], // Subtle border
+  },
+  chipSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  chipLabel: {
+    fontSize: SIZES.body, // CORRECTED
+    fontFamily: FONTS.medium,
+    color: COLORS.gray[800], // Darker text for better readability
+  },
+  chipLabelSelected: {
+    color: COLORS.white,
+    fontFamily: FONTS.semibold,
+  },
+  // --- END: Styles for SelectableChipGroup ---
 }); 

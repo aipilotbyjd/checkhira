@@ -238,7 +238,7 @@ const loadInterstitialAd = async (): Promise<() => void> => {
     await loadAdModules();
   } catch (error) {
     console.error('Error loading ad modules for interstitial ad:', error);
-    return () => { }; // Return empty function on error
+    return () => { };
   }
 
   try {
@@ -246,7 +246,6 @@ const loadInterstitialAd = async (): Promise<() => void> => {
 
     interstitialAd = InterstitialAd.createForAdRequest(adUnitId);
 
-    // Define unsubscribe functions with default empty functions
     let unsubscribeLoaded = () => { };
     let unsubscribeClosed = () => { };
     let unsubscribeError = () => { };
@@ -258,7 +257,6 @@ const loadInterstitialAd = async (): Promise<() => void> => {
 
       unsubscribeClosed = interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
         console.log('Interstitial ad closed');
-        // Reload the ad for next time
         try {
           interstitialAd?.load();
         } catch (loadError) {
@@ -271,7 +269,7 @@ const loadInterstitialAd = async (): Promise<() => void> => {
       });
     } catch (eventError) {
       console.error('Error setting up interstitial ad event listeners:', eventError);
-      return () => { }; // Return empty function on error
+      return () => { };
     }
 
     // Start loading with error handling
