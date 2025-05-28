@@ -51,11 +51,6 @@ export default function WorkListScreen() {
   // State for sorting preferences
   const [sortField, setSortField] = useState('date'); // Default sort field
   const [sortDirection, setSortDirection] = useState('desc'); // Default sort direction
-
-  // State for bulk operations
-  const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [selectedWorkIds, setSelectedWorkIds] = useState<string[]>([]); // Assuming IDs are strings, adjust if numbers
-
   // Use the modern API hook pattern
   const { execute: executeGetWorks, isLoading: apiIsLoading } = useApi({
     showErrorToast: true,
@@ -131,43 +126,6 @@ export default function WorkListScreen() {
     await loadWork({ page: currentPage + 1, sortBy: sortField, sortDir: sortDirection });
   }, [currentPage, hasMorePages, isLoadingMore, loadWork, sortField, sortDirection]);
 
-  const toggleWorkSelection = (workId: string) => {
-    setSelectedWorkIds(prevSelected =>
-      prevSelected.includes(workId)
-        ? prevSelected.filter(id => id !== workId)
-        : [...prevSelected, workId]
-    );
-  };
-
-  const handleBulkDeleteWorkEntries = async () => {
-    if (selectedWorkIds.length === 0) return;
-
-    Alert.alert(
-      t('confirmDelete'), // Existing translation
-      t('confirmBulkDeleteMessage', { count: selectedWorkIds.length }), // New translation
-      [
-        { text: t('cancel'), style: 'cancel' },
-        {
-          text: t('delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              // TODO: Implement API call to backend: api.delete('/works/bulk', { data: { ids: selectedWorkIds } });
-              // For now, simulate deletion and update UI
-              setWorkList(prevList => prevList.filter(work => !selectedWorkIds.includes(String(work.id))));
-              showToast(t('itemsDeletedSuccess', { count: selectedWorkIds.length }), 'success'); // New translation
-              setIsSelectionMode(false);
-              setSelectedWorkIds([]);
-            } catch (error) {
-              console.error('Error bulk deleting work entries:', error);
-              showToast(t('bulkDeleteFailed'), 'error'); // New translation
-            }
-          },
-        },
-      ]
-    );
-  };
-
   const generateWorkListCSV = () => {
     const header = [
       t('workName'),
@@ -235,73 +193,36 @@ export default function WorkListScreen() {
           style={styles.headerContainer}>
           <View className="flex-row items-center justify-between">
             <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-              {isSelectionMode ? `${t('selected')}: ${selectedWorkIds.length}` : t('worklist')}
+              {t('worklist')}
             </Text>
             <View className="flex-row space-x-1 items-center">
-              {isSelectionMode ? (
-                <>
-                  <Pressable
-                    onPress={handleBulkDeleteWorkEntries}
-                    disabled={selectedWorkIds.length === 0}
-                    className="rounded-full p-3"
-                    style={{ backgroundColor: selectedWorkIds.length > 0 ? COLORS.error : COLORS.gray[300] }}>
-                    <MaterialCommunityIcons name="delete-sweep-outline" size={22} color="white" />
-                  </Pressable>
-                  <Pressable
-                    onPress={() => {
-                      setIsSelectionMode(false);
-                      setSelectedWorkIds([]);
-                    }}
-                    className="rounded-full p-3"
-                    style={{ backgroundColor: COLORS.gray[100] }}>
-                    <MaterialCommunityIcons name="close" size={22} color={COLORS.gray[600]} />
-                  </Pressable>
-                </>
-              ) : (
-                <>
-                  <Pressable
-                    onPress={() => router.push('/work/add')}
-                    className="mr-1 rounded-full p-3"
-                    style={{ backgroundColor: COLORS.primary }}>
-                    <MaterialCommunityIcons name="plus" size={22} color="white" />
-                  </Pressable>
-                  <Pressable
-                    onPress={handleExportWorkListCSV}
-                    className="mr-1 rounded-full p-3"
-                    style={{ backgroundColor: COLORS.gray[100] }}>
-                    <MaterialCommunityIcons name="download-outline" size={22} color={COLORS.gray[600]} />
-                  </Pressable>
-                  <Pressable
-                    onPress={() => actionSheetRef.current?.show()}
-                    className="mr-1 rounded-full p-3"
-                    style={{ backgroundColor: COLORS.gray[100] }}>
-                    <MaterialCommunityIcons
-                      name="filter-variant"
-                      size={22}
-                      color={currentFilter === 'all' ? COLORS.gray[600] : COLORS.primary}
-                    />
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setIsSelectionMode(true)}
-                    className="rounded-full p-3"
-                    style={{ backgroundColor: COLORS.gray[100] }}>
-                    <MaterialCommunityIcons name="checkbox-multiple-marked-outline" size={22} color={COLORS.gray[600]} />
-                  </Pressable>
-                </>
-              )}
+              <Pressable
+                onPress={() => router.push('/work/add')}
+                className="mr-1 rounded-full p-3"
+                style={{ backgroundColor: COLORS.primary }}>
+                <MaterialCommunityIcons name="plus" size={22} color="white" />
+              </Pressable>
+              <Pressable
+                onPress={handleExportWorkListCSV}
+                className="mr-1 rounded-full p-3"
+                style={{ backgroundColor: COLORS.gray[100] }}>
+                <MaterialCommunityIcons name="download-outline" size={22} color={COLORS.gray[600]} />
+              </Pressable>
+              <Pressable
+                onPress={() => actionSheetRef.current?.show()}
+                className="mr-1 rounded-full p-3"
+                style={{ backgroundColor: COLORS.gray[100] }}>
+                <MaterialCommunityIcons
+                  name="filter-variant"
+                  size={22}
+                  color={currentFilter === 'all' ? COLORS.gray[600] : COLORS.primary}
+                />
+              </Pressable>
             </View>
           </View>
         </View>
-
-        <View className="my-6 px-4">
-          <View className="rounded-xl p-4" style={{ backgroundColor: COLORS.primary + '15' }}>
-            <View className="h-4 w-20 rounded bg-gray-200" />
-            <View className="mt-2 h-8 w-32 rounded bg-gray-200" />
-          </View>
-        </View>
-
-        <View className="px-4">
-          {[...Array(8)].map((_, index) => (
+        <View style={styles.skeletonContainer}>
+          {[...Array(5)].map((_, index) => (
             <WorkSkeleton key={index} />
           ))}
         </View>
@@ -315,60 +236,31 @@ export default function WorkListScreen() {
         style={styles.headerContainer}>
         <View className="flex-row items-center justify-between">
           <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-            {isSelectionMode ? `${t('selected')}: ${selectedWorkIds.length}` : t('worklist')}
+            {t('worklist')}
           </Text>
           <View className="flex-row space-x-1 items-center">
-            {isSelectionMode ? (
-              <>
-                <Pressable
-                  onPress={handleBulkDeleteWorkEntries}
-                  disabled={selectedWorkIds.length === 0}
-                  className="rounded-full p-3"
-                  style={{ backgroundColor: selectedWorkIds.length > 0 ? COLORS.error : COLORS.gray[300] }}>
-                  <MaterialCommunityIcons name="delete-sweep-outline" size={22} color="white" />
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    setIsSelectionMode(false);
-                    setSelectedWorkIds([]);
-                  }}
-                  className="rounded-full p-3"
-                  style={{ backgroundColor: COLORS.gray[100] }}>
-                  <MaterialCommunityIcons name="close" size={22} color={COLORS.gray[600]} />
-                </Pressable>
-              </>
-            ) : (
-              <>
-                <Pressable
-                  onPress={() => router.push('/work/add')}
-                  className="mr-1 rounded-full p-3"
-                  style={{ backgroundColor: COLORS.primary }}>
-                  <MaterialCommunityIcons name="plus" size={22} color="white" />
-                </Pressable>
-                <Pressable
-                  onPress={handleExportWorkListCSV}
-                  className="mr-1 rounded-full p-3"
-                  style={{ backgroundColor: COLORS.gray[100] }}>
-                  <MaterialCommunityIcons name="download-outline" size={22} color={COLORS.gray[600]} />
-                </Pressable>
-                <Pressable
-                  onPress={() => actionSheetRef.current?.show()}
-                  className="mr-1 rounded-full p-3"
-                  style={{ backgroundColor: COLORS.gray[100] }}>
-                  <MaterialCommunityIcons
-                    name="filter-variant"
-                    size={22}
-                    color={currentFilter === 'all' ? COLORS.gray[600] : COLORS.primary}
-                  />
-                </Pressable>
-                <Pressable
-                  onPress={() => setIsSelectionMode(true)}
-                  className="rounded-full p-3"
-                  style={{ backgroundColor: COLORS.gray[100] }}>
-                  <MaterialCommunityIcons name="checkbox-multiple-marked-outline" size={22} color={COLORS.gray[600]} />
-                </Pressable>
-              </>
-            )}
+            <Pressable
+              onPress={() => router.push('/work/add')}
+              className="mr-1 rounded-full p-3"
+              style={{ backgroundColor: COLORS.primary }}>
+              <MaterialCommunityIcons name="plus" size={22} color="white" />
+            </Pressable>
+            <Pressable
+              onPress={handleExportWorkListCSV}
+              className="mr-1 rounded-full p-3"
+              style={{ backgroundColor: COLORS.gray[100] }}>
+              <MaterialCommunityIcons name="download-outline" size={22} color={COLORS.gray[600]} />
+            </Pressable>
+            <Pressable
+              onPress={() => actionSheetRef.current?.show()}
+              className="mr-1 rounded-full p-3"
+              style={{ backgroundColor: COLORS.gray[100] }}>
+              <MaterialCommunityIcons
+                name="filter-variant"
+                size={22}
+                color={currentFilter === 'all' ? COLORS.gray[600] : COLORS.primary}
+              />
+            </Pressable>
           </View>
         </View>
       </View>
@@ -405,9 +297,8 @@ export default function WorkListScreen() {
 
         <BannerAdComponent size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} containerStyle={{ marginTop: -10 }} />
 
-        {workList.map((item: Work, index: number) => {
-          const showNativeAd = index > 0 && index % 8 === 0;
-
+        {workList.map((item, index) => {
+          const showNativeAd = index > 0 && index % 10 === 0;
           return (
             <React.Fragment key={item.id.toString()}>
               {showNativeAd && (
@@ -415,35 +306,7 @@ export default function WorkListScreen() {
                   <NativeAdComponent adType="small" />
                 </View>
               )}
-              <Pressable
-                onPress={async () => {
-                  if (isSelectionMode) {
-                    toggleWorkSelection(String(item.id));
-                  } else {
-                    router.push(`/work/${item.id}/edit`);
-                  }
-                }}
-                style={[
-                  isSelectionMode && selectedWorkIds.includes(String(item.id)) &&
-                  { backgroundColor: COLORS.primary + '20' },
-                  { borderRadius: 12 }
-                ]}
-              >
-                <View className="flex-row items-center">
-                  {isSelectionMode && (
-                    <View className="p-3">
-                      <MaterialCommunityIcons
-                        name={selectedWorkIds.includes(String(item.id)) ? 'checkbox-marked' : 'checkbox-blank-outline'}
-                        size={24}
-                        color={COLORS.primary}
-                      />
-                    </View>
-                  )}
-                  <View className={`flex-1 ${isSelectionMode ? 'pl-0' : ''}`}>
-                    <WorkListItem item={item} />
-                  </View>
-                </View>
-              </Pressable>
+              <WorkListItem item={item} />
             </React.Fragment>
           );
         })}
@@ -540,5 +403,8 @@ const styles = StyleSheet.create({
     fontSize: SIZES.body,
     color: COLORS.gray[600],
     textAlign: 'center',
+  },
+  skeletonContainer: {
+    padding: SPACING.lg,
   },
 });

@@ -21,7 +21,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PREFERENCE_KEYS } from '../account/list-preferences';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import BulkEditPaymentMethodModal from "../../components/BulkEditPaymentMethodModal";
 
 export default function PaymentsList() {
   useAnalytics('PaymentsTabScreen');
@@ -42,13 +41,6 @@ export default function PaymentsList() {
   // State for sorting preferences
   const [sortField, setSortField] = useState('date'); // Default sort field
   const [sortDirection, setSortDirection] = useState('desc'); // Default sort direction
-
-  // State for bulk operations
-  const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [selectedPaymentIds, setSelectedPaymentIds] = useState<string[]>([]); // Assuming IDs are strings
-
-  // State for bulk edit modal
-  const [isBulkEditModalVisible, setIsBulkEditModalVisible] = useState(false);
 
   // Use the modern API hook pattern
   const { execute: executeGetPayments, isLoading } = useApi({
@@ -193,81 +185,6 @@ export default function PaymentsList() {
     return Number(total);
   }, [total]);
 
-  const togglePaymentSelection = (paymentId: string) => {
-    setSelectedPaymentIds(prevSelected =>
-      prevSelected.includes(paymentId)
-        ? prevSelected.filter(id => id !== paymentId)
-        : [...prevSelected, paymentId]
-    );
-  };
-
-  // Placeholder for bulk delete payments handler
-  const handleBulkDeletePayments = async () => {
-    if (selectedPaymentIds.length === 0) return;
-
-    Alert.alert(
-      t('confirmDelete'),
-      t('confirmBulkDeleteMessage', { count: selectedPaymentIds.length }),
-      [
-        { text: t('cancel'), style: 'cancel' },
-        {
-          text: t('delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              // TODO: Implement API call: api.delete('/payments/bulk', { data: { ids: selectedPaymentIds } });
-              setPaymentsList(prevList => prevList.filter(payment => !selectedPaymentIds.includes(String(payment.id))));
-              showToast(t('itemsDeletedSuccess', { count: selectedPaymentIds.length }), 'success');
-              setIsSelectionMode(false);
-              setSelectedPaymentIds([]);
-            } catch (error) {
-              console.error('Error bulk deleting payments:', error);
-              showToast(t('bulkDeleteFailed'), 'error');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleBulkEditPaymentsPress = () => {
-    // This will open the bulk edit modal
-    if (selectedPaymentIds.length > 0) {
-      console.log("Opening bulk edit modal for payments: ", selectedPaymentIds);
-      setIsBulkEditModalVisible(true); // Open the modal
-    } else {
-      Alert.alert(t("noItemsSelectedErrorTitle"), t("noItemsSelectedErrorDesc"));
-    }
-  };
-
-  const handleApplyBulkEdit = async (newPaymentMethod: string) => {
-    console.log(
-      `Applying bulk edit. New Payment Method: ${newPaymentMethod} to IDs: ${selectedPaymentIds.join(", ")}`
-    );
-    // TODO: Implement API call to bulk update payments
-    // For now, simulate success and refresh/reset state
-    try {
-      // const response = await api.bulkUpdatePayments(selectedPaymentIds, { paymentMethod: newPaymentMethod });
-      // if (response.success) {
-      //   Alert.alert(t("bulkEditSuccessTitle"), t("bulkEditSuccessMessage", { count: selectedPaymentIds.length }));
-      //   loadPayments({ page: 1 }); // Refresh from page 1
-      //   setSelectedPaymentIds([]);
-      //   setIsSelectionMode(false);
-      // } else {
-      //   Alert.alert(t("bulkEditErrorTitle"), t("bulkEditErrorMessage"));
-      // }
-      // Simulating success for now:
-      Alert.alert("Success (Simulated)", `Payment method for ${selectedPaymentIds.length} item(s) would be changed to ${newPaymentMethod}.`);
-      loadPayments({ page: 1 }); // Refresh from page 1
-      setSelectedPaymentIds([]);
-      setIsSelectionMode(false);
-    } catch (err) {
-      console.error("Failed to bulk edit payments (simulated):", err);
-      Alert.alert("Error (Simulated)", "Failed to apply bulk edit (simulated).");
-    }
-    setIsBulkEditModalVisible(false); // Close modal
-  };
-
   if (isLoading && currentPage === 1 && isLoadingSub && paymentsList.length === 0) { // Added paymentsList.length check
     return <PaymentSkeleton />;
   }
@@ -287,68 +204,30 @@ export default function PaymentsList() {
           backgroundColor: COLORS.background.primary,
         }}>
         <View className="flex-row items-center justify-between">
-          <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-            {isSelectionMode ? `${t('selected')}: ${selectedPaymentIds.length}` : t('paymentsList')}
-          </Text>
+          <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>{t('paymentsList')}</Text>
           <View className="flex-row space-x-1 items-center">
-            {isSelectionMode ? (
-              <>
-                <Pressable
-                  onPress={handleBulkEditPaymentsPress}
-                  disabled={selectedPaymentIds.length === 0}
-                  className="rounded-full p-3 mr-1"
-                  style={{ backgroundColor: selectedPaymentIds.length > 0 ? COLORS.primary : COLORS.gray[300] }}>
-                  <MaterialCommunityIcons name="pencil-outline" size={22} color="white" />
-                </Pressable>
-                <Pressable
-                  onPress={handleBulkDeletePayments}
-                  disabled={selectedPaymentIds.length === 0}
-                  className="rounded-full p-3"
-                  style={{ backgroundColor: selectedPaymentIds.length > 0 ? COLORS.error : COLORS.gray[300] }}>
-                  <MaterialCommunityIcons name="delete-sweep-outline" size={22} color="white" />
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    setIsSelectionMode(false);
-                    setSelectedPaymentIds([]);
-                  }}
-                  className="rounded-full p-3"
-                  style={{ backgroundColor: COLORS.gray[100] }}>
-                  <MaterialCommunityIcons name="close" size={22} color={COLORS.gray[600]} />
-                </Pressable>
-              </>
-            ) : (
-              <>
-                <Pressable
-                  onPress={() => router.push('/payments/add')}
-                  className="mr-1 rounded-full p-3"
-                  style={{ backgroundColor: COLORS.primary }}>
-                  <MaterialCommunityIcons name="plus" size={22} color="white" />
-                </Pressable>
-                <Pressable
-                  onPress={handleExportPaymentListCSV}
-                  className="mr-1 rounded-full p-3"
-                  style={{ backgroundColor: COLORS.gray[100] }}>
-                  <MaterialCommunityIcons name="download-outline" size={22} color={COLORS.gray[600]} />
-                </Pressable>
-                <Pressable
-                  onPress={() => actionSheetRef.current?.show()}
-                  className="mr-1 rounded-full p-3"
-                  style={{ backgroundColor: COLORS.gray[100] }}>
-                  <MaterialCommunityIcons
-                    name="filter-variant"
-                    size={22}
-                    color={currentFilter === 'all' ? COLORS.gray[600] : COLORS.primary}
-                  />
-                </Pressable>
-                <Pressable
-                  onPress={() => setIsSelectionMode(true)}
-                  className="rounded-full p-3"
-                  style={{ backgroundColor: COLORS.gray[100] }}>
-                  <MaterialCommunityIcons name="checkbox-multiple-marked-outline" size={22} color={COLORS.gray[600]} />
-                </Pressable>
-              </>
-            )}
+            <Pressable
+              onPress={() => router.push('/payments/add')}
+              className="mr-1 rounded-full p-3"
+              style={{ backgroundColor: COLORS.primary }}>
+              <MaterialCommunityIcons name="plus" size={22} color="white" />
+            </Pressable>
+            <Pressable
+              onPress={handleExportPaymentListCSV}
+              className="mr-1 rounded-full p-3"
+              style={{ backgroundColor: COLORS.gray[100] }}>
+              <MaterialCommunityIcons name="download-outline" size={22} color={COLORS.gray[600]} />
+            </Pressable>
+            <Pressable
+              onPress={() => actionSheetRef.current?.show()}
+              className="mr-1 rounded-full p-3"
+              style={{ backgroundColor: COLORS.gray[100] }}>
+              <MaterialCommunityIcons
+                name="filter-variant"
+                size={22}
+                color={currentFilter === 'all' ? COLORS.gray[600] : COLORS.primary}
+              />
+            </Pressable>
           </View>
         </View>
       </View>
@@ -417,13 +296,7 @@ export default function PaymentsList() {
                     </View>
                   )}
                   <Pressable
-                    onPress={async () => {
-                      if (isSelectionMode) {
-                        togglePaymentSelection(String(item.id));
-                      } else {
-                        router.push(`/payments/${item.id}/edit`);
-                      }
-                    }}
+                    onPress={() => router.push(`/payments/${item.id}/edit`)}
                     className="mb-4 rounded-xl p-4"
                     style={[
                       {
@@ -434,19 +307,8 @@ export default function PaymentsList() {
                         shadowRadius: 2,
                         elevation: 1,
                       },
-                      isSelectionMode && selectedPaymentIds.includes(String(item.id)) &&
-                      { backgroundColor: COLORS.primary + '20' } // Light primary background
                     ]}>
                     <View className="flex-row items-center">
-                      {isSelectionMode && (
-                        <View className="pr-3">
-                          <MaterialCommunityIcons
-                            name={selectedPaymentIds.includes(String(item.id)) ? 'checkbox-marked' : 'checkbox-blank-outline'}
-                            size={24}
-                            color={COLORS.primary}
-                          />
-                        </View>
-                      )}
                       <View className="flex-1">
                         <View className="flex-row items-center justify-between">
                           <View>
@@ -532,14 +394,6 @@ export default function PaymentsList() {
           ))}
         </View>
       </ActionSheet>
-
-      {/* Render Bulk Edit Modal */}
-      <BulkEditPaymentMethodModal
-        visible={isBulkEditModalVisible}
-        onClose={() => setIsBulkEditModalVisible(false)}
-        onApply={handleApplyBulkEdit}
-      // paymentSources={paymentSources} // If you have dynamic payment sources, pass them here
-      />
     </View>
   );
 }
