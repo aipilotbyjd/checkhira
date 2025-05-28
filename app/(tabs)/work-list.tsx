@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
-  TextInput,
   StyleSheet,
   Platform,
 } from 'react-native';
@@ -32,8 +31,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PREFERENCE_KEYS } from '../account/list-preferences';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { HeaderButton } from '../../components/HeaderButton';
-import BulkEditWorkDateModal from '../../components/BulkEditWorkDateModal';
 
 export default function WorkListScreen() {
   useAnalytics('WorkListTabScreen');
@@ -50,8 +47,6 @@ export default function WorkListScreen() {
   const [currentFilter, setCurrentFilter] = useState('all');
   const [todayTotal, setTodayTotal] = useState(0);
   const { refreshUnreadCount } = useNotification();
-  const [searchQuery, setSearchQuery] = useState('');
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // State for sorting preferences
   const [sortField, setSortField] = useState('date'); // Default sort field
@@ -60,7 +55,6 @@ export default function WorkListScreen() {
   // State for bulk operations
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedWorkIds, setSelectedWorkIds] = useState<string[]>([]); // Assuming IDs are strings, adjust if numbers
-  const [isBulkEditDateModalVisible, setIsBulkEditDateModalVisible] = useState(false);
 
   // Use the modern API hook pattern
   const { execute: executeGetWorks, isLoading: apiIsLoading } = useApi({
@@ -68,10 +62,10 @@ export default function WorkListScreen() {
     defaultErrorMessage: t('failedToLoadWorkEntries')
   });
 
-  const loadWork = useCallback(async ({ page = 1, isRefresh = false, sortBy = sortField, sortDir = sortDirection, search = searchQuery }) => {
+  const loadWork = useCallback(async ({ page = 1, isRefresh = false, sortBy = sortField, sortDir = sortDirection }) => {
     try {
       const response = await executeGetWorks(() =>
-        api.get('/works', { page, filter: currentFilter, sortBy, sortDir, search })
+        api.get('/works', { page, filter: currentFilter, sortBy, sortDir })
       );
 
       if (response?.data) {
@@ -91,35 +85,20 @@ export default function WorkListScreen() {
       setRefreshing(false);
       setIsLoadingMore(false);
     }
-  }, [currentFilter, executeGetWorks, sortField, sortDirection, searchQuery]);
-
-  useEffect(() => {
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-    debounceTimeoutRef.current = setTimeout(() => {
-      loadWork({ page: 1, isRefresh: true, search: searchQuery });
-    }, 500);
-
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-    };
-  }, [searchQuery, loadWork]);
+  }, [currentFilter, executeGetWorks, sortField, sortDirection]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadWork({ page: 1, isRefresh: true, sortBy: sortField, sortDir: sortDirection, search: searchQuery });
-  }, [loadWork, sortField, sortDirection, searchQuery]);
+    await loadWork({ page: 1, isRefresh: true, sortBy: sortField, sortDir: sortDirection });
+  }, [loadWork, sortField, sortDirection]);
 
   const handleFilter = useCallback((filter: string) => {
     setCurrentFilter(filter);
     setWorkList([]);
     setCurrentPage(1);
     actionSheetRef.current?.hide();
-    loadWork({ page: 1, sortBy: sortField, sortDir: sortDirection, search: searchQuery });
-  }, [loadWork, sortField, sortDirection, searchQuery]);
+    loadWork({ page: 1, sortBy: sortField, sortDir: sortDirection });
+  }, [loadWork, sortField, sortDirection]);
 
   useFocusEffect(
     useCallback(() => {
@@ -136,12 +115,12 @@ export default function WorkListScreen() {
         }
         setSortField(prefSortField);
         setSortDirection(prefSortDirection);
-        loadWork({ page: 1, sortBy: prefSortField, sortDir: prefSortDirection, search: searchQuery });
+        loadWork({ page: 1, sortBy: prefSortField, sortDir: prefSortDirection });
       };
 
       loadPreferencesAndFetchData();
       refreshUnreadCount();
-    }, [currentFilter, searchQuery])
+    }, [currentFilter])
   );
 
   const handleLoadMore = useCallback(async () => {
@@ -149,8 +128,8 @@ export default function WorkListScreen() {
 
     analyticsService.logEvent('load_more_work_entries', { page: currentPage + 1 });
     setIsLoadingMore(true);
-    await loadWork({ page: currentPage + 1, sortBy: sortField, sortDir: sortDirection, search: searchQuery });
-  }, [currentPage, hasMorePages, isLoadingMore, loadWork, sortField, sortDirection, searchQuery]);
+    await loadWork({ page: currentPage + 1, sortBy: sortField, sortDir: sortDirection });
+  }, [currentPage, hasMorePages, isLoadingMore, loadWork, sortField, sortDirection]);
 
   const toggleWorkSelection = (workId: string) => {
     setSelectedWorkIds(prevSelected =>
@@ -249,33 +228,7 @@ export default function WorkListScreen() {
     }
   };
 
-  const handleBulkEditWorksPress = () => {
-    if (selectedWorkIds.length > 0) {
-      console.log("Opening bulk edit date modal for works: ", selectedWorkIds);
-      setIsBulkEditDateModalVisible(true);
-    } else {
-      Alert.alert(t("noItemsSelectedErrorTitle"), t("noItemsSelectedErrorDesc"));
-    }
-  };
-
-  const handleApplyBulkEditDate = async (newDate: Date) => {
-    const formattedDate = newDate.toISOString().split('T')[0];
-    console.log(
-      `Applying bulk date edit. New Date: ${formattedDate} to Work IDs: ${selectedWorkIds.join(", ")}`
-    );
-    try {
-      showToast(t('bulkEditSuccessTitle'), 'success');
-      loadWork({ page: 1, isRefresh: true });
-      setSelectedWorkIds([]);
-      setIsSelectionMode(false);
-    } catch (err) {
-      console.error("Failed to bulk edit work dates (simulated):", err);
-      showToast(t('bulkEditErrorTitle'), 'error');
-    }
-    setIsBulkEditDateModalVisible(false);
-  };
-
-  if (apiIsLoading && currentPage === 1 && workList.length === 0 && !searchQuery) {
+  if (apiIsLoading && currentPage === 1 && workList.length === 0) {
     return (
       <View style={styles.screenContainer}>
         <View
@@ -420,17 +373,6 @@ export default function WorkListScreen() {
         </View>
       </View>
 
-      <View style={styles.searchBarContainer}>
-        <TextInput
-          style={styles.searchBarInput}
-          placeholder={t('searchWorkListPlaceholder') || 'Search by work name, client...'}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor={COLORS.gray[500]}
-          clearButtonMode="while-editing"
-        />
-      </View>
-
       <ScrollView
         style={styles.scrollViewStyle}
         refreshControl={
@@ -516,7 +458,7 @@ export default function WorkListScreen() {
           <View style={styles.emptyStateContainer}>
             <MaterialCommunityIcons name="file-document-outline" size={48} color={COLORS.gray[400]} />
             <Text style={styles.emptyStateText}>
-              {searchQuery ? (t('noSearchResultsFound') || 'No results found for your search.') : t('noWorkEntries')}
+              {t('noWorkEntries')}
             </Text>
           </View>
         )}
@@ -562,13 +504,6 @@ export default function WorkListScreen() {
           ))}
         </View>
       </ActionSheet>
-
-      <BulkEditWorkDateModal
-        visible={isBulkEditDateModalVisible}
-        onClose={() => setIsBulkEditDateModalVisible(false)}
-        onApply={handleApplyBulkEditDate}
-        currentSelectedCount={selectedWorkIds.length}
-      />
     </View>
   );
 }
@@ -590,24 +525,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
-  },
-  searchBarContainer: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    backgroundColor: COLORS.background.primary,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray[100],
-  },
-  searchBarInput: {
-    backgroundColor: COLORS.background.secondary,
-    borderColor: COLORS.gray[300],
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: Platform.OS === 'ios' ? SPACING.md : SPACING.sm,
-    fontSize: SIZES.body,
-    color: COLORS.secondary,
-    height: 44,
   },
   scrollViewStyle: {
     flex: 1,
