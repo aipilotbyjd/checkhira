@@ -3,12 +3,13 @@ import {
   View, Text, StyleSheet, Pressable, Platform, ScrollView, Dimensions,
   ActivityIndicator, TextInput, Share, Alert
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+// import { Picker } from '@react-native-picker/picker'; // Picker is no longer used
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LineChart, PieChart } from 'react-native-chart-kit'; // BarChart is not used currently
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useToast } from '../../contexts/ToastContext';
-import { COLORS, FONTS, SIZES, SPACING, LAYOUT } from '../../constants/theme';
+import { COLORS, FONTS, SIZES, SPACING, LAYOUT, SHADOWS } from '../../constants/theme';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
@@ -21,8 +22,6 @@ interface Client {
 // Placeholder for your actual work entry type
 interface WorkEntry {
   id: string;
-  clientId: string; // or clientName if you don't use IDs
-  clientName?: string; // Optional if you fetch client name separately or have it in work entry
   date: string; // Should be in a format that can be compared with startDate/endDate (e.g., ISO string)
   hours: number;
   amountEarned: number;
@@ -30,7 +29,6 @@ interface WorkEntry {
 }
 
 interface ReportData {
-  clientName: string;
   period: string;
   totalEarnings: number;
   totalHours: number;
@@ -38,6 +36,8 @@ interface ReportData {
   tasksCompleted: number;
   detailedBreakdown?: Array<{ name: string; hours: number; earnings: number }>; // For future enhancement
   hasData: boolean; // To distinguish between no data for filter and initial state
+  earningsOverTimeData?: { labels: string[]; datasets: { data: number[] }[] };
+  taskDistributionData?: { name: string; population: number; color: string; legendFontColor: string; legendFontSize: number }[];
 }
 
 // --- API MOCKING START ---
@@ -59,28 +59,27 @@ const fetchClientsFromAPI = async (): Promise<Client[]> => {
   });
 };
 
-const fetchWorkDataFromAPI = async (startDate: Date, endDate: Date, selectedClientId?: string, taskNameFilter?: string): Promise<WorkEntry[]> => {
-  console.log(`[ReportsScreen] Fetching work data for client: ${selectedClientId || 'All'}, period: ${startDate.toISOString().split('T')[0]} - ${endDate.toISOString().split('T')[0]}, task: ${taskNameFilter || 'All'}`);
+const fetchWorkDataFromAPI = async (startDate: Date, endDate: Date, taskNameFilter?: string): Promise<WorkEntry[]> => {
+  console.log(`[ReportsScreen] Fetching work data for period: ${startDate.toISOString().split('T')[0]} - ${endDate.toISOString().split('T')[0]}, task: ${taskNameFilter || 'All'}`);
   return new Promise(resolve => {
     setTimeout(() => {
       // Simulate fetching and filtering data
       const allWorkEntries: WorkEntry[] = [
         // ... (populate with more diverse mock data for realistic testing)
-        { id: 'w1', clientId: '1', clientName: 'Client Alpha', date: '2023-10-01T10:00:00Z', hours: 5, amountEarned: 250, taskName: 'Project A' },
-        { id: 'w2', clientId: '2', clientName: 'Client Beta', date: '2023-10-05T14:00:00Z', hours: 3, amountEarned: 180, taskName: 'Consulting' },
-        { id: 'w3', clientId: '1', clientName: 'Client Alpha', date: '2023-10-10T09:00:00Z', hours: 8, amountEarned: 400, taskName: 'Project B' },
-        { id: 'w4', clientId: '3', clientName: 'Client Gamma', date: startDate.toISOString(), hours: 6, amountEarned: 300, taskName: 'Support' }, // Within range
-        { id: 'w5', clientId: '4', clientName: 'Diamond Inc.', date: endDate.toISOString(), hours: 4, amountEarned: 500, taskName: 'Feature X' }, // Within range
-        { id: 'w6', clientId: '1', clientName: 'Client Alpha', date: new Date(startDate.getTime() + 86400000).toISOString(), hours: 2, amountEarned: 100, taskName: 'Project A Maintenance' }, // ensure some data within range
+        { id: 'w1', date: '2023-10-01T10:00:00Z', hours: 5, amountEarned: 250, taskName: 'Project A' },
+        { id: 'w2', date: '2023-10-05T14:00:00Z', hours: 3, amountEarned: 180, taskName: 'Consulting' },
+        { id: 'w3', date: '2023-10-10T09:00:00Z', hours: 8, amountEarned: 400, taskName: 'Project B' },
+        { id: 'w4', date: startDate.toISOString(), hours: 6, amountEarned: 300, taskName: 'Support' }, // Within range
+        { id: 'w5', date: endDate.toISOString(), hours: 4, amountEarned: 500, taskName: 'Feature X' }, // Within range
+        { id: 'w6', date: new Date(startDate.getTime() + 86400000).toISOString(), hours: 2, amountEarned: 100, taskName: 'Project A Maintenance' }, // ensure some data within range
       ];
 
       const filtered = allWorkEntries.filter(entry => {
         const entryDate = new Date(entry.date);
         const isAfterStart = entryDate >= startDate;
         const isBeforeEnd = entryDate <= new Date(endDate.getTime() + (24 * 60 * 60 * 1000 - 1)); // Include whole end day
-        const clientMatch = !selectedClientId || entry.clientId === selectedClientId;
         const taskMatch = !taskNameFilter || (entry.taskName && entry.taskName.toLowerCase().includes(taskNameFilter.toLowerCase()));
-        return isAfterStart && isBeforeEnd && clientMatch && taskMatch;
+        return isAfterStart && isBeforeEnd && taskMatch;
       });
       console.log('[ReportsScreen] Work data fetched and filtered:', filtered);
       resolve(filtered);
@@ -94,8 +93,6 @@ const ALL_CLIENTS_ID = '__ALL_CLIENTS__'; // Special ID for "All Clients" option
 export default function ReportsScreen() {
   const { t } = useLanguage();
   const { showToast } = useToast();
-  const [selectedClient, setSelectedClient] = useState<string>(ALL_CLIENTS_ID);
-  const [clientList, setClientList] = useState<Array<{ label: string; value: string }>>([]);
   const [startDate, setStartDate] = useState<Date>(() => {
     const date = new Date();
     date.setDate(date.getDate() - 30);
@@ -106,7 +103,6 @@ export default function ReportsScreen() {
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isClientsLoading, setIsClientsLoading] = useState(true);
 
   // New states for advanced filtering and sorting
   const [taskNameFilter, setTaskNameFilter] = useState('');
@@ -114,23 +110,8 @@ export default function ReportsScreen() {
   const [sortTaskDirection, setSortTaskDirection] = useState<'asc' | 'desc'>('asc');
   const [showSortOptions, setShowSortOptions] = useState(false);
 
-  useEffect(() => {
-    const loadClients = async () => {
-      setIsClientsLoading(true);
-      try {
-        const clients = await fetchClientsFromAPI(); // Replace with your actual function
-        const formattedClients = clients.map(c => ({ label: c.name, value: c.id }));
-        const allClientsOption = { label: t('allClientsPlaceholder'), value: ALL_CLIENTS_ID };
-        setClientList([allClientsOption, ...formattedClients]);
-      } catch (error) {
-        console.error('[ReportsScreen] Error fetching clients:', error);
-        showToast(t('errorFetchingClients'), 'error');
-        setClientList([{ label: t('allClientsPlaceholder'), value: ALL_CLIENTS_ID }]); // Fallback
-      }
-      setIsClientsLoading(false);
-    };
-    loadClients();
-  }, [t, showToast]);
+  // useEffect(() => {
+  // }, [t, showToast]); // Removed client loading useEffect
 
   const onChangeStartDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || startDate;
@@ -152,13 +133,6 @@ export default function ReportsScreen() {
   };
 
   const handleGenerateReport = async () => {
-    if (isClientsLoading) {
-      showToast(t('clientsStillLoading'), 'info');
-      return;
-    }
-
-    // No need to check selectedClient against placeholder if ALL_CLIENTS_ID is the default and valid
-
     setIsLoading(true);
     setReportData(null);
 
@@ -166,13 +140,11 @@ export default function ReportsScreen() {
       const workEntries = await fetchWorkDataFromAPI(
         startDate,
         endDate,
-        selectedClient === ALL_CLIENTS_ID ? undefined : selectedClient,
         taskNameFilter
       ); // Replace with your actual function
 
       if (workEntries.length === 0) {
         setReportData({
-          clientName: selectedClient === ALL_CLIENTS_ID ? t('allClientsSummary') : clientList.find(c => c.value === selectedClient)?.label || '',
           period: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
           totalEarnings: 0, totalHours: 0, averageRate: 0, tasksCompleted: 0, hasData: false
         });
@@ -184,10 +156,16 @@ export default function ReportsScreen() {
       let totalEarnings = 0;
       let totalHours = 0;
       const breakdownMap = new Map<string, { hours: number; earnings: number }>();
+      const earningsByDate = new Map<string, number>(); // For earnings over time chart
 
       workEntries.forEach(entry => {
         totalEarnings += entry.amountEarned;
         totalHours += entry.hours;
+
+        const entryDateString = new Date(entry.date).toLocaleDateString();
+        const currentDailyEarnings = earningsByDate.get(entryDateString) || 0;
+        earningsByDate.set(entryDateString, currentDailyEarnings + entry.amountEarned);
+
         if (entry.taskName) {
           const current = breakdownMap.get(entry.taskName) || { hours: 0, earnings: 0 };
           breakdownMap.set(entry.taskName, {
@@ -215,10 +193,30 @@ export default function ReportsScreen() {
         return sortTaskDirection === 'asc' ? comparison : comparison * -1;
       });
 
-      const currentClient = clientList.find(c => c.value === selectedClient);
+      // Prepare data for Earnings Over Time Chart
+      const sortedDates = Array.from(earningsByDate.keys()).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+      const earningsOverTimeData = {
+        labels: sortedDates.map(date => {
+          const d = new Date(date);
+          return `${d.getMonth() + 1}/${d.getDate()}`;
+        }),
+        datasets: [
+          {
+            data: sortedDates.map(date => earningsByDate.get(date) || 0)
+          }
+        ]
+      };
+
+      // Prepare data for Task Distribution Pie Chart
+      const taskDistributionData = detailedBreakdown.map((task, index) => ({
+        name: task.name,
+        population: task.earnings, // Using earnings for pie chart distribution
+        color: COLORS.chartColors[index % COLORS.chartColors.length], // Use predefined colors
+        legendFontColor: COLORS.text, // Use theme text color
+        legendFontSize: 12
+      }));
 
       setReportData({
-        clientName: currentClient?.value === ALL_CLIENTS_ID ? t('allClientsSummary') : currentClient?.label || '',
         period: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
         totalEarnings: parseFloat(totalEarnings.toFixed(2)),
         totalHours: parseFloat(totalHours.toFixed(1)),
@@ -226,6 +224,8 @@ export default function ReportsScreen() {
         tasksCompleted: workEntries.length,
         detailedBreakdown: detailedBreakdown.length > 0 ? detailedBreakdown : undefined,
         hasData: true,
+        earningsOverTimeData,
+        taskDistributionData
       });
 
     } catch (error) {
@@ -237,7 +237,6 @@ export default function ReportsScreen() {
 
   const clearReport = () => {
     setReportData(null);
-    setSelectedClient(ALL_CLIENTS_ID);
     const defaultStartDate = new Date();
     defaultStartDate.setDate(defaultStartDate.getDate() - 30);
     setStartDate(defaultStartDate);
@@ -253,7 +252,6 @@ export default function ReportsScreen() {
     }
 
     const header = [
-      'Client',
       'Period',
       'Task Name',
       'Hours',
@@ -265,7 +263,6 @@ export default function ReportsScreen() {
 
     // Add summary row
     rows.push([
-      `"${reportData.clientName}"`,
       `"${reportData.period}"`,
       '"TOTAL"',
       reportData.totalHours.toFixed(1),
@@ -277,7 +274,6 @@ export default function ReportsScreen() {
     if (reportData.detailedBreakdown) {
       reportData.detailedBreakdown.forEach(task => {
         rows.push([
-          `"${reportData.clientName}"`,
           `"${reportData.period}"`,
           `"${task.name.replace(/"/g, '""')}"`,
           task.hours.toFixed(1),
@@ -303,7 +299,7 @@ export default function ReportsScreen() {
         return;
       }
 
-      const filename = `financial_report_${reportData.clientName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.csv`;
+      const filename = `financial_report_${new Date().toISOString().split('T')[0]}.csv`;
       const fileUri = FileSystem.documentDirectory + filename;
 
       await FileSystem.writeAsStringAsync(fileUri, csvString, {
@@ -355,298 +351,543 @@ export default function ReportsScreen() {
     }
   };
 
+  const screenWidth = Dimensions.get("window").width;
+
+  const chartConfig = {
+    backgroundGradientFrom: COLORS.background.secondary,
+    backgroundGradientTo: COLORS.background.secondary,
+    decimalPlaces: 2,
+    color: (opacity = 1) => `rgba(${parseInt(COLORS.primary.substring(1, 3), 16)}, ${parseInt(COLORS.primary.substring(3, 5), 16)}, ${parseInt(COLORS.primary.substring(5, 7), 16)}, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    style: {
+      borderRadius: SIZES.borderRadius,
+    },
+    propsForDots: {
+      r: "4",
+      strokeWidth: "1",
+      stroke: COLORS.primary
+    }
+  };
+
   return (
-    <ScrollView className="flex-1 bg-gray-50">
-      <View className="p-4">
-        {/* Filters Section */}
-        <View className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <View className="flex-row items-center mb-6">
-            <MaterialCommunityIcons name="filter-variant" size={24} color="#4B5563" />
-            <Text className="text-xl font-semibold text-gray-700 ml-2">{t('reportFiltersTitle')}</Text>
-          </View>
-
-          {/* Client Selection */}
-          <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-600 mb-2">{t('clientNameLabel')}</Text>
-            <View className="border border-gray-200 rounded-lg bg-gray-50">
-              {isClientsLoading ? (
-                <View className="flex-row items-center justify-center py-3">
-                  <ActivityIndicator size="small" color="#6366F1" />
-                  <Text className="ml-2 text-gray-600">{t('loadingClients')}</Text>
-                </View>
-              ) : (
-                <Picker
-                  selectedValue={selectedClient}
-                  onValueChange={(itemValue) => setSelectedClient(itemValue as string)}
-                  className="h-12"
-                  dropdownIconColor="#4B5563"
-                >
-                  {clientList.map((client) => (
-                    <Picker.Item
-                      key={client.value}
-                      label={client.label}
-                      value={client.value}
-                      color="#374151"
-                    />
-                  ))}
-                </Picker>
-              )}
-            </View>
-          </View>
-
-          {/* Task Name Filter */}
-          <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-600 mb-2">{t('taskNameFilterLabel')}</Text>
-            <TextInput
-              className="border border-gray-200 rounded-lg bg-gray-50 px-4 py-3 text-gray-700"
-              placeholder={t('enterTaskNamePlaceholder')}
-              value={taskNameFilter}
-              onChangeText={setTaskNameFilter}
-              placeholderTextColor="#9CA3AF"
-            />
-          </View>
-
-          {/* Date Range */}
-          <View className="mb-6">
-            <Text className="text-sm font-medium text-gray-600 mb-2">{t('selectDateRangeLabel')}</Text>
-            <View className="flex-row items-center justify-between">
-              <Pressable
-                onPress={() => setShowStartDatePicker(true)}
-                className="flex-1 flex-row items-center bg-gray-50 border border-gray-200 rounded-lg px-4 py-3"
-              >
-                <MaterialCommunityIcons name="calendar-start" size={20} color="#6366F1" />
-                <Text className="ml-2 text-gray-700">{startDate.toLocaleDateString()}</Text>
-              </Pressable>
-
-              <MaterialCommunityIcons name="arrow-right" size={20} color="#9CA3AF" className="mx-2" />
-
-              <Pressable
-                onPress={() => setShowEndDatePicker(true)}
-                className="flex-1 flex-row items-center bg-gray-50 border border-gray-200 rounded-lg px-4 py-3"
-              >
-                <MaterialCommunityIcons name="calendar-end" size={20} color="#6366F1" />
-                <Text className="ml-2 text-gray-700">{endDate.toLocaleDateString()}</Text>
-              </Pressable>
-            </View>
-          </View>
-
-          {/* Date Pickers */}
-          {showStartDatePicker && (
-            <DateTimePicker
-              value={startDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onChangeStartDate}
-              maximumDate={new Date()}
-            />
-          )}
-          {showEndDatePicker && (
-            <DateTimePicker
-              value={endDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onChangeEndDate}
-              minimumDate={startDate}
-              maximumDate={new Date()}
-            />
-          )}
-
-          {/* Generate Report Button */}
-          <Pressable
-            onPress={handleGenerateReport}
-            disabled={isLoading || isClientsLoading}
-            className={`flex-row items-center justify-center rounded-lg px-6 py-4 ${isLoading || isClientsLoading ? 'bg-gray-300' : 'bg-indigo-600 active:bg-indigo-700'
-              }`}
-          >
-            {isLoading || isClientsLoading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" className="mr-2" />
-            ) : (
-              <MaterialCommunityIcons name="calculator-variant" size={22} color="#FFFFFF" className="mr-2" />
-            )}
-            <Text className="text-white font-semibold text-lg">
-              {isLoading ? t('generatingReportButton')
-                : isClientsLoading ? t('loadingClients')
-                  : t('generateReportButton')}
-            </Text>
-          </Pressable>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <MaterialCommunityIcons name="filter-variant" size={SIZES.iconSize.medium} color={COLORS.primary} />
+          <Text style={styles.cardTitle}>{t('reportFiltersTitle')}</Text>
         </View>
 
-        {/* Loading State */}
-        {isLoading && (
-          <View className="items-center justify-center py-12">
-            <ActivityIndicator size="large" color="#6366F1" />
-            <Text className="mt-4 text-gray-600 font-medium">{t('fetchingReportData')}</Text>
-          </View>
-        )}
-
-        {/* Report Results */}
-        {!isLoading && reportData && reportData.hasData && (
-          <View className="bg-white rounded-xl shadow-md p-6 mb-6">
-            {/* Report Header */}
-            <View className="flex-row items-center justify-between mb-6">
-              <View className="flex-row items-center">
-                <MaterialCommunityIcons name="file-chart-outline" size={24} color="#4B5563" />
-                <Text className="text-xl font-semibold text-gray-700 ml-2">{t('reportSummaryTitle')}</Text>
-              </View>
-
-              <Pressable
-                onPress={handleExportReport}
-                className="flex-row items-center bg-emerald-50 px-4 py-2.5 rounded-lg"
-              >
-                <MaterialCommunityIcons name="file-export-outline" size={20} color="#059669" />
-                <Text className="ml-2 text-emerald-700 font-medium">{t('exportReportButton')}</Text>
-              </Pressable>
-            </View>
-
-            {/* Report Info Banner */}
-            <View className="bg-indigo-50 border-l-4 border-indigo-500 rounded-r-lg p-4 mb-6">
-              <Text className="text-indigo-700 font-medium">
-                {t('reportForClient', { clientName: reportData.clientName })}
-              </Text>
-              <Text className="text-indigo-600 mt-1">
-                {t('reportForPeriod', { period: reportData.period })}
-              </Text>
-            </View>
-
-            {/* Summary Grid */}
-            <View className="flex-row flex-wrap justify-between">
-              {[
-                {
-                  icon: 'cash-multiple',
-                  label: t('totalEarningsLabel'),
-                  value: `$${reportData.totalEarnings.toFixed(2)}`,
-                  color: '#059669'
-                },
-                {
-                  icon: 'clock-time-eight',
-                  label: t('totalHoursLabel'),
-                  value: `${reportData.totalHours.toFixed(1)} hrs`,
-                  color: '#2563EB'
-                },
-                {
-                  icon: 'calculator',
-                  label: t('averageRateLabel'),
-                  value: `$${reportData.averageRate.toFixed(2)}/hr`,
-                  color: '#DC2626'
-                },
-                {
-                  icon: 'format-list-numbered',
-                  label: t('tasksCompletedLabel'),
-                  value: reportData.tasksCompleted.toString(),
-                  color: '#6366F1'
-                }
-              ].map((item, index) => (
-                <View key={index} className="w-[48%] bg-white border border-gray-100 rounded-xl p-4 mb-4 shadow-sm">
-                  <MaterialCommunityIcons name={item.icon as any} size={30} color={item.color} />
-                  <Text className="text-2xl font-bold text-gray-800 mt-2">{item.value}</Text>
-                  <Text className="text-sm text-gray-500 mt-1">{item.label}</Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Detailed Breakdown */}
-            {reportData.detailedBreakdown && reportData.detailedBreakdown.length > 0 && (
-              <View className="mt-8">
-                <View className="flex-row items-center justify-between mb-4">
-                  <Text className="text-xl font-semibold text-gray-800">{t('detailedBreakdownTitle')}</Text>
-                  <Pressable
-                    onPress={toggleSortOptions}
-                    className="flex-row items-center bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg"
-                  >
-                    <MaterialCommunityIcons
-                      name={sortTaskBy === 'name'
-                        ? (sortTaskDirection === 'asc' ? "sort-alphabetical-ascending" : "sort-alphabetical-descending")
-                        : (sortTaskDirection === 'asc' ? "sort-numeric-ascending" : "sort-numeric-descending")}
-                      size={20}
-                      color="#4F46E5"
-                    />
-                    <Text className="ml-2 text-indigo-700 font-medium">
-                      {t('sortByLabel')}: {t(sortTaskBy)}
-                    </Text>
-                  </Pressable>
-                </View>
-
-                {/* Sort Options with Improved UI */}
-                {showSortOptions && (
-                  <View className="bg-white border border-gray-200 rounded-xl p-3 mb-4 shadow-sm">
-                    <Text className="text-sm font-medium text-gray-500 mb-2">{t('selectSortOption')}</Text>
-                    <View className="flex-row justify-around">
-                      {(['name', 'hours', 'earnings'] as const).map(field => (
-                        <Pressable
-                          key={field}
-                          onPress={() => { applySort(field); setShowSortOptions(false); }}
-                          className={`flex-1 flex-row items-center justify-center px-3 py-2 rounded-lg mx-1 ${sortTaskBy === field
-                            ? 'bg-indigo-600'
-                            : 'bg-gray-100 active:bg-gray-200'
-                            }`}
-                        >
-                          <Text className={
-                            sortTaskBy === field
-                              ? 'text-white font-medium'
-                              : 'text-gray-700'
-                          }>
-                            {t(field)}
-                          </Text>
-                          {sortTaskBy === field && (
-                            <MaterialCommunityIcons
-                              name={sortTaskDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
-                              size={18}
-                              color={sortTaskBy === field ? '#FFFFFF' : '#4F46E5'}
-                              className="ml-1"
-                            />
-                          )}
-                        </Pressable>
-                      ))}
-                    </View>
-                  </View>
-                )}
-
-                {/* Task Cards with Improved UI */}
-                {reportData.detailedBreakdown.map((task, index) => (
-                  <View
-                    key={index}
-                    className="bg-white border border-gray-200 rounded-xl p-4 mb-3 shadow-sm"
-                  >
-                    <Text className="text-lg font-semibold text-gray-800">{task.name}</Text>
-                    <View className="flex-row justify-between mt-3">
-                      <View className="flex-row items-center">
-                        <MaterialCommunityIcons name="clock-outline" size={18} color="#6B7280" />
-                        <Text className="text-gray-600 ml-1">
-                          {t('hoursShort')}: {task.hours.toFixed(1)}
-                        </Text>
-                      </View>
-                      <View className="flex-row items-center">
-                        <MaterialCommunityIcons name="currency-usd" size={18} color="#6B7280" />
-                        <Text className="text-gray-600 ml-1">
-                          {t('earningsShort')}: ${task.earnings.toFixed(2)}
-                        </Text>
-                      </View>
-                      <View className="flex-row items-center">
-                        <MaterialCommunityIcons name="chart-line" size={18} color="#6B7280" />
-                        <Text className="text-gray-600 ml-1">
-                          ${(task.earnings / task.hours).toFixed(2)}/hr
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                ))}
-              </View>
+        {/* Date Range Pickers */}
+        <View style={styles.dateRangeContainer}>
+          <View style={styles.datePickerWrapper}>
+            <Text style={styles.label}>{t('startDateLabel')}</Text>
+            <Pressable onPress={() => setShowStartDatePicker(true)} style={styles.dateInput}>
+              <MaterialCommunityIcons name="calendar" size={SIZES.iconSize.small} color={COLORS.gray[500]} style={styles.dateIcon} />
+              <Text style={styles.dateText}>{startDate.toLocaleDateString()}</Text>
+            </Pressable>
+            {showStartDatePicker && (
+              <DateTimePicker
+                value={startDate}
+                mode="date"
+                display="default"
+                onChange={onChangeStartDate}
+                maximumDate={endDate}
+              />
             )}
           </View>
-        )}
-
-        {/* No Data State */}
-        {!isLoading && (!reportData || !reportData.hasData) && (
-          <View className="bg-white rounded-xl shadow-md p-8 items-center">
-            <MaterialCommunityIcons name="text-box-search-outline" size={60} color="#9CA3AF" />
-            <Text className="text-gray-600 text-center text-lg mt-4">
-              {reportData && !reportData.hasData
-                ? t('noDataForFilters')
-                : t('generateReportPrompt')}
-            </Text>
+          <View style={styles.datePickerWrapper}>
+            <Text style={styles.label}>{t('endDateLabel')}</Text>
+            <Pressable onPress={() => setShowEndDatePicker(true)} style={styles.dateInput}>
+              <MaterialCommunityIcons name="calendar" size={SIZES.iconSize.small} color={COLORS.gray[500]} style={styles.dateIcon} />
+              <Text style={styles.dateText}>{endDate.toLocaleDateString()}</Text>
+            </Pressable>
+            {showEndDatePicker && (
+              <DateTimePicker
+                value={endDate}
+                mode="date"
+                display="default"
+                onChange={onChangeEndDate}
+                minimumDate={startDate}
+              />
+            )}
           </View>
-        )}
+        </View>
+
+        {/* Task Name Filter */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>{t('taskNameFilterLabel')}</Text>
+          <View style={styles.textInputContainer}>
+            <MaterialCommunityIcons name="magnify" size={SIZES.iconSize.small} color={COLORS.gray[500]} style={styles.inputIcon} />
+            <TextInput
+              style={styles.textInput}
+              placeholder={t('taskNameFilterPlaceholder')}
+              value={taskNameFilter}
+              onChangeText={setTaskNameFilter}
+              placeholderTextColor={COLORS.gray[400]}
+            />
+          </View>
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.buttonGroup}>
+          <Pressable
+            onPress={handleGenerateReport}
+            disabled={isLoading}
+            style={({ pressed }: { pressed: boolean }) => [
+              styles.button,
+              styles.primaryButton,
+              isLoading ? styles.buttonDisabled : null,
+              pressed ? styles.buttonPressed : null,
+            ].filter(Boolean) // Ensure no nulls/undefined are in the array
+            }
+          >
+            <MaterialCommunityIcons name="file-chart" size={SIZES.iconSize.medium} color={COLORS.white} style={styles.buttonIcon} />
+            <Text style={styles.buttonText}>
+              {isLoading ? t('generatingReportButton', { defaultValue: 'Generating...' }) : t('generateReportButton', { defaultValue: 'Generate Report' })}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={clearReport}
+            style={({ pressed }: { pressed: boolean }) => [
+              styles.button,
+              styles.secondaryButton,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <MaterialCommunityIcons name="refresh" size={SIZES.iconSize.medium} color={COLORS.primary} style={styles.buttonIcon} />
+            <Text style={[styles.buttonText, styles.secondaryButtonText]}>{t('clearReportButton')}</Text>
+          </Pressable>
+        </View>
       </View>
+
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>{t('generatingReportButton')}...</Text>
+        </View>
+      )}
+
+      {reportData && !isLoading && (
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <MaterialCommunityIcons name="information-outline" size={SIZES.iconSize.medium} color={COLORS.primary} />
+            <Text style={styles.cardTitle}>{t('reportSummaryTitle')}</Text>
+            <Pressable onPress={handleExportReport} style={styles.exportButton}>
+              <MaterialCommunityIcons name="download" size={SIZES.iconSize.medium} color={COLORS.primary} />
+            </Pressable>
+          </View>
+
+          {!reportData.hasData ? (
+            <View style={styles.noDataContainer}>
+              <MaterialCommunityIcons name="alert-circle-outline" size={SIZES.iconSize.large} color={COLORS.gray[500]} />
+              <Text style={styles.noDataText}>{t('noDataForFilters', { defaultValue: 'No data found for the selected filters.' })}</Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.summaryGrid}>
+                {/* Summary Items */}
+                <View style={styles.summaryItem}>
+                  <MaterialCommunityIcons name="calendar-range" size={SIZES.iconSize.small} color={COLORS.secondary} style={styles.summaryIcon} />
+                  <Text style={styles.summaryLabel}>{t('reportPeriodLabel')}</Text>
+                  <Text style={styles.summaryValue}>{reportData.period}</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <MaterialCommunityIcons name="cash-multiple" size={SIZES.iconSize.small} color={COLORS.success} style={styles.summaryIcon} />
+                  <Text style={styles.summaryLabel}>{t('totalEarningsLabel')}</Text>
+                  <Text style={styles.summaryValue}>{`$${reportData.totalEarnings.toFixed(2)}`}</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <MaterialCommunityIcons name="clock-time-four-outline" size={SIZES.iconSize.small} color={COLORS.info} style={styles.summaryIcon} />
+                  <Text style={styles.summaryLabel}>{t('totalHoursLabel')}</Text>
+                  <Text style={styles.summaryValue}>{`${reportData.totalHours.toFixed(1)} ${t('hoursSuffix')}`}</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <MaterialCommunityIcons name="briefcase-outline" size={SIZES.iconSize.small} color={COLORS.warning} style={styles.summaryIcon} />
+                  <Text style={styles.summaryLabel}>{t('tasksCompletedLabel')}</Text>
+                  <Text style={styles.summaryValue}>{reportData.tasksCompleted}</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <MaterialCommunityIcons name="chart-line" size={SIZES.iconSize.small} color={COLORS.blue[500]} style={styles.summaryIcon} />
+                  <Text style={styles.summaryLabel}>{t('averageRateLabel')}</Text>
+                  <Text style={styles.summaryValue}>{`$${reportData.averageRate.toFixed(2)} ${t('perHourSuffix')}`}</Text>
+                </View>
+              </View>
+
+              {/* Charts Section */}
+              {reportData.earningsOverTimeData && reportData.earningsOverTimeData.labels.length > 0 && (
+                <View style={styles.chartContainer}>
+                  <Text style={styles.chartTitle}>{t('earningsOverTimeChartTitle')}</Text>
+                  <LineChart
+                    data={reportData.earningsOverTimeData}
+                    width={screenWidth - SPACING.md * 2 - SPACING.lg * 2} // Adjust width based on padding
+                    height={220}
+                    chartConfig={chartConfig}
+                    bezier
+                    style={styles.chartStyle}
+                  />
+                </View>
+              )}
+
+              {reportData.taskDistributionData && reportData.taskDistributionData.length > 0 && (
+                <View style={styles.chartContainer}>
+                  <Text style={styles.chartTitle}>{t('taskDistributionChartTitle')}</Text>
+                  <PieChart
+                    data={reportData.taskDistributionData}
+                    width={screenWidth - SPACING.md * 2 - SPACING.lg * 2} // Adjust width based on padding
+                    height={220}
+                    chartConfig={{
+                      ...chartConfig,
+                      color: (opacity = 1, index) => { // Use COLORS.chartColors for pie chart
+                        // index might be undefined for the sum label, handle it gracefully
+                        const colorIndex = index !== undefined ? index % COLORS.chartColors.length : 0;
+                        const hexColor = COLORS.chartColors[colorIndex];
+                        const r = parseInt(hexColor.substring(1, 3), 16);
+                        const g = parseInt(hexColor.substring(3, 5), 16);
+                        const b = parseInt(hexColor.substring(5, 7), 16);
+                        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+                      }
+                    }}
+                    accessor={"population"}
+                    backgroundColor={"transparent"}
+                    paddingLeft={"15"} // prevent label cutoff
+                    // center={[10, 0]} // Adjust center if needed
+                    absolute // Shows absolute values in pie chart
+                    style={styles.chartStyle}
+                  />
+                </View>
+              )}
+
+              {/* Detailed Breakdown Table */}
+              {reportData.detailedBreakdown && reportData.detailedBreakdown.length > 0 && (
+                <View style={styles.tableContainer}>
+                  <View style={styles.tableHeader}>
+                    <Text style={[styles.tableHeaderText, styles.taskNameHeader]}>{t('taskNameHeader')}</Text>
+                    <Pressable onPress={() => applySort('hours')} style={styles.tableHeaderClickable}>
+                      <Text style={[styles.tableHeaderText, styles.hoursHeader]}>{t('hoursHeader')}</Text>
+                      {sortTaskBy === 'hours' && <MaterialCommunityIcons name={sortTaskDirection === 'asc' ? 'arrow-up' : 'arrow-down'} size={16} color={COLORS.primary} />}
+                    </Pressable>
+                    <Pressable onPress={() => applySort('earnings')} style={styles.tableHeaderClickable}>
+                      <Text style={[styles.tableHeaderText, styles.earningsHeader]}>{t('earningsHeader')}</Text>
+                      {sortTaskBy === 'earnings' && <MaterialCommunityIcons name={sortTaskDirection === 'asc' ? 'arrow-up' : 'arrow-down'} size={16} color={COLORS.primary} />}
+                    </Pressable>
+                  </View>
+                  {reportData.detailedBreakdown.map((item, index) => (
+                    <View key={index} style={styles.tableRow}>
+                      <Text style={[styles.tableCell, styles.taskNameCell]}>{item.name}</Text>
+                      <Text style={[styles.tableCell, styles.hoursCell]}>{item.hours.toFixed(1)}</Text>
+                      <Text style={[styles.tableCell, styles.earningsCell]}>{`$${item.earnings.toFixed(2)}`}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
-} 
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.gray[50], // Lighter background for overall screen
+  },
+  contentContainer: {
+    padding: SPACING.md,
+    paddingBottom: SPACING.xl, // Add more padding at the bottom
+  },
+  card: {
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.borderRadius * 1.5,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    ...SHADOWS.small, // Softer shadow for cards
+    elevation: 3, // Adjusted elevation for Android consistency
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.lg, // Increased margin
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[100], // Lighter border
+    paddingBottom: SPACING.md, // Increased padding
+  },
+  cardTitle: {
+    fontSize: SIZES.h2, // Slightly larger title
+    fontFamily: FONTS.bold, // Bolder font
+    color: COLORS.secondary,
+    marginLeft: SPACING.md, // Increased margin
+    flex: 1,
+  },
+  exportButton: {
+    padding: SPACING.sm, // Increased padding for better touch
+    borderRadius: SIZES.borderRadius,
+    backgroundColor: COLORS.gray[100], // Subtle background for export
+  },
+  dateRangeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.lg, // Increased margin
+  },
+  datePickerWrapper: {
+    flex: 1,
+    marginRight: SPACING.sm,
+  },
+  datePickerWrapperLast: {
+    marginRight: 0,
+  },
+  label: {
+    fontSize: SIZES.body,
+    fontFamily: FONTS.medium,
+    color: COLORS.gray[700], // Darker label for better contrast
+    marginBottom: SPACING.sm, // Increased margin
+  },
+  dateInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.gray[50], // Lighter background for inputs
+    borderWidth: 1,
+    borderColor: COLORS.gray[300],
+    borderRadius: SIZES.borderRadius,
+    paddingHorizontal: SPACING.md, // Increased padding
+    paddingVertical: SPACING.sm + 2, // Adjusted for height
+    height: SIZES.inputHeight + 4, // Slightly taller
+  },
+  dateIcon: {
+    marginRight: SPACING.sm,
+  },
+  dateText: {
+    fontSize: SIZES.body,
+    fontFamily: FONTS.regular,
+    color: COLORS.secondary,
+  },
+  inputGroup: {
+    marginBottom: SPACING.lg, // Increased margin
+  },
+  textInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.gray[50], // Lighter background
+    borderWidth: 1,
+    borderColor: COLORS.gray[300],
+    borderRadius: SIZES.borderRadius,
+    paddingHorizontal: SPACING.md, // Increased padding
+    height: SIZES.inputHeight + 4, // Slightly taller
+  },
+  inputIcon: {
+    marginRight: SPACING.sm,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: SIZES.body,
+    fontFamily: FONTS.regular,
+    color: COLORS.secondary,
+    height: '100%',
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: SPACING.lg, // Increased top margin for button group
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.md,
+    borderRadius: SIZES.borderRadius * 1.2,
+    flex: 1,
+    marginHorizontal: SPACING.sm, // Slightly increased margin between buttons
+    minHeight: SIZES.buttonHeight + 4,
+    ...SHADOWS.small, // Consistent shadow for buttons
+    elevation: 3,
+  },
+  primaryButton: {
+    backgroundColor: COLORS.primary,
+  },
+  secondaryButton: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1.5, // Slightly thicker border
+    borderColor: COLORS.primary,
+  },
+  buttonText: {
+    fontSize: SIZES.h4 - 1, // Adjusted size
+    fontFamily: FONTS.semibold,
+    color: COLORS.white,
+    textAlign: 'center',
+  },
+  secondaryButtonText: {
+    color: COLORS.primary,
+  },
+  buttonIcon: {
+    marginRight: SPACING.sm,
+  },
+  buttonDisabled: {
+    backgroundColor: COLORS.gray[300],
+    elevation: 0, // No shadow when disabled
+  },
+  buttonPressed: {
+    opacity: 0.85, // More subtle press
+    transform: [{ scale: 0.98 }] // Press down effect
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', // Slightly more opaque
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  loadingText: {
+    marginTop: SPACING.md, // Increased margin
+    fontSize: SIZES.body,
+    color: COLORS.secondary,
+    fontFamily: FONTS.medium,
+  },
+  noDataContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl * 1.5, // More padding
+    minHeight: 200, // Increased min height
+    backgroundColor: COLORS.gray[50], // Subtle background
+    borderRadius: SIZES.borderRadius,
+    marginTop: SPACING.md,
+  },
+  noDataText: {
+    fontSize: SIZES.h4,
+    color: COLORS.gray[600], // Slightly darker text
+    fontFamily: FONTS.regular,
+    marginTop: SPACING.md, // Increased margin
+    textAlign: 'center',
+    paddingHorizontal: SPACING.lg, // Add horizontal padding
+  },
+  summaryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.xl,
+  },
+  summaryItem: {
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.borderRadius * 1.2,
+    padding: SPACING.md,
+    width: '48%',
+    marginBottom: SPACING.md,
+    alignItems: 'flex-start',
+    minHeight: 110,
+    ...SHADOWS.small,
+    elevation: 3,
+    borderWidth: 1, // Adding a subtle border
+    borderColor: COLORS.gray[100], // Light border color
+  },
+  summaryIcon: {
+    marginBottom: SPACING.sm, // Increased margin
+    padding: SPACING.xs, // Add padding around icon
+    borderRadius: SIZES.borderRadius * 2, // Make it circular if background added
+    // backgroundColor: COLORS.primary + '20', // Example: transparent primary
+  },
+  summaryLabel: {
+    fontSize: SIZES.caption,
+    fontFamily: FONTS.medium,
+    color: COLORS.gray[700], // Darker for better readability
+    marginBottom: SPACING.xs,
+  },
+  summaryValue: {
+    fontSize: SIZES.h3 - 2, // Adjusted size
+    fontFamily: FONTS.bold,
+    color: COLORS.secondary,
+  },
+  chartContainer: {
+    marginBottom: SPACING.xl,
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: SIZES.borderRadius * 1.5,
+    ...SHADOWS.small, // Softer shadow for charts as well
+    elevation: 3, // Adjusted elevation
+  },
+  chartTitle: {
+    fontSize: SIZES.h3, // Larger chart title
+    fontFamily: FONTS.semibold,
+    color: COLORS.secondary,
+    marginBottom: SPACING.lg, // Increased margin
+    textAlign: 'center',
+  },
+  chartStyle: {
+    borderRadius: SIZES.borderRadius,
+    // marginVertical: SPACING.sm, // Removed as padding is in container
+  },
+  tableContainer: {
+    marginTop: SPACING.md,
+    borderWidth: 0,
+    borderRadius: SIZES.borderRadius * 1.5,
+    backgroundColor: COLORS.white,
+    ...SHADOWS.small, // Softer shadow for table container
+    overflow: 'hidden',
+    elevation: 3, // Adjusted elevation
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.gray[50], // Even lighter header for a cleaner look
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    borderBottomWidth: 1, // Slightly thinner border, but clear
+    borderBottomColor: COLORS.gray[200],
+  },
+  tableHeaderClickable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.xs / 2,
+    borderRadius: SIZES.borderRadius / 2, // Add slight rounding for pressable area
+    // Add a style for when pressed (though React Native's Pressable handles opacity)
+  },
+  tableHeaderClickablePressed: { // Style for when table header is pressed
+    backgroundColor: COLORS.gray[100], // Subtle background change on press
+  },
+  tableHeaderText: {
+    fontSize: SIZES.body,
+    fontFamily: FONTS.bold, // Bolder header text
+    color: COLORS.secondary,
+  },
+  taskNameHeader: {
+    flex: 3,
+  },
+  hoursHeader: {
+    flex: 1,
+    textAlign: 'right',
+    marginRight: SPACING.xs,
+  },
+  earningsHeader: {
+    flex: 1.5,
+    textAlign: 'right',
+    marginRight: SPACING.xs,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[100],
+  },
+  tableRowLast: {
+    borderBottomWidth: 0,
+  },
+  tableCell: {
+    fontSize: SIZES.body,
+    fontFamily: FONTS.regular,
+    color: COLORS.gray[800], // Darker text for better readability
+  },
+  taskNameCell: {
+    flex: 3,
+    fontFamily: FONTS.medium, // Slightly bolder for task name
+  },
+  hoursCell: {
+    flex: 1,
+    textAlign: 'right',
+  },
+  earningsCell: {
+    flex: 1.5,
+    textAlign: 'right',
+    fontFamily: FONTS.medium, // Slightly bolder for earnings
+  },
+});
