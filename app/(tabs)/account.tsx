@@ -72,11 +72,6 @@ export default function Account() {
       href: '/account/edit-profile',
     },
     {
-      title: t('reports'),
-      icon: 'chart-bar',
-      href: '/account/reports',
-    },
-    {
       title: t('defaultPrices'),
       icon: 'diamond-stone',
       href: '/account/default-prices',
