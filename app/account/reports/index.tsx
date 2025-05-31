@@ -302,16 +302,11 @@ const ReportsScreen = () => {
     }, [locale, t]);
 
     // Calculate KPIs using the locally filtered workData
-    const { totalWorkUnits, totalEarnings, unpaidBalance } = useMemo(() => {
+    const { totalWorkUnits, totalEarnings } = useMemo(() => {
         const currentWorkData = workData || []; // Use filtered workData
         const units = currentWorkData.reduce((sum, entry) => sum + entry.quantity, 0);
         const earnings = currentWorkData.reduce((sum, entry) => sum + (entry.calculated_earning || 0), 0); // Ensure calculated_earning exists
-        const balance = currentWorkData
-            .filter(entry => entry.payment_status === 'Unpaid' || entry.payment_status === 'Partially Paid')
-            .reduce((sum, entry) => {
-                return sum + (entry.calculated_earning || 0); // Ensure calculated_earning exists
-            }, 0);
-        return { totalWorkUnits: units, totalEarnings: earnings, unpaidBalance: balance };
+        return { totalWorkUnits: units, totalEarnings: earnings };
     }, [workData]);
 
     // Render function for each section in the main FlatList
@@ -456,11 +451,6 @@ const ReportsScreen = () => {
                                     <Text className="text-xs text-green-600 mt-1 font-medium">{t('reportsPage.kpi.totalEarnings')}</Text>
                                     <Text className="text-xl font-bold text-green-700 mt-0.5">₹{(totalEarnings || 0).toFixed(0)}</Text>
                                 </View>
-                                <View className="bg-red-50 p-3 rounded-lg items-center shadow-sm">
-                                    <AppIcon name="cash-remove" family="MaterialCommunityIcons" size={28} color={COLORS.error} />
-                                    <Text className="text-xs text-red-600 mt-1 font-medium">{t('reportsPage.kpi.unpaidBalance')}</Text>
-                                    <Text className="text-xl font-bold text-red-700 mt-0.5">₹{(unpaidBalance || 0).toFixed(0)}</Text>
-                                </View>
                             </View>
                         )}
                     </View>
@@ -515,12 +505,6 @@ const ReportsScreen = () => {
                                         </View>
                                         <View className="flex-row justify-between items-center mt-1.5">
                                             <Text className="text-xs text-gray-600">{t('reportsPage.earning')}: ₹{(item.calculated_earning || 0).toFixed(2)}</Text>
-                                            <Text className={`text-xs font-semibold px-2 py-0.5 rounded-full 
-                                                ${item.payment_status === 'Paid' ? 'bg-green-100 text-green-700' :
-                                                    item.payment_status === 'Unpaid' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}
-                                            `}>
-                                                {t(`reportsPage.paymentStatus.${item.payment_status.toLowerCase().replace(/\s+/g, '')}` as any)}
-                                            </Text>
                                         </View>
                                         {item.notes && <Text className="text-xs text-gray-400 mt-1.5 italic bg-gray-50 p-1 rounded">{t('reportsPage.notes')}: {item.notes}</Text>}
                                     </View>
