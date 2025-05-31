@@ -1,39 +1,40 @@
-import { api } from './api';
-import { JobType, ReportPaymentEntry, WorkEntry } from '../types/reports';
-
-export interface ReportParams {
-    startDate: string | null;
-    endDate: string | null;
-    search?: string;
-    status?: 'Paid' | 'Unpaid' | null;
-    job_type_id?: number | null;
-}
-
-const buildQueryString = (params: ReportParams): string => {
-    const query = new URLSearchParams();
-    if (params.startDate) query.append('startDate', params.startDate);
-    if (params.endDate) query.append('endDate', params.endDate);
-    if (params.search) query.append('search', params.search);
-    if (params.status) query.append('status', params.status);
-    if (params.job_type_id !== undefined && params.job_type_id !== null) query.append('job_type_id', String(params.job_type_id));
-
-    const queryString = query.toString();
-    return queryString ? `?${queryString}` : '';
-};
+import { api } from './axiosClient';
+import { ApiResponseData, ReportFilters, StandardApiResponse } from '../types/reports';
 
 const reportService = {
-    getWorkEntries: (params: ReportParams): Promise<WorkEntry[]> => {
-        const queryString = buildQueryString(params);
-        return api.request<WorkEntry[]>(`/reports/work-entries${queryString}`);
-    },
+    fetchReportData: async (filters: ReportFilters): Promise<ApiResponseData> => {
+        if (!filters.startDate || !filters.endDate) {
+            return Promise.reject(new Error('Start date and end date are required for fetching report data.'));
+        }
 
-    getPaymentEntries: (params: ReportParams): Promise<ReportPaymentEntry[]> => {
-        const queryString = buildQueryString(params);
-        return api.request<ReportPaymentEntry[]>(`/reports/payments${queryString}`);
-    },
+        let reportTypeParam = '';
+        if (filters.viewMode === 'work') {
+            reportTypeParam = 'work';
+        } else if (filters.viewMode === 'payments') {
+            reportTypeParam = 'payment';
+        } // For 'combined', reportTypeParam remains empty
 
-    getJobTypes: (): Promise<JobType[]> => {
-        return api.request<JobType[]>('/job-types');
+        const params: Record<string, any> = {
+            report_type: reportTypeParam,
+            start_date: filters.startDate,
+            end_date: filters.endDate,
+        };
+
+        if (filters.searchQuery) {
+            params.search = filters.searchQuery;
+        }
+
+        if (filters.taskTypeCode && (filters.viewMode === 'work' || filters.viewMode === 'combined')) {
+            params.job_type = filters.taskTypeCode;
+        }
+
+        try {
+            const responseWrapper = await api.get<StandardApiResponse<ApiResponseData>>('/reports', { params });
+            return responseWrapper.data;
+        } catch (error) {
+            console.error('Error fetching report data in service:', error);
+            throw error;
+        }
     },
 };
 

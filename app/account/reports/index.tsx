@@ -4,142 +4,44 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import AppIcon, { IconFamily } from '../../../components/common/Icon';
 import { COLORS } from '../../../constants/theme';
 import { useApi } from '../../../hooks/useApi';
-import { api } from '../../../services/axiosClient';
+import reportService from '../../../services/reportService';
+import {
+    ApiWorkRecord,
+    ApiPaymentRecord,
+    TransformedWorkEntry,
+    TransformedPaymentEntry,
+    ApiResponseData,
+    JobType,
+    ReportFilters,
+    ViewMode,
+    QuickFilterType
+} from '../../../types/reports';
 
-// --- TYPE DEFINITIONS (Ideally in types/reports.ts) ---
-export interface ApiWorkItem {
-    id: number;
-    type: string; // Job Type Code like 'A', 'B'
-    diamond: number; // This seems to be the quantity for this specific item
-    price: string; // Price per unit/diamond for this item
-    work_id: number;
-    // other fields if needed by logic but not displayed directly (e.g., is_active, timestamps)
-}
-
-export interface ApiWorkRecord {
-    id: number;
-    name: string; // Main name/title of the work batch/order
-    description: string | null; // Additional notes for the batch/order
-    date: string; // ISO Date string
-    total: string; // Total earning for this work record (numeric string)
-    user_id: number;
-    work_items: ApiWorkItem[];
-    // other fields (e.g., is_active, timestamps)
-}
-
-export interface ApiPaymentRecord {
-    id: number;
-    name: string | null; // Seems to be often null in API response
-    amount: string; // numeric string
-    category: string | null; // Often null
-    description: string | null; // Main notes for the payment
-    from: string | null; // Who the payment is from
-    source_id: number | null;
-    date: string; // ISO Date string
-    user_id: number;
-    // other fields
-}
-
-// Transformed types for UI consumption
-export interface TransformedWorkEntry {
-    id: number;
-    date: string;
-    title: string; // Mapped from ApiWorkRecord.name
-    notes?: string | null; // Mapped from ApiWorkRecord.description
-    quantity: number; // Sum of ApiWorkRecord.work_items[...].diamond
-    calculated_earning: number; // Mapped from parseFloat(ApiWorkRecord.total)
-    task_type_code?: string | null; // Mapped from ApiWorkRecord.work_items[0]?.type (type of first item)
-    // unit?: string; // No direct unit from API, can be omitted or hardcoded if needed
-}
-
-export interface TransformedPaymentEntry {
-    id: number;
-    date: string;
-    amount: number;
-    from?: string | null;
-    notes?: string | null; // Mapped from ApiPaymentRecord.description
-    source_id?: number | null;
-    // Source name is not directly available from this API endpoint's payment record
-}
-
-interface ApiResponseData {
-    records: {
-        works: ApiWorkRecord[];
-        payments: ApiPaymentRecord[];
-    };
-    summary: {
-        work: {
-            total_records: number;
-            total_amount: number;
-        };
-        payment: {
-            total_records: number;
-            total_amount: number;
-        };
-    };
-}
-
-// Using a local JobType definition since the import was removed earlier
-interface JobType {
-    id: string | number;
-    code: string;
-    name: string;
-    name_en?: string;
-    name_gu?: string;
-    name_hi?: string;
-    description_en?: string;
-    description_gu?: string;
-    description_hi?: string;
-    created_at?: string;
-    updated_at?: string;
-}
-
-interface ApiErrorResponse {
-    message: string;
-    // other potential error fields
-}
-// --- END TYPE DEFINITIONS ---
-
-// --- START STATIC JOB TYPES ---
 const A_Z_LETTERS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
+
 const STATIC_JOB_TYPES: JobType[] = A_Z_LETTERS.map(letter => ({
-    id: letter, // Assuming id can be the letter code
+    id: letter,
     code: letter,
-    name: `Type ${letter}`, // Generic name
+    name: `Type ${letter}`,
     name_en: `Type ${letter}`,
     name_gu: `પ્રકાર ${letter}`,
     name_hi: `प्रकार ${letter}`,
     description_en: `Description for Type ${letter}`,
     description_gu: `પ્રકાર ${letter} માટે વર્ણન`,
     description_hi: `प्रकार ${letter} के लिए विवरण`,
-    // Add any other required fields from JobType with default values
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
 }));
-// --- END STATIC JOB TYPES ---
-
-type ViewMode = 'work' | 'payments' | 'combined';
-type QuickFilterType = 'today' | 'yesterday' | 'last7' | 'last15' | 'last30' | 'thisMonth' | 'lastMonth' | 'custom';
-
-interface ReportFilters {
-    quickFilter: QuickFilterType | null;
-    startDate: string | null; // ISO date string
-    endDate: string | null;   // ISO date string
-    viewMode: ViewMode;
-    searchQuery: string;
-    taskTypeCode?: string | null; // For filtering by job type CODE
-}
 
 const getDateRangeForQuickFilter = (filter: QuickFilterType): { startDate: string, endDate: string } => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Start of day
+    today.setHours(0, 0, 0, 0);
     let startDate = new Date(today);
     let endDate = new Date(today);
-    endDate.setHours(23, 59, 59, 999); // End of day
+    endDate.setHours(23, 59, 59, 999);
 
     switch (filter) {
         case 'today':
-            // StartDate and endDate are already today
             break;
         case 'yesterday':
             startDate.setDate(today.getDate() - 1);
@@ -147,16 +49,13 @@ const getDateRangeForQuickFilter = (filter: QuickFilterType): { startDate: strin
             endDate.setHours(23, 59, 59, 999);
             break;
         case 'last7':
-            startDate.setDate(today.getDate() - 6); // today is inclusive
-            // endDate is today
+            startDate.setDate(today.getDate() - 6);
             break;
         case 'last15':
             startDate.setDate(today.getDate() - 14);
-            // endDate is today
             break;
         case 'last30':
             startDate.setDate(today.getDate() - 29);
-            // endDate is today
             break;
         case 'thisMonth':
             startDate = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -175,7 +74,6 @@ const getDateRangeForQuickFilter = (filter: QuickFilterType): { startDate: strin
     };
 };
 
-// Define types for screen sections
 type ScreenSectionType = 'header' | 'filters' | 'viewAndSearch' | 'kpis' | 'visualSummary' | 'workList' | 'paymentList' | 'exportAndShare';
 interface ScreenSection {
     id: ScreenSectionType;
@@ -207,62 +105,30 @@ const ReportsScreen = () => {
 
     const [savedFiltersList, setSavedFiltersList] = useState<{ name: string; criteria: ReportFilters }[]>([]);
 
-    // State for transformed data to be used in UI
     const [workData, setWorkData] = useState<TransformedWorkEntry[]>([]);
     const [paymentData, setPaymentData] = useState<TransformedPaymentEntry[]>([]);
     const [reportSummary, setReportSummary] = useState<ApiResponseData['summary'] | null>(null);
 
-    // Combined loading state
     const [isProcessingData, setIsProcessingData] = useState(false);
 
-    // useEffect to fetch and process data from API when filters change
     useEffect(() => {
         const fetchAndProcessReportData = async () => {
             if (!filters.startDate || !filters.endDate) {
-                console.log("Start date or end date is missing, skipping API call.");
-                // Clear data if dates are invalid
-                setWorkData([]);
-                setPaymentData([]);
-                setReportSummary(null);
-                return;
+                setWorkData([]); setPaymentData([]); setReportSummary(null); return;
             }
-
-            setIsProcessingData(true);
-            setWorkData([]);
-            setPaymentData([]);
-            setReportSummary(null);
-
-            let reportTypeParam = 'all';
-            if (filters.viewMode === 'work') reportTypeParam = 'work';
-            else if (filters.viewMode === 'payments') reportTypeParam = 'payment';
-
-            const params: Record<string, any> = {
-                report_type: reportTypeParam,
-                start_date: filters.startDate,
-                end_date: filters.endDate,
-            };
-            if (filters.searchQuery) params.search = filters.searchQuery;
-            if (filters.taskTypeCode) params.job_type = filters.taskTypeCode;
-
+            setIsProcessingData(true); setWorkData([]); setPaymentData([]); setReportSummary(null);
             try {
-                // Correctly call execute by wrapping the api call
-                await execute(async () => api.get('/reports', { params }));
-            } catch (err) {
-                // Error is handled by useApi hook and set in apiError
-                console.error("API call initiation error (should be caught by useApi):");
+                await execute(() => reportService.fetchReportData(filters));
             }
-            // setIsProcessingData(false); // This will be set in the data processing useEffect
+            catch (err) {
+            }
         };
-
         fetchAndProcessReportData();
-    }, [filters, execute]); // Changed makeRequest to execute
+    }, [filters, execute]);
 
-    // useEffect to process rawApiData when it changes (after successful API call)
     useEffect(() => {
-        // Check if rawApiData itself is the ApiResponseData, not rawApiData.data
-        if (rawApiData && !apiIsLoading) { // Process only if not loading and data is present
+        if (rawApiData && !apiIsLoading) {
             setIsProcessingData(true);
-            // Directly access records and summary from rawApiData if it's the actual response body
             const { records, summary } = rawApiData;
 
             const transformedWorks: TransformedWorkEntry[] = (records?.works || []).map((work: ApiWorkRecord) => ({
@@ -287,18 +153,18 @@ const ReportsScreen = () => {
             setPaymentData(transformedPayments);
             setReportSummary(summary);
             setIsProcessingData(false);
-        } else if (!apiIsLoading && rawApiData === null && !apiError) { // Handle successful call with no data or cleared data
+        } else if (!apiIsLoading && rawApiData === null && !apiError) {
             setWorkData([]);
             setPaymentData([]);
             setReportSummary(null);
             setIsProcessingData(false);
-        } else if (apiError) { // Handle API error case specifically
-            setIsProcessingData(false); // Stop processing if there's an error
+        } else if (apiError) {
+            setIsProcessingData(false);
             setWorkData([]);
             setPaymentData([]);
             setReportSummary(null);
         }
-    }, [rawApiData, apiIsLoading, apiError]); // Add apiError to dependencies
+    }, [rawApiData, apiIsLoading, apiError]);
 
     const handleQuickFilterChange = (filterKey: QuickFilterType) => {
         if (filterKey === 'custom') {
@@ -377,7 +243,6 @@ const ReportsScreen = () => {
         ] as (JobType | { code: null; name: string; name_en: string; name_gu: string; name_hi: string; id: string; })[];
     }, [locale, t]);
 
-    // Calculate KPIs using the reportSummary from API
     const { totalWorkUnits, totalEarnings } = useMemo(() => {
         let units = 0;
         let earnings = 0;
@@ -400,10 +265,8 @@ const ReportsScreen = () => {
         return { totalWorkUnits: units, totalEarnings: earnings };
     }, [reportSummary, workData, filters.viewMode]);
 
-    // Combined loading state for sections that depend on API data
     const isLoadingDisplayData = apiIsLoading || isProcessingData;
 
-    // Render function for each section in the main FlatList
     const renderScreenSection = ({ item }: { item: ScreenSection }) => {
         switch (item.id) {
             case 'header':
