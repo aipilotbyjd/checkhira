@@ -238,7 +238,6 @@
   "errorGeneratingReport": "રિપોર્ટ જનરેટ કરવામાં નિષ્ફળ. કૃપા કરીને ફરી પ્રયાસ કરો.",
   "financialReports": "નાણાકીય રિપોર્ટ્સ",
   "reportFiltersTitle": "રિપોર્ટ ફિલ્ટર્સ",
-  "loadingClients": "ક્લાયંટ લોડ થઈ રહ્યા છે...",
   "selectClientPrompt": "ક્લાયન્ટ પસંદ કરો",
   "generatingReportButton": "જનરેટ કરી રહ્યું છે...",
   "fetchingReportData": "રિપોર્ટ ડેટા મેળવી રહ્યા છીએ...",
@@ -246,10 +245,6 @@
   "clearButtonText": "નવો રિપોર્ટ",
   "reportForClient": "{{clientName}} માટે રિપોર્ટ",
   "reportForPeriod": "સમયગાળો: {{period}}",
-  "totalEarningsLabel": "કુલ કમાણી",
-  "totalHoursLabel": "કુલ કલાકો",
-  "averageRateLabel": "સરેરાશ દર",
-  "tasksCompletedLabel": "પૂર્ણ થયેલ કાર્યો",
   "detailedBreakdownTitle": "કાર્ય વિશ્લેષણ",
   "hoursShort": "કલાક",
   "earningsShort": "કમાણી",
@@ -321,7 +316,6 @@
   "averageRateLabel": "સરેરાશ દર",
   "hoursSuffix": "કલાક",
   "perHourSuffix": "/કલાક",
-  "noDataForFilters": "પસંદ કરેલ ફિલ્ટર્સ માટે કોઈ ડેટા મળ્યો નથી.",
   "earningsOverTimeChartTitle": "સમય જતાં કમાણી",
   "taskDistributionChartTitle": "કાર્ય કમાણી વિતરણ",
   "taskNameHeader": "કાર્યનું નામ",
@@ -381,5 +375,9 @@
   "reportsPage.paymentSource": "[GU Source: ]",
   "reportsPage.exportAndShare": "[GU Export & Share]",
   "reportsPage.exportAsCSV": "[GU Export as CSV]",
-  "reportsPage.filters.typeAWork": "બધા જોબ પ્રકારો"
+  "reportsPage.filters.typeAWork": "બધા જોબ પ્રકારો",
+  "reportsPage.errorLoading": "[GU Error loading data. Please try again.]",
+  "reportsPage.errorLoadingCharts": "[GU Error loading chart data. Please try again.]",
+  "reportsPage.kpi.totalPaymentEntries": "[GU Total Payment Entries]",
+  "reportsPage.kpi.totalPaymentsReceived": "[GU Total Payments Received]"
 }

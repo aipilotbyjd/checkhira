@@ -1,17 +1,103 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Platform, TextInput, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, TextInput, FlatList, ActivityIndicator } from 'react-native';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import AppIcon, { IconFamily } from '../../../components/common/Icon';
 import { COLORS } from '../../../constants/theme';
-import { JobType, WorkEntry, ReportPaymentEntry } from '../../../types/reports';
+import { useApi } from '../../../hooks/useApi';
+import { api } from '../../../services/axiosClient';
 
-// --- MOCK DATA IMPORTS ---
-import sampleWorkEntries from '../../../services/mockApi/data/sampleWorkEntries.json';
-import samplePaymentEntries from '../../../services/mockApi/data/samplePaymentEntries.json';
-// --- END MOCK DATA IMPORTS ---
+// --- TYPE DEFINITIONS (Ideally in types/reports.ts) ---
+export interface ApiWorkItem {
+    id: number;
+    type: string; // Job Type Code like 'A', 'B'
+    diamond: number; // This seems to be the quantity for this specific item
+    price: string; // Price per unit/diamond for this item
+    work_id: number;
+    // other fields if needed by logic but not displayed directly (e.g., is_active, timestamps)
+}
 
-// --- START TYPE DEFINITIONS (to be moved to types/ folder later) ---
-// MOVED TO ../../../types/reports.ts
+export interface ApiWorkRecord {
+    id: number;
+    name: string; // Main name/title of the work batch/order
+    description: string | null; // Additional notes for the batch/order
+    date: string; // ISO Date string
+    total: string; // Total earning for this work record (numeric string)
+    user_id: number;
+    work_items: ApiWorkItem[];
+    // other fields (e.g., is_active, timestamps)
+}
+
+export interface ApiPaymentRecord {
+    id: number;
+    name: string | null; // Seems to be often null in API response
+    amount: string; // numeric string
+    category: string | null; // Often null
+    description: string | null; // Main notes for the payment
+    from: string | null; // Who the payment is from
+    source_id: number | null;
+    date: string; // ISO Date string
+    user_id: number;
+    // other fields
+}
+
+// Transformed types for UI consumption
+export interface TransformedWorkEntry {
+    id: number;
+    date: string;
+    title: string; // Mapped from ApiWorkRecord.name
+    notes?: string | null; // Mapped from ApiWorkRecord.description
+    quantity: number; // Sum of ApiWorkRecord.work_items[...].diamond
+    calculated_earning: number; // Mapped from parseFloat(ApiWorkRecord.total)
+    task_type_code?: string | null; // Mapped from ApiWorkRecord.work_items[0]?.type (type of first item)
+    // unit?: string; // No direct unit from API, can be omitted or hardcoded if needed
+}
+
+export interface TransformedPaymentEntry {
+    id: number;
+    date: string;
+    amount: number;
+    from?: string | null;
+    notes?: string | null; // Mapped from ApiPaymentRecord.description
+    source_id?: number | null;
+    // Source name is not directly available from this API endpoint's payment record
+}
+
+interface ApiResponseData {
+    records: {
+        works: ApiWorkRecord[];
+        payments: ApiPaymentRecord[];
+    };
+    summary: {
+        work: {
+            total_records: number;
+            total_amount: number;
+        };
+        payment: {
+            total_records: number;
+            total_amount: number;
+        };
+    };
+}
+
+// Using a local JobType definition since the import was removed earlier
+interface JobType {
+    id: string | number;
+    code: string;
+    name: string;
+    name_en?: string;
+    name_gu?: string;
+    name_hi?: string;
+    description_en?: string;
+    description_gu?: string;
+    description_hi?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+interface ApiErrorResponse {
+    message: string;
+    // other potential error fields
+}
 // --- END TYPE DEFINITIONS ---
 
 // --- START STATIC JOB TYPES ---
@@ -108,6 +194,7 @@ const screenSections: ScreenSection[] = [
 
 const ReportsScreen = () => {
     const { t, locale } = useLanguage();
+    const { execute, isLoading: apiIsLoading, error: apiError, data: rawApiData } = useApi<ApiResponseData>();
 
     const [filters, setFilters] = useState<ReportFilters>({
         quickFilter: 'thisMonth',
@@ -120,96 +207,98 @@ const ReportsScreen = () => {
 
     const [savedFiltersList, setSavedFiltersList] = useState<{ name: string; criteria: ReportFilters }[]>([]);
 
-    // --- MOCK DATA STATE ---
-    const [allWorkData, setAllWorkData] = useState<WorkEntry[]>(sampleWorkEntries as WorkEntry[]);
-    const [allPaymentData, setAllPaymentData] = useState<ReportPaymentEntry[]>(samplePaymentEntries as ReportPaymentEntry[]);
+    // State for transformed data to be used in UI
+    const [workData, setWorkData] = useState<TransformedWorkEntry[]>([]);
+    const [paymentData, setPaymentData] = useState<TransformedPaymentEntry[]>([]);
+    const [reportSummary, setReportSummary] = useState<ApiResponseData['summary'] | null>(null);
 
-    const [workData, setWorkData] = useState<WorkEntry[]>([]);
-    const [paymentData, setPaymentData] = useState<ReportPaymentEntry[]>([]);
+    // Combined loading state
+    const [isProcessingData, setIsProcessingData] = useState(false);
 
-    const [isLoadingWork, setIsLoadingWork] = useState(true);
-    const [isLoadingPayments, setIsLoadingPayments] = useState(true);
-    // --- END MOCK DATA STATE ---
-
-    // useEffect to filter work and payment entries from mock data based on filters
+    // useEffect to fetch and process data from API when filters change
     useEffect(() => {
-        setIsLoadingWork(true);
-        setIsLoadingPayments(true);
-
-        // Simulate API delay for demo
-        const timer = setTimeout(() => {
-            let filteredWork: WorkEntry[] = [];
-            if (filters.viewMode === 'work' || filters.viewMode === 'combined') {
-                filteredWork = allWorkData.filter(entry => {
-                    const entryDate = new Date(entry.date);
-                    const startDateFilter = filters.startDate ? new Date(filters.startDate) : null;
-                    const endDateFilter = filters.endDate ? new Date(filters.endDate) : null;
-
-                    if (startDateFilter) { // Adjust start date to beginning of day for comparison
-                        startDateFilter.setHours(0, 0, 0, 0);
-                        if (entryDate < startDateFilter) return false;
-                    }
-                    if (endDateFilter) { // Adjust end date to end of day for comparison
-                        endDateFilter.setHours(23, 59, 59, 999);
-                        if (entryDate > endDateFilter) return false;
-                    }
-
-                    if (filters.searchQuery) {
-                        const query = filters.searchQuery.toLowerCase();
-                        const searchableFields = [
-                            entry.description?.toLowerCase(),
-                            entry.notes?.toLowerCase(),
-                        ].filter(Boolean);
-                        if (!searchableFields.some(field => field?.includes(query))) return false;
-                    }
-
-                    if (filters.taskTypeCode && entry.task_type_code !== filters.taskTypeCode) return false;
-
-                    return true;
-                });
+        const fetchAndProcessReportData = async () => {
+            if (!filters.startDate || !filters.endDate) {
+                console.log("Start date or end date is missing, skipping API call.");
+                // Clear data if dates are invalid
+                setWorkData([]);
+                setPaymentData([]);
+                setReportSummary(null);
+                return;
             }
-            setWorkData(filteredWork);
-            setIsLoadingWork(false);
 
-            let filteredPayments: ReportPaymentEntry[] = [];
-            if (filters.viewMode === 'payments' || filters.viewMode === 'combined') {
-                filteredPayments = allPaymentData.filter(entry => {
-                    const entryDate = new Date(entry.date);
-                    const startDateFilter = filters.startDate ? new Date(filters.startDate) : null;
-                    const endDateFilter = filters.endDate ? new Date(filters.endDate) : null;
+            setIsProcessingData(true);
+            setWorkData([]);
+            setPaymentData([]);
+            setReportSummary(null);
 
-                    if (startDateFilter) {
-                        startDateFilter.setHours(0, 0, 0, 0);
-                        if (entryDate < startDateFilter) return false;
-                    }
-                    if (endDateFilter) {
-                        endDateFilter.setHours(23, 59, 59, 999);
-                        if (entryDate > endDateFilter) return false;
-                    }
+            let reportTypeParam = 'all';
+            if (filters.viewMode === 'work') reportTypeParam = 'work';
+            else if (filters.viewMode === 'payments') reportTypeParam = 'payment';
 
-                    if (filters.searchQuery) {
-                        const query = filters.searchQuery.toLowerCase();
-                        const searchableFields = [
-                            entry.description?.toLowerCase(),
-                            entry.from?.toLowerCase(),
-                            entry.notes?.toLowerCase(),
-                            entry.source?.name_en?.toLowerCase(),
-                            entry.source?.name_gu?.toLowerCase(),
-                            entry.source?.name?.toLowerCase(),
-                        ].filter(Boolean);
-                        if (!searchableFields.some(field => field?.includes(query))) return false;
-                    }
-                    // No status or jobType filter for payments in current UI design
-                    return true;
-                });
+            const params: Record<string, any> = {
+                report_type: reportTypeParam,
+                start_date: filters.startDate,
+                end_date: filters.endDate,
+            };
+            if (filters.searchQuery) params.search = filters.searchQuery;
+            if (filters.taskTypeCode) params.job_type = filters.taskTypeCode;
+
+            try {
+                // Correctly call execute by wrapping the api call
+                await execute(async () => api.get('/reports', { params }));
+            } catch (err) {
+                // Error is handled by useApi hook and set in apiError
+                console.error("API call initiation error (should be caught by useApi):");
             }
-            setPaymentData(filteredPayments);
-            setIsLoadingPayments(false);
+            // setIsProcessingData(false); // This will be set in the data processing useEffect
+        };
 
-        }, 500); // 500ms delay to simulate network
+        fetchAndProcessReportData();
+    }, [filters, execute]); // Changed makeRequest to execute
 
-        return () => clearTimeout(timer);
-    }, [filters, allWorkData, allPaymentData]);
+    // useEffect to process rawApiData when it changes (after successful API call)
+    useEffect(() => {
+        // Check if rawApiData itself is the ApiResponseData, not rawApiData.data
+        if (rawApiData && !apiIsLoading) { // Process only if not loading and data is present
+            setIsProcessingData(true);
+            // Directly access records and summary from rawApiData if it's the actual response body
+            const { records, summary } = rawApiData;
+
+            const transformedWorks: TransformedWorkEntry[] = (records?.works || []).map((work: ApiWorkRecord) => ({
+                id: work.id,
+                date: work.date,
+                title: work.name,
+                notes: work.description,
+                quantity: work.work_items.reduce((sum, item) => sum + Number(item.diamond || 0), 0),
+                calculated_earning: parseFloat(work.total) || 0,
+                task_type_code: work.work_items[0]?.type,
+            }));
+            setWorkData(transformedWorks);
+
+            const transformedPayments: TransformedPaymentEntry[] = (records?.payments || []).map((payment: ApiPaymentRecord) => ({
+                id: payment.id,
+                date: payment.date,
+                amount: parseFloat(payment.amount) || 0,
+                from: payment.from,
+                notes: payment.description,
+                source_id: payment.source_id,
+            }));
+            setPaymentData(transformedPayments);
+            setReportSummary(summary);
+            setIsProcessingData(false);
+        } else if (!apiIsLoading && rawApiData === null && !apiError) { // Handle successful call with no data or cleared data
+            setWorkData([]);
+            setPaymentData([]);
+            setReportSummary(null);
+            setIsProcessingData(false);
+        } else if (apiError) { // Handle API error case specifically
+            setIsProcessingData(false); // Stop processing if there's an error
+            setWorkData([]);
+            setPaymentData([]);
+            setReportSummary(null);
+        }
+    }, [rawApiData, apiIsLoading, apiError]); // Add apiError to dependencies
 
     const handleQuickFilterChange = (filterKey: QuickFilterType) => {
         if (filterKey === 'custom') {
@@ -223,22 +312,16 @@ const ReportsScreen = () => {
             quickFilter: filterKey,
             startDate,
             endDate,
-            taskTypeCode: null // Reset task type on broad date change
         }));
     };
 
     const openCustomDateRangePicker = () => {
         console.log("Open custom date range picker - to be implemented");
-        // Needs implementation with a DateTimePicker or custom calendar modal
-        // On selection, update:
-        // setFilters(prev => ({ ...prev, startDate: newStartDate, endDate: newEndDate, quickFilter: 'custom' }));
     };
 
     const saveCurrentFilter = () => {
-        // Basic implementation:
-        const filterName = `Saved Filter ${savedFiltersList.length + 1}`; // Replace with a prompt for name
+        const filterName = `Saved Filter ${savedFiltersList.length + 1}`;
         setSavedFiltersList(prev => [...prev, { name: filterName, criteria: { ...filters } }]);
-        // Persist savedFiltersList to AsyncStorage or backend
         console.log("Save current filter:", filterName, filters);
     };
 
@@ -248,9 +331,7 @@ const ReportsScreen = () => {
 
     const removeSavedFilter = (filterNameToRemove: string) => {
         setSavedFiltersList(prev => prev.filter(f => f.name !== filterNameToRemove));
-        // Update persisted list
     };
-
 
     const handleViewModeChange = (mode: ViewMode) => {
         setFilters(prev => ({ ...prev, viewMode: mode }));
@@ -266,7 +347,6 @@ const ReportsScreen = () => {
 
     const exportReport = (format: 'pdf' | 'csv') => {
         console.log(`Exporting report as ${format} with filters:`, filters);
-        // Logic for report generation and sharing using libraries like react-native-html-to-pdf or xlsx
     };
 
     const quickFilterOptions: { key: QuickFilterType; label: string; icon?: string, iconFamily?: IconFamily }[] = [
@@ -282,9 +362,8 @@ const ReportsScreen = () => {
         const getLocalizedName = (jt: JobType) => {
             if (locale === 'gu' && jt.name_gu) return jt.name_gu;
             if (locale === 'hi' && jt.name_hi) return jt.name_hi;
-            return jt.name_en || jt.name || ''; // Ensure string for sort
+            return jt.name_en || jt.name || '';
         };
-
         const sortedTypes = [...STATIC_JOB_TYPES]
             .sort((a, b) => {
                 const nameA = getLocalizedName(a).toLowerCase();
@@ -292,22 +371,37 @@ const ReportsScreen = () => {
                 return nameA.localeCompare(nameB);
             })
             .slice(0, 10);
-
-        // Add "Type A Work" (All Types) as the first option
         return [
-            { code: null, name_en: t('reportsPage.filters.typeAWork'), name_gu: t('reportsPage.filters.typeAWork'), name_hi: t('reportsPage.filters.typeAWork') },
+            { code: null, name: t('reportsPage.filters.typeAWork'), name_en: t('reportsPage.filters.typeAWork'), name_gu: t('reportsPage.filters.typeAWork'), name_hi: t('reportsPage.filters.typeAWork'), id: 'all-types-filter' },
             ...sortedTypes
-        ] as (JobType | { code: null; name_en: string; name_gu: string; name_hi: string })[]; // Type assertion for combined array
-
+        ] as (JobType | { code: null; name: string; name_en: string; name_gu: string; name_hi: string; id: string; })[];
     }, [locale, t]);
 
-    // Calculate KPIs using the locally filtered workData
+    // Calculate KPIs using the reportSummary from API
     const { totalWorkUnits, totalEarnings } = useMemo(() => {
-        const currentWorkData = workData || []; // Use filtered workData
-        const units = currentWorkData.reduce((sum, entry) => sum + entry.quantity, 0);
-        const earnings = currentWorkData.reduce((sum, entry) => sum + (entry.calculated_earning || 0), 0); // Ensure calculated_earning exists
+        let units = 0;
+        let earnings = 0;
+
+        if (reportSummary) {
+            if (filters.viewMode === 'work') {
+                units = workData.reduce((sum, entry) => sum + entry.quantity, 0);
+                earnings = reportSummary.work?.total_amount || 0;
+            } else if (filters.viewMode === 'payments') {
+                units = 0;
+                earnings = 0;
+            } else {
+                units = workData.reduce((sum, entry) => sum + entry.quantity, 0);
+                earnings = reportSummary.work?.total_amount || 0;
+            }
+        } else {
+            units = workData.reduce((sum, entry) => sum + entry.quantity, 0);
+            earnings = workData.reduce((sum, entry) => sum + entry.calculated_earning, 0);
+        }
         return { totalWorkUnits: units, totalEarnings: earnings };
-    }, [workData]);
+    }, [reportSummary, workData, filters.viewMode]);
+
+    // Combined loading state for sections that depend on API data
+    const isLoadingDisplayData = apiIsLoading || isProcessingData;
 
     // Render function for each section in the main FlatList
     const renderScreenSection = ({ item }: { item: ScreenSection }) => {
@@ -400,7 +494,6 @@ const ReportsScreen = () => {
                                 placeholderTextColor={COLORS.gray[400]}
                             />
                         </View>
-                        {/* Task Type Filter */}
                         {STATIC_JOB_TYPES.length > 0 && (
                             <View className="mt-2">
                                 <Text className="text-base text-gray-700 mb-2 font-medium">{t('reportsPage.filters.filterByJobType')}</Text>
@@ -408,15 +501,13 @@ const ReportsScreen = () => {
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
                                     data={jobTypeFilterOptions}
-                                    keyExtractor={(jt) => jt.code || 'all-types'} // Use a unique key for the "all" option
+                                    keyExtractor={(jt) => jt.code || 'all-types-filter'}
                                     className="-mx-1 px-1 py-1 mb-1"
                                     renderItem={({ item: jt }) => {
-                                        // Determine the display name based on locale and available translations
-                                        let displayName = jt.name_en; // Default to English
-                                        if (locale === 'gu' && (jt as JobType).name_gu) displayName = (jt as JobType).name_gu;
-                                        else if (locale === 'hi' && (jt as JobType).name_hi) displayName = (jt as JobType).name_hi;
-                                        else if ((jt as JobType).name) displayName = (jt as JobType).name; // Fallback to generic name if specific locale name not found
-                                        // For the "All Types" button, name_en is already set by t() to the localized string
+                                        let displayName = jt.name_en;
+                                        if (locale === 'gu' && jt.name_gu) displayName = jt.name_gu;
+                                        else if (locale === 'hi' && jt.name_hi) displayName = jt.name_hi;
+                                        else if (jt.name) displayName = jt.name;
 
                                         return (
                                             <TouchableOpacity
@@ -438,8 +529,19 @@ const ReportsScreen = () => {
                 return (
                     <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
                         <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.keyNumbers')}</Text>
-                        {(isLoadingWork || isLoadingPayments) && <View className="h-20 justify-center items-center"><Text className="text-gray-500">{t('reportsPage.loadingData')}</Text></View>}
-                        {!(isLoadingWork || isLoadingPayments) && (
+                        {isLoadingDisplayData && (
+                            <View className="h-20 justify-center items-center">
+                                <ActivityIndicator size="large" color={COLORS.primary} />
+                                <Text className="text-gray-500 mt-2">{t('reportsPage.loadingData')}</Text>
+                            </View>
+                        )}
+                        {!isLoadingDisplayData && apiError && (
+                            <View className="h-20 justify-center items-center">
+                                <AppIcon name="alert-circle-outline" family="Ionicons" size={30} color={COLORS.error} />
+                                <Text className="text-red-500 text-center mt-1">{apiError.message || t('reportsPage.errorLoading')}</Text>
+                            </View>
+                        )}
+                        {!isLoadingDisplayData && !apiError && (
                             <View className="grid grid-cols-2 gap-x-4 gap-y-4">
                                 <View className="bg-blue-50 p-4 rounded-lg items-center shadow-sm border border-blue-100">
                                     <AppIcon name="briefcase-variant-outline" family="MaterialCommunityIcons" size={30} color={COLORS.blue[600]} />
@@ -459,8 +561,19 @@ const ReportsScreen = () => {
                 return (
                     <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
                         <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.visualSummary')}</Text>
-                        {(isLoadingWork || isLoadingPayments) && <View className="h-40 justify-center items-center"><Text className="text-gray-500">{t('reportsPage.loadingCharts')}</Text></View>}
-                        {!(isLoadingWork || isLoadingPayments) && (workData.length > 0 || paymentData.length > 0) && (
+                        {isLoadingDisplayData && (
+                            <View className="h-40 justify-center items-center">
+                                <ActivityIndicator size="large" color={COLORS.primary} />
+                                <Text className="text-gray-500 mt-2">{t('reportsPage.loadingCharts')}</Text>
+                            </View>
+                        )}
+                        {!isLoadingDisplayData && apiError && (
+                            <View className="h-40 justify-center items-center">
+                                <AppIcon name="bar-chart-outline" family="Ionicons" size={30} color={COLORS.error} />
+                                <Text className="text-red-500 text-center mt-1">{t('reportsPage.errorLoadingCharts')}</Text>
+                            </View>
+                        )}
+                        {!isLoadingDisplayData && !apiError && (workData.length > 0 || paymentData.length > 0) && (
                             <>
                                 <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg mb-3 p-2">
                                     <Text className="text-gray-500 text-center">{t('reportsPage.charts.workUnitsBar')}</Text>
@@ -476,32 +589,41 @@ const ReportsScreen = () => {
                                 </View>
                             </>
                         )}
-                        {!(isLoadingWork || isLoadingPayments) && workData.length === 0 && paymentData.length === 0 && (
-                            <Text className="text-gray-500 text-center py-10">{t('reportsPage.noDataForCharts')}</Text>
+                        {!isLoadingDisplayData && !apiError && workData.length === 0 && paymentData.length === 0 && (
+                            <View className="py-10 items-center">
+                                <AppIcon name="analytics-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
+                                <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForCharts')}</Text>
+                            </View>
                         )}
                     </View>
                 );
             case 'workList':
-                if (isLoadingWork || isLoadingPayments) return null; // Handled by section loader
+                if (isLoadingDisplayData) return <View className="h-60 justify-center items-center bg-white p-4 rounded-lg shadow mb-4 mx-3"><ActivityIndicator size="large" color={COLORS.primary} /><Text className="text-gray-500 mt-2">{t('reportsPage.loadingTable')}</Text></View>;
+                if (!isLoadingDisplayData && apiError) return <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3 items-center"><AppIcon name="cloud-offline-outline" family="Ionicons" size={30} color={COLORS.error} /><Text className="text-red-500 text-center mt-1">{apiError.message || t('reportsPage.errorLoading')}</Text></View>;
                 if (!(filters.viewMode === 'work' || filters.viewMode === 'combined')) return null;
+
                 return (
                     <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
                         <Text className="text-xl font-semibold text-gray-800 mb-1">{t('reportsPage.detailedData')}</Text>
                         <Text className="text-lg font-medium text-gray-700 mb-3 mt-1">{t('reportsPage.workEntriesTitle')}</Text>
                         <FlatList
                             data={workData}
-                            keyExtractor={(item) => item.id}
-                            renderItem={({ item }) => {
+                            keyExtractor={(item) => item.id.toString()}
+                            renderItem={({ item }: { item: TransformedWorkEntry }) => {
                                 const jobTypeDetails = STATIC_JOB_TYPES.find(jt => jt.code === item.task_type_code);
-                                const displayJobTypeName = jobTypeDetails ? (locale === 'gu' && jobTypeDetails.name_gu ? jobTypeDetails.name_gu : locale === 'hi' && jobTypeDetails.name_hi ? jobTypeDetails.name_hi : jobTypeDetails.name_en || jobTypeDetails.name) : item.task_type_code;
+                                let displayJobTypeName = item.task_type_code || 'N/A';
+                                if (jobTypeDetails) {
+                                    displayJobTypeName = (locale === 'gu' && jobTypeDetails.name_gu ? jobTypeDetails.name_gu : locale === 'hi' && jobTypeDetails.name_hi ? jobTypeDetails.name_hi : jobTypeDetails.name_en || jobTypeDetails.name);
+                                }
+
                                 return (
                                     <View className="border-b border-gray-200 py-3.5 px-1">
                                         <View className="flex-row justify-between items-start mb-1">
                                             <View className="flex-1 pr-2">
-                                                <Text className="text-base text-gray-800 font-semibold mb-0.5">{item.description || t('reportsPage.noDescription')}</Text>
-                                                {displayJobTypeName && <Text className="text-xs text-gray-600">{t('reportsPage.jobType')}{displayJobTypeName}</Text>}
+                                                <Text className="text-base text-gray-800 font-semibold mb-0.5">{item.title || t('reportsPage.noDescription')}</Text>
+                                                <Text className="text-xs text-gray-600">{t('reportsPage.jobType')}{displayJobTypeName}</Text>
                                             </View>
-                                            <Text className="text-base font-semibold text-blue-600">{`${item.quantity}${item.unit ? ` ${item.unit}` : ''}`}</Text>
+                                            <Text className="text-base font-semibold text-blue-600">{`${item.quantity}`}</Text>
                                         </View>
                                         <View className="flex-row justify-between items-center">
                                             <Text className="text-sm text-green-700 font-medium">{t('reportsPage.earning')} <Text className="font-semibold">₹{(item.calculated_earning || 0).toFixed(2)}</Text></Text>
@@ -515,50 +637,50 @@ const ReportsScreen = () => {
                                 );
                             }}
                             ListEmptyComponent={() => (
-                                !isLoadingWork && workData.length === 0 && (
-                                    <Text className="text-gray-500 text-center py-5">{t('reportsPage.noDataForFilters')}</Text>
+                                !isLoadingDisplayData && !apiError && workData.length === 0 && (
+                                    <View className="py-10 items-center">
+                                        <AppIcon name="file-tray-stacked-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
+                                        <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForFilters')}</Text>
+                                    </View>
                                 )
                             )}
-                            // Prevent FlatList from being scrollable itself if it has few items
-                            // The parent FlatList handles scrolling
                             scrollEnabled={false}
                         />
                     </View>
                 );
             case 'paymentList':
-                if (isLoadingWork || isLoadingPayments) return null;
+                if (isLoadingDisplayData) return <View className="h-60 justify-center items-center bg-white p-4 rounded-lg shadow mb-4 mx-3"><ActivityIndicator size="large" color={COLORS.primary} /><Text className="text-gray-500 mt-2">{t('reportsPage.loadingTable')}</Text></View>;
+                if (!isLoadingDisplayData && apiError) return <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3 items-center"><AppIcon name="card-outline" family="Ionicons" size={30} color={COLORS.error} /><Text className="text-red-500 text-center mt-1">{apiError.message || t('reportsPage.errorLoading')}</Text></View>;
                 if (!(filters.viewMode === 'payments' || filters.viewMode === 'combined')) return null;
+
                 return (
                     <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
-                        {/* Only show title if workList wasn't shown or if it's combined and workData is empty */}
                         {(filters.viewMode === 'payments' || (filters.viewMode === 'combined' && workData.length === 0)) &&
                             <Text className="text-xl font-semibold text-gray-800 mb-1">{t('reportsPage.detailedData')}</Text>}
                         <Text className="text-lg font-medium text-gray-700 mb-3 mt-1">{t('reportsPage.paymentEntriesTitle')}</Text>
                         <FlatList
                             data={paymentData}
-                            keyExtractor={(item) => item.id}
-                            renderItem={({ item }) => (
+                            keyExtractor={(item) => item.id.toString()}
+                            renderItem={({ item }: { item: TransformedPaymentEntry }) => (
                                 <View className="border-b border-gray-200 py-3.5 px-1">
                                     <View className="flex-row justify-between items-start mb-1">
                                         <View className="flex-1 pr-2">
                                             <Text className="text-base text-green-700 font-semibold">
-                                                {t('reportsPage.paymentAmount')}₹{(typeof item.amount === 'string' ? parseFloat(item.amount) : (item.amount || 0)).toFixed(2)}
+                                                {t('reportsPage.paymentAmount')}₹{(item.amount || 0).toFixed(2)}
                                             </Text>
                                             {item.from && <Text className="text-sm text-gray-700 mt-0.5">{t('reportsPage.paymentFrom')}{item.from}</Text>}
                                         </View>
                                         <Text className="text-sm text-gray-600">{new Date(item.date).toLocaleDateString(locale || 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</Text>
                                     </View>
-                                    {item.source?.name && <Text className="text-xs text-gray-500 mb-1.5">{t('reportsPage.paymentSource')}{item.source.name_gu || item.source.name_en || item.source.name}</Text>}
-                                    {(item.description || item.notes) && (
+                                    {item.notes && (
                                         <View className="mt-1.5 bg-gray-50 p-2 rounded-md border border-gray-100">
-                                            {item.description && <Text className="text-xs text-gray-500 italic mb-0.5">{item.description}</Text>}
-                                            {item.notes && <Text className="text-xs text-gray-500 italic">{t('reportsPage.notes')}{item.notes}</Text>}
+                                            <Text className="text-xs text-gray-500 italic">{t('reportsPage.notes')}{item.notes}</Text>
                                         </View>
                                     )}
                                 </View>
                             )}
                             ListEmptyComponent={() => (
-                                !isLoadingPayments && paymentData.length === 0 && (
+                                !isLoadingDisplayData && !apiError && paymentData.length === 0 && (
                                     <View className="py-10 items-center">
                                         <AppIcon name="file-tray-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
                                         <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForFilters')}</Text>
@@ -567,8 +689,7 @@ const ReportsScreen = () => {
                             )}
                             scrollEnabled={false}
                         />
-                        {/* Overall empty state for detailed data if both lists are empty and not loading and in combined view*/}
-                        {!(isLoadingWork || isLoadingPayments) && filters.viewMode === 'combined' && workData.length === 0 && paymentData.length === 0 && (
+                        {!isLoadingDisplayData && !apiError && filters.viewMode === 'combined' && workData.length === 0 && paymentData.length === 0 && (
                             <View className="py-10 items-center">
                                 <AppIcon name="documents-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
                                 <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForFilters')}</Text>
@@ -607,9 +728,7 @@ const ReportsScreen = () => {
             data={screenSections}
             renderItem={renderScreenSection}
             keyExtractor={(item) => item.id}
-            // Sticky header for the main title section (optional, but good UX)
-            // stickyHeaderIndices={[0]} // If you want the header to stick
-            ListFooterComponent={<View className="h-12" />} // Add some padding at the bottom
+            ListFooterComponent={<View className="h-12" />}
         />
     );
 };
