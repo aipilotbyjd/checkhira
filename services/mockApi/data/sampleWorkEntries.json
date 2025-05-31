@@ -1,0 +1,102 @@
+[
+  {
+    "id": "work1",
+    "date": "2024-03-10",
+    "description": "Yrg - Morning batch work",
+    "quantity": 50,
+    "unit": "pcs",
+    "price_per_unit": 9.00,
+    "calculated_earning": 450,
+    "payment_status": "Paid",
+    "task_type_code": "A",
+    "worker_id": "user123",
+    "notes": "Good quality stones for Yrg"
+  },
+  {
+    "id": "work2",
+    "date": "2024-03-10",
+    "description": "Yrg - Secondary tasks",
+    "quantity": 5,
+    "unit": "pcs",
+    "price_per_unit": 10.00,
+    "calculated_earning": 50,
+    "payment_status": "Paid",
+    "task_type_code": "B",
+    "worker_id": "user123",
+    "notes": "Related to Yrg batch"
+  },
+  {
+    "id": "work3",
+    "date": "2024-03-11",
+    "description": "Uhh - Polishing for client X",
+    "quantity": 6,
+    "unit": "carat",
+    "price_per_unit": 50.00,
+    "calculated_earning": 300,
+    "payment_status": "Unpaid",
+    "task_type_code": "A",
+    "worker_id": "user123",
+    "notes": "Urgent delivery for Uhh"
+  },
+  {
+    "id": "work4",
+    "date": "2024-03-11",
+    "description": "Uhh - Small piece work",
+    "quantity": 6,
+    "unit": "carat",
+    "price_per_unit": 30.00,
+    "calculated_earning": 180,
+    "payment_status": "Unpaid",
+    "task_type_code": "B",
+    "worker_id": "user123"
+  },
+  {
+    "id": "work5",
+    "date": "2024-03-05",
+    "description": "Batch 6 - Large stones",
+    "quantity": 55,
+    "unit": "pcs",
+    "price_per_unit": 50.00,
+    "calculated_earning": 2750,
+    "payment_status": "Paid",
+    "task_type_code": "C", 
+    "worker_id": "user123"
+  },
+  {
+    "id": "work6",
+    "date": "2024-02-20",
+    "description": "Batch 6 - Detail work",
+    "quantity": 5,
+    "unit": "pcs",
+    "price_per_unit": 30.00,
+    "calculated_earning": 150,
+    "payment_status": "Partially Paid",
+    "task_type_code": "D",
+    "worker_id": "user123",
+    "notes": "Paid 100 advance for Batch 6"
+  },
+  {
+    "id": "work7",
+    "date": "2024-03-12",
+    "description": "Rr6 - Type A cutting",
+    "quantity": 2,
+    "unit": "pcs",
+    "price_per_unit": 50.00,
+    "calculated_earning": 100,
+    "payment_status": "Unpaid",
+    "task_type_code": "A",
+    "worker_id": "user123"
+  },
+  {
+    "id": "work8",
+    "date": "2024-03-12",
+    "description": "Rr6 - Type B polishing",
+    "quantity": 2,
+    "unit": "pcs",
+    "price_per_unit": 30.00,
+    "calculated_earning": 60,
+    "payment_status": "Unpaid",
+    "task_type_code": "B",
+    "worker_id": "user123"
+  }
+] 

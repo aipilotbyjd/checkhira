@@ -77,6 +77,11 @@ export default function Account() {
       href: '/account/default-prices',
     },
     {
+      title: t('reports'),
+      icon: 'file-document',
+      href: '/account/reports',
+    },
+    {
       title: t('languageSettings'),
       icon: 'translate',
       href: '/account/language',

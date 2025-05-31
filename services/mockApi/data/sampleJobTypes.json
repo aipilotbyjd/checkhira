@@ -1,0 +1,34 @@
+[
+  {
+    "code": "A",
+    "name": "Type A Work",
+    "name_en": "Type A Work",
+    "name_gu": "પ્રકાર A કામ",
+    "name_hi": "प्रकार A काम",
+    "icon": "alpha-a-box-outline"
+  },
+  {
+    "code": "B",
+    "name": "Type B Work",
+    "name_en": "Type B Work",
+    "name_gu": "પ્રકાર B કામ",
+    "name_hi": "प्रकार B काम",
+    "icon": "alpha-b-box-outline"
+  },
+  {
+    "code": "C",
+    "name": "General Polishing",
+    "name_en": "General Polishing",
+    "name_gu": "સામાન્ય પોલિશિંગ",
+    "name_hi": "सामान्य पॉलिशिंग",
+    "icon": "diamond-stone"
+  },
+  {
+    "code": "D",
+    "name": "Cutting Work",
+    "name_en": "Cutting Work",
+    "name_gu": "કટીંગ કામ",
+    "name_hi": "कटिंग काम",
+    "icon": "content-cut"
+  }
+] 
