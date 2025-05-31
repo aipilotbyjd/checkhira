@@ -315,7 +315,7 @@ const ReportsScreen = () => {
             case 'header':
                 return (
                     <View className={`flex-row justify-between items-center px-5 bg-white border-b border-gray-200 ${Platform.OS === 'android' ? 'pt-8' : 'pt-12'} pb-4`}>
-                        <Text className="text-2xl font-bold text-gray-800">{t('reportsPage.title')}</Text>
+                        <Text className="text-2xl font-semibold text-gray-800">{t('reportsPage.title')}</Text>
                         <TouchableOpacity onPress={() => console.log("Help pressed - to be implemented")}>
                             <AppIcon name="help-circle-outline" size={28} color={COLORS.primary} family="Ionicons" />
                         </TouchableOpacity>
@@ -324,17 +324,17 @@ const ReportsScreen = () => {
             case 'filters':
                 return (
                     <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3 mt-3">
-                        <Text className="text-lg font-semibold text-gray-700 mb-3">{t('reportsPage.selectTime')}</Text>
+                        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.selectTime')}</Text>
                         <FlatList
                             horizontal
                             showsHorizontalScrollIndicator={false}
                             data={quickFilterOptions}
                             keyExtractor={(opt) => opt.key}
-                            className="mb-3 -mx-2 px-2"
+                            className="mb-4 -mx-2 px-2"
                             renderItem={({ item: opt }) => (
                                 <TouchableOpacity
                                     key={opt.key}
-                                    className={`px-3 py-2 rounded-full mr-2 border ${filters.quickFilter === opt.key ? 'bg-primary-500 border-primary-500' : 'bg-gray-100 border-gray-300'}`}
+                                    className={`px-4 py-2.5 rounded-full mr-2 border ${filters.quickFilter === opt.key ? 'bg-primary-500 border-primary-500' : 'bg-gray-100 border-gray-300'}`}
                                     onPress={() => handleQuickFilterChange(opt.key)}
                                 >
                                     <Text className={`${filters.quickFilter === opt.key ? 'text-white' : 'text-gray-700'} font-medium text-sm`}>{opt.label}</Text>
@@ -342,7 +342,7 @@ const ReportsScreen = () => {
                             )}
                         />
                         <TouchableOpacity
-                            className="flex-row items-center justify-center bg-blue-50 border border-blue-500 p-3 rounded-md mb-3 active:bg-blue-100"
+                            className="flex-row items-center justify-center bg-blue-50 border border-blue-500 p-3.5 rounded-md mb-4 active:bg-blue-100"
                             onPress={openCustomDateRangePicker}
                         >
                             <AppIcon name="calendar-range" family="MaterialCommunityIcons" size={20} color={COLORS.primary} />
@@ -350,12 +350,12 @@ const ReportsScreen = () => {
                         </TouchableOpacity>
 
                         {savedFiltersList.length > 0 && (
-                            <View className="mb-3 pt-2 border-t border-gray-100">
-                                <Text className="text-sm text-gray-600 mb-2 font-medium">{t('reportsPage.savedFilters')}</Text>
+                            <View className="mb-4 pt-3 border-t border-gray-200">
+                                <Text className="text-base text-gray-700 mb-2 font-medium">{t('reportsPage.savedFilters')}</Text>
                                 {savedFiltersList.map(sf => (
-                                    <View key={sf.name} className="flex-row justify-between items-center mb-1 p-2 bg-gray-50 rounded">
+                                    <View key={sf.name} className="flex-row justify-between items-center mb-1.5 p-2.5 bg-gray-50 rounded-md border border-gray-200">
                                         <TouchableOpacity onPress={() => applySavedFilter(sf)} className="flex-1">
-                                            <Text className="text-sm text-gray-700">{sf.name}</Text>
+                                            <Text className="text-sm text-gray-800">{sf.name}</Text>
                                         </TouchableOpacity>
                                         <TouchableOpacity onPress={() => removeSavedFilter(sf.name)} className="p-1">
                                             <AppIcon name="close-circle-outline" family="Ionicons" size={20} color={COLORS.error} />
@@ -365,7 +365,7 @@ const ReportsScreen = () => {
                             </View>
                         )}
                         <TouchableOpacity
-                            className="flex-row items-center justify-center bg-green-50 border border-green-500 p-3 rounded-md active:bg-green-100"
+                            className="flex-row items-center justify-center bg-green-50 border border-green-500 p-3.5 rounded-md active:bg-green-100"
                             onPress={saveCurrentFilter}
                         >
                             <AppIcon name="content-save-all-outline" family="MaterialCommunityIcons" size={20} color={COLORS.success} />
@@ -376,24 +376,24 @@ const ReportsScreen = () => {
             case 'viewAndSearch':
                 return (
                     <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
-                        <Text className="text-lg font-semibold text-gray-700 mb-3">{t('reportsPage.viewAndSearch')}</Text>
+                        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.viewAndSearch')}</Text>
                         <View className="flex-row justify-center mb-4 bg-gray-100 rounded-full p-1">
                             {(['work', 'payments', 'combined'] as ViewMode[]).map(mode => (
                                 <TouchableOpacity
                                     key={mode}
-                                    className={`flex-1 py-2 px-3 rounded-full items-center ${filters.viewMode === mode ? 'bg-primary-500 shadow' : ''}`}
+                                    className={`flex-1 py-2.5 px-3 rounded-full items-center ${filters.viewMode === mode ? 'bg-primary-500 shadow-md' : ''}`}
                                     onPress={() => handleViewModeChange(mode)}
                                 >
-                                    <Text className={`${filters.viewMode === mode ? 'text-white' : 'text-gray-700'} font-semibold capitalize`}>
+                                    <Text className={`${filters.viewMode === mode ? 'text-white' : 'text-primary-700'} font-semibold capitalize`}>
                                         {t(`reportsPage.viewModes.${mode}` as any)}
                                     </Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
-                        <View className="flex-row items-center bg-gray-100 rounded-md p-0.5 border border-gray-300 mb-3">
-                            <AppIcon name="magnify" family="MaterialCommunityIcons" size={22} color={COLORS.gray[500]} style={{ marginLeft: 8, marginRight: 4 }} />
+                        <View className="flex-row items-center bg-gray-50 rounded-md p-0.5 border border-gray-300 mb-4">
+                            <AppIcon name="magnify" family="MaterialCommunityIcons" size={22} color={COLORS.gray[500]} style={{ marginLeft: 10, marginRight: 6 }} />
                             <TextInput
-                                className="flex-1 h-10 text-base text-gray-700 px-2"
+                                className="flex-1 h-11 text-base text-gray-800 px-2"
                                 placeholder={t('reportsPage.searchPlaceholder')}
                                 value={filters.searchQuery}
                                 onChangeText={handleSearchQueryChange}
@@ -403,13 +403,13 @@ const ReportsScreen = () => {
                         {/* Task Type Filter */}
                         {STATIC_JOB_TYPES.length > 0 && (
                             <View className="mt-2">
-                                <Text className="text-sm text-gray-600 mb-1">{t('reportsPage.filters.filterByJobType')}</Text>
+                                <Text className="text-base text-gray-700 mb-2 font-medium">{t('reportsPage.filters.filterByJobType')}</Text>
                                 <FlatList
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
                                     data={jobTypeFilterOptions}
                                     keyExtractor={(jt) => jt.code || 'all-types'} // Use a unique key for the "all" option
-                                    className="-mx-1 px-1 py-1" // Added py-1 for some vertical padding if items have different heights
+                                    className="-mx-1 px-1 py-1 mb-1"
                                     renderItem={({ item: jt }) => {
                                         // Determine the display name based on locale and available translations
                                         let displayName = jt.name_en; // Default to English
@@ -421,9 +421,9 @@ const ReportsScreen = () => {
                                         return (
                                             <TouchableOpacity
                                                 onPress={() => handleTaskTypeCodeFilterChange(jt.code)}
-                                                className={`px-3 py-1 rounded-full border text-xs mr-2 ${filters.taskTypeCode === jt.code ? 'bg-secondary-500 border-secondary-500' : 'bg-gray-100 border-gray-300'}`}
+                                                className={`px-3.5 py-1.5 rounded-full border text-xs mr-2 ${filters.taskTypeCode === jt.code ? 'bg-secondary-500 border-secondary-500' : 'bg-gray-100 border-gray-300'}`}
                                             >
-                                                <Text className={`${filters.taskTypeCode === jt.code ? 'text-white' : 'text-secondary-700'}`}>
+                                                <Text className={`${filters.taskTypeCode === jt.code ? 'text-white' : 'text-secondary-700'} font-medium`}>
                                                     {displayName}
                                                 </Text>
                                             </TouchableOpacity>
@@ -437,19 +437,19 @@ const ReportsScreen = () => {
             case 'kpis':
                 return (
                     <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
-                        <Text className="text-lg font-semibold text-gray-700 mb-3">{t('reportsPage.keyNumbers')}</Text>
+                        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.keyNumbers')}</Text>
                         {(isLoadingWork || isLoadingPayments) && <View className="h-20 justify-center items-center"><Text className="text-gray-500">{t('reportsPage.loadingData')}</Text></View>}
                         {!(isLoadingWork || isLoadingPayments) && (
-                            <View className="grid grid-cols-2 gap-x-3 gap-y-4">
-                                <View className="bg-blue-50 p-3 rounded-lg items-center shadow-sm">
-                                    <AppIcon name="briefcase-variant-outline" family="MaterialCommunityIcons" size={28} color={COLORS.blue[600]} />
-                                    <Text className="text-xs text-blue-600 mt-1 font-medium">{t('reportsPage.kpi.totalWorkUnits')}</Text>
-                                    <Text className="text-xl font-bold text-blue-700 mt-0.5">{totalWorkUnits || '--'}</Text>
+                            <View className="grid grid-cols-2 gap-x-4 gap-y-4">
+                                <View className="bg-blue-50 p-4 rounded-lg items-center shadow-sm border border-blue-100">
+                                    <AppIcon name="briefcase-variant-outline" family="MaterialCommunityIcons" size={30} color={COLORS.blue[600]} />
+                                    <Text className="text-sm text-blue-700 mt-1.5 font-medium">{t('reportsPage.kpi.totalWorkUnits')}</Text>
+                                    <Text className="text-2xl font-bold text-blue-800 mt-0.5">{totalWorkUnits || '--'}</Text>
                                 </View>
-                                <View className="bg-green-50 p-3 rounded-lg items-center shadow-sm">
-                                    <AppIcon name="cash-multiple" family="MaterialCommunityIcons" size={28} color={COLORS.success} />
-                                    <Text className="text-xs text-green-600 mt-1 font-medium">{t('reportsPage.kpi.totalEarnings')}</Text>
-                                    <Text className="text-xl font-bold text-green-700 mt-0.5">₹{(totalEarnings || 0).toFixed(0)}</Text>
+                                <View className="bg-green-50 p-4 rounded-lg items-center shadow-sm border border-green-100">
+                                    <AppIcon name="cash-multiple" family="MaterialCommunityIcons" size={30} color={COLORS.success} />
+                                    <Text className="text-sm text-green-700 mt-1.5 font-medium">{t('reportsPage.kpi.totalEarnings')}</Text>
+                                    <Text className="text-2xl font-bold text-green-800 mt-0.5">₹{(totalEarnings || 0).toFixed(0)}</Text>
                                 </View>
                             </View>
                         )}
@@ -458,20 +458,20 @@ const ReportsScreen = () => {
             case 'visualSummary':
                 return (
                     <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
-                        <Text className="text-lg font-semibold text-gray-700 mb-3">{t('reportsPage.visualSummary')}</Text>
+                        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.visualSummary')}</Text>
                         {(isLoadingWork || isLoadingPayments) && <View className="h-40 justify-center items-center"><Text className="text-gray-500">{t('reportsPage.loadingCharts')}</Text></View>}
                         {!(isLoadingWork || isLoadingPayments) && (workData.length > 0 || paymentData.length > 0) && (
                             <>
-                                <View className="h-48 bg-gray-100 justify-center items-center rounded-md mb-3 p-2">
+                                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg mb-3 p-2">
                                     <Text className="text-gray-500 text-center">{t('reportsPage.charts.workUnitsBar')}</Text>
                                 </View>
-                                <View className="h-48 bg-gray-100 justify-center items-center rounded-md mb-3 p-2">
+                                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg mb-3 p-2">
                                     <Text className="text-gray-500 text-center">{t('reportsPage.charts.earningsTrendLine')}</Text>
                                 </View>
-                                <View className="h-48 bg-gray-100 justify-center items-center rounded-md mb-3 p-2">
+                                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg mb-3 p-2">
                                     <Text className="text-gray-500 text-center">{t('reportsPage.charts.paymentRatioPie')}</Text>
                                 </View>
-                                <View className="h-48 bg-gray-100 justify-center items-center rounded-md p-2">
+                                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg p-2">
                                     <Text className="text-gray-500 text-center">{t('reportsPage.charts.workDensityHeatmap')}</Text>
                                 </View>
                             </>
@@ -486,8 +486,8 @@ const ReportsScreen = () => {
                 if (!(filters.viewMode === 'work' || filters.viewMode === 'combined')) return null;
                 return (
                     <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
-                        <Text className="text-lg font-semibold text-gray-700 mb-1">{t('reportsPage.detailedData')}</Text>
-                        <Text className="text-base font-semibold text-gray-700 mb-2 mt-1">{t('reportsPage.workEntriesTitle')}</Text>
+                        <Text className="text-xl font-semibold text-gray-800 mb-1">{t('reportsPage.detailedData')}</Text>
+                        <Text className="text-lg font-medium text-gray-700 mb-3 mt-1">{t('reportsPage.workEntriesTitle')}</Text>
                         <FlatList
                             data={workData}
                             keyExtractor={(item) => item.id}
@@ -495,18 +495,22 @@ const ReportsScreen = () => {
                                 const jobTypeDetails = STATIC_JOB_TYPES.find(jt => jt.code === item.task_type_code);
                                 const displayJobTypeName = jobTypeDetails ? (locale === 'gu' && jobTypeDetails.name_gu ? jobTypeDetails.name_gu : locale === 'hi' && jobTypeDetails.name_hi ? jobTypeDetails.name_hi : jobTypeDetails.name_en || jobTypeDetails.name) : item.task_type_code;
                                 return (
-                                    <View className="border-b border-gray-200 py-3 px-1">
-                                        <View className="flex-row justify-between items-start">
+                                    <View className="border-b border-gray-200 py-3.5 px-1">
+                                        <View className="flex-row justify-between items-start mb-1">
                                             <View className="flex-1 pr-2">
-                                                <Text className="text-sm text-gray-800 font-medium">{item.description || t('reportsPage.noDescription')}</Text>
-                                                {displayJobTypeName && <Text className="text-xs text-gray-500">{t('reportsPage.jobType')}{displayJobTypeName}</Text>}
+                                                <Text className="text-base text-gray-800 font-semibold mb-0.5">{item.description || t('reportsPage.noDescription')}</Text>
+                                                {displayJobTypeName && <Text className="text-xs text-gray-600">{t('reportsPage.jobType')}{displayJobTypeName}</Text>}
                                             </View>
-                                            <Text className="text-sm font-semibold text-blue-600">{`${item.quantity}${item.unit ? ` ${item.unit}` : ''}`}</Text>
+                                            <Text className="text-base font-semibold text-blue-600">{`${item.quantity}${item.unit ? ` ${item.unit}` : ''}`}</Text>
                                         </View>
-                                        <View className="flex-row justify-between items-center mt-1.5">
-                                            <Text className="text-xs text-gray-600">{t('reportsPage.earning')}: ₹{(item.calculated_earning || 0).toFixed(2)}</Text>
+                                        <View className="flex-row justify-between items-center">
+                                            <Text className="text-sm text-green-700 font-medium">{t('reportsPage.earning')} <Text className="font-semibold">₹{(item.calculated_earning || 0).toFixed(2)}</Text></Text>
                                         </View>
-                                        {item.notes && <Text className="text-xs text-gray-400 mt-1.5 italic bg-gray-50 p-1 rounded">{t('reportsPage.notes')}: {item.notes}</Text>}
+                                        {item.notes && (
+                                            <View className="mt-2 bg-gray-50 p-2 rounded-md border border-gray-100">
+                                                <Text className="text-xs text-gray-500 italic">{t('reportsPage.notes')}{item.notes}</Text>
+                                            </View>
+                                        )}
                                     </View>
                                 );
                             }}
@@ -528,44 +532,54 @@ const ReportsScreen = () => {
                     <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
                         {/* Only show title if workList wasn't shown or if it's combined and workData is empty */}
                         {(filters.viewMode === 'payments' || (filters.viewMode === 'combined' && workData.length === 0)) &&
-                            <Text className="text-lg font-semibold text-gray-700 mb-1">{t('reportsPage.detailedData')}</Text>}
-                        <Text className="text-base font-semibold text-gray-700 mb-2 mt-1">{t('reportsPage.paymentEntriesTitle')}</Text>
+                            <Text className="text-xl font-semibold text-gray-800 mb-1">{t('reportsPage.detailedData')}</Text>}
+                        <Text className="text-lg font-medium text-gray-700 mb-3 mt-1">{t('reportsPage.paymentEntriesTitle')}</Text>
                         <FlatList
                             data={paymentData}
                             keyExtractor={(item) => item.id}
                             renderItem={({ item }) => (
-                                <View className="border-b border-gray-200 py-3 px-1">
-                                    <View className="flex-row justify-between items-start">
+                                <View className="border-b border-gray-200 py-3.5 px-1">
+                                    <View className="flex-row justify-between items-start mb-1">
                                         <View className="flex-1 pr-2">
-                                            <Text className="text-sm text-gray-800 font-medium">
-                                                {t('reportsPage.paymentAmount')}: ₹{(typeof item.amount === 'string' ? parseFloat(item.amount) : (item.amount || 0)).toFixed(2)}
+                                            <Text className="text-base text-green-700 font-semibold">
+                                                {t('reportsPage.paymentAmount')}₹{(typeof item.amount === 'string' ? parseFloat(item.amount) : (item.amount || 0)).toFixed(2)}
                                             </Text>
-                                            {item.from && <Text className="text-xs text-gray-500">{t('reportsPage.paymentFrom')}: {item.from}</Text>}
-                                            {item.source?.name && <Text className="text-xs text-gray-500">{t('reportsPage.paymentSource')}: {item.source.name_gu || item.source.name_en || item.source.name}</Text>}
+                                            {item.from && <Text className="text-sm text-gray-700 mt-0.5">{t('reportsPage.paymentFrom')}{item.from}</Text>}
                                         </View>
-                                        <Text className="text-xs text-gray-500">{new Date(item.date).toLocaleDateString(locale || 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</Text>
+                                        <Text className="text-sm text-gray-600">{new Date(item.date).toLocaleDateString(locale || 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</Text>
                                     </View>
-                                    {item.description && <Text className="text-xs text-gray-400 mt-1.5 italic bg-gray-50 p-1 rounded">{t('reportsPage.notes')}: {item.description}</Text>}
-                                    {item.notes && <Text className="text-xs text-gray-400 mt-1 italic bg-gray-50 p-1 rounded">{t('reportsPage.notes')}: {item.notes}</Text>}
+                                    {item.source?.name && <Text className="text-xs text-gray-500 mb-1.5">{t('reportsPage.paymentSource')}{item.source.name_gu || item.source.name_en || item.source.name}</Text>}
+                                    {(item.description || item.notes) && (
+                                        <View className="mt-1.5 bg-gray-50 p-2 rounded-md border border-gray-100">
+                                            {item.description && <Text className="text-xs text-gray-500 italic mb-0.5">{item.description}</Text>}
+                                            {item.notes && <Text className="text-xs text-gray-500 italic">{t('reportsPage.notes')}{item.notes}</Text>}
+                                        </View>
+                                    )}
                                 </View>
                             )}
                             ListEmptyComponent={() => (
                                 !isLoadingPayments && paymentData.length === 0 && (
-                                    <Text className="text-gray-500 text-center py-5">{t('reportsPage.noDataForFilters')}</Text>
+                                    <View className="py-10 items-center">
+                                        <AppIcon name="file-tray-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
+                                        <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForFilters')}</Text>
+                                    </View>
                                 )
                             )}
                             scrollEnabled={false}
                         />
                         {/* Overall empty state for detailed data if both lists are empty and not loading and in combined view*/}
                         {!(isLoadingWork || isLoadingPayments) && filters.viewMode === 'combined' && workData.length === 0 && paymentData.length === 0 && (
-                            <Text className="text-gray-500 text-center py-10">{t('reportsPage.noDataForFilters')}</Text>
+                            <View className="py-10 items-center">
+                                <AppIcon name="documents-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
+                                <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForFilters')}</Text>
+                            </View>
                         )}
                     </View>
                 );
             case 'exportAndShare':
                 return (
                     <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
-                        <Text className="text-lg font-semibold text-gray-700 mb-3">{t('reportsPage.exportAndShare')}</Text>
+                        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.exportAndShare')}</Text>
                         <TouchableOpacity
                             className="flex-row items-center justify-center bg-red-100 border border-red-300 p-3.5 rounded-md mb-3 active:bg-red-200"
                             onPress={() => exportReport('pdf')}
