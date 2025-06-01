@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Platform, TextInput, FlatList, ActivityIndicator } from 'react-native';
-import { useLanguage } from '../../../contexts/LanguageContext';
+import { useLanguage, LanguageContextType } from '../../../contexts/LanguageContext';
 import AppIcon, { IconFamily } from '../../../components/common/Icon';
 import { COLORS } from '../../../constants/theme';
 import { useApi } from '../../../hooks/useApi';
@@ -90,14 +90,412 @@ const screenSections: ScreenSection[] = [
     { id: 'exportAndShare' },
 ];
 
+// Section Components
+interface HeaderSectionProps { t: LanguageContextType['t']; }
+const HeaderSection = React.memo(({ t }: HeaderSectionProps) => (
+    <View className={`flex-row justify-between items-center px-5 bg-white border-b border-gray-200 ${Platform.OS === 'android' ? 'pt-8' : 'pt-12'} pb-4`}>
+        <Text className="text-2xl font-semibold text-gray-800">{t('reportsPage.title')}</Text>
+        <TouchableOpacity onPress={() => console.log("Help pressed - to be implemented")}>
+            <AppIcon name="help-circle-outline" size={28} color={COLORS.primary} family="Ionicons" />
+        </TouchableOpacity>
+    </View>
+));
+
+interface FiltersSectionProps {
+    t: LanguageContextType['t'];
+    filters: ReportFilters;
+    quickFilterOptions: { key: QuickFilterType; label: string; icon?: string, iconFamily?: IconFamily }[];
+    savedFiltersList: { name: string; criteria: ReportFilters }[];
+    handleQuickFilterChange: (filterKey: QuickFilterType) => void;
+    openCustomDateRangePicker: () => void;
+    applySavedFilter: (savedFilter: { name: string; criteria: ReportFilters }) => void;
+    removeSavedFilter: (filterNameToRemove: string) => void;
+    saveCurrentFilter: () => void;
+}
+const FiltersSection = React.memo(({
+    t, filters, quickFilterOptions, savedFiltersList,
+    handleQuickFilterChange, openCustomDateRangePicker, applySavedFilter, removeSavedFilter, saveCurrentFilter
+}: FiltersSectionProps) => (
+    <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3 mt-3">
+        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.selectTime')}</Text>
+        <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={quickFilterOptions}
+            keyExtractor={(opt) => opt.key}
+            className="mb-4 -mx-2 px-2"
+            renderItem={({ item: opt }) => (
+                <TouchableOpacity
+                    key={opt.key}
+                    className={`px-4 py-2.5 rounded-full mr-2 border ${filters.quickFilter === opt.key ? 'bg-fuchsia-500 border-fuchsia-500' : 'bg-gray-100 border-gray-300'}`}
+                    onPress={() => handleQuickFilterChange(opt.key)}
+                >
+                    <Text className={`${filters.quickFilter === opt.key ? 'text-white' : 'text-gray-700'} font-medium text-sm`}>{opt.label}</Text>
+                </TouchableOpacity>
+            )}
+        />
+        <TouchableOpacity
+            className="flex-row items-center justify-center bg-blue-50 border border-blue-500 p-3.5 rounded-md mb-4 active:bg-blue-100"
+            onPress={openCustomDateRangePicker}
+        >
+            <AppIcon name="calendar-range" family="MaterialCommunityIcons" size={20} color={COLORS.primary} />
+            <Text className="ml-2 text-blue-600 font-semibold">{t('reportsPage.chooseDates')}</Text>
+        </TouchableOpacity>
+
+        {savedFiltersList.length > 0 && (
+            <View className="mb-4 pt-3 border-t border-gray-200">
+                <Text className="text-base text-gray-700 mb-2 font-medium">{t('reportsPage.savedFilters')}</Text>
+                {savedFiltersList.map(sf => (
+                    <View key={sf.name} className="flex-row justify-between items-center mb-1.5 p-2.5 bg-gray-50 rounded-md border border-gray-200">
+                        <TouchableOpacity onPress={() => applySavedFilter(sf)} className="flex-1">
+                            <Text className="text-sm text-gray-800">{sf.name}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => removeSavedFilter(sf.name)} className="p-1">
+                            <AppIcon name="close-circle-outline" family="Ionicons" size={20} color={COLORS.error} />
+                        </TouchableOpacity>
+                    </View>
+                ))}
+            </View>
+        )}
+        <TouchableOpacity
+            className="flex-row items-center justify-center bg-green-50 border border-green-500 p-3.5 rounded-md active:bg-green-100"
+            onPress={saveCurrentFilter}
+        >
+            <AppIcon name="content-save-all-outline" family="MaterialCommunityIcons" size={20} color={COLORS.success} />
+            <Text className="ml-2 text-green-700 font-semibold">{t('reportsPage.saveCurrentFilter')}</Text>
+        </TouchableOpacity>
+    </View>
+));
+
+interface ViewAndSearchSectionProps {
+    t: LanguageContextType['t'];
+    filters: ReportFilters;
+    jobTypeFilterOptions: (JobType | { code: null; name: string; name_en: string; name_gu: string; name_hi: string; id: string; })[];
+    locale: string;
+    handleViewModeChange: (mode: ViewMode) => void;
+    handleSearchQueryChange: (text: string) => void;
+    handleTaskTypeCodeFilterChange: (code: string | null) => void;
+}
+const ViewAndSearchSection = React.memo(({
+    t, filters, jobTypeFilterOptions, locale,
+    handleViewModeChange, handleSearchQueryChange, handleTaskTypeCodeFilterChange
+}: ViewAndSearchSectionProps) => {
+    const viewModeButtons = useMemo(() => (['work', 'payment', 'combined'] as ViewMode[]).map(mode => {
+        const keySuffix = mode === 'payment' ? 'payments' : mode;
+        const translationKey = `reportsPage.viewModes.${keySuffix}`;
+
+        // Define a type that represents the actual keys we expect after mapping.
+        type ActualTranslationKeys =
+            | "reportsPage.viewModes.work"
+            | "reportsPage.viewModes.payments"
+            | "reportsPage.viewModes.combined";
+
+        return (
+            <TouchableOpacity
+                key={mode}
+                className={`flex-1 py-2.5 px-3 rounded-full items-center ${filters.viewMode === mode ? 'bg-primary-500 shadow-md' : ''}`}
+                onPress={() => handleViewModeChange(mode)}
+            >
+                <Text className={`${filters.viewMode === mode ? 'text-white' : 'text-primary-700'} font-semibold capitalize`}>
+                    {t(translationKey as ActualTranslationKeys)}
+                </Text>
+            </TouchableOpacity>
+        );
+    }), [filters.viewMode, handleViewModeChange, t]);
+
+    const renderJobTypeItem = useCallback(({ item: jt }: { item: (JobType | { code: null; name: string; name_en: string; name_gu: string; name_hi: string; id: string; }) }) => {
+        let displayName = jt.name_en;
+        if (locale === 'gu' && jt.name_gu) displayName = jt.name_gu;
+        else if (locale === 'hi' && jt.name_hi) displayName = jt.name_hi;
+        else if ((jt as JobType).name) displayName = (jt as JobType).name;
+
+        return (
+            <TouchableOpacity
+                onPress={() => handleTaskTypeCodeFilterChange(jt.code)}
+                className={`px-3.5 py-1.5 rounded-full border text-xs mr-2 ${filters.taskTypeCode === jt.code ? 'bg-fuchsia-500 border-fuchsia-500' : 'bg-gray-100 border-gray-300'}`}
+            >
+                <Text className={`${filters.taskTypeCode === jt.code ? 'text-white' : 'text-secondary-700'} font-medium`}>
+                    {displayName}
+                </Text>
+            </TouchableOpacity>
+        );
+    }, [locale, filters.taskTypeCode, handleTaskTypeCodeFilterChange, t]);
+
+    return (
+        <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
+            <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.viewAndSearch')}</Text>
+            <View className="flex-row justify-center mb-4 bg-gray-100 rounded-full p-1">
+                {viewModeButtons}
+            </View>
+            <View className="flex-row items-center bg-gray-50 rounded-md p-0.5 border border-gray-300 mb-4">
+                <AppIcon name="magnify" family="MaterialCommunityIcons" size={22} color={COLORS.gray[500]} style={{ marginLeft: 10, marginRight: 6 }} />
+                <TextInput
+                    className="flex-1 h-11 text-base text-gray-800 px-2"
+                    placeholder={t('reportsPage.searchPlaceholder')}
+                    value={filters.searchQuery}
+                    onChangeText={handleSearchQueryChange}
+                    placeholderTextColor={COLORS.gray[400]}
+                />
+            </View>
+            {STATIC_JOB_TYPES.length > 0 && (filters.viewMode === 'work' || filters.viewMode === 'combined') && (
+                <View className="mt-2">
+                    <Text className="text-base text-gray-700 mb-2 font-medium">{t('reportsPage.filters.filterByJobType')}</Text>
+                    <FlatList
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        data={jobTypeFilterOptions}
+                        keyExtractor={(jt) => jt.code || 'all-types-filter'}
+                        className="-mx-1 px-1 py-1 mb-1"
+                        renderItem={renderJobTypeItem}
+                    />
+                </View>
+            )}
+        </View>
+    );
+});
+
+interface KpisSectionProps {
+    t: LanguageContextType['t'];
+    isLoadingDisplayData: boolean;
+    apiError: any;
+    totalWorkUnits: number;
+    totalEarnings: number;
+}
+const KpisSection = React.memo(({ t, isLoadingDisplayData, apiError, totalWorkUnits, totalEarnings }: KpisSectionProps) => (
+    <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
+        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.keyNumbers')}</Text>
+        {isLoadingDisplayData && (
+            <View className="h-20 justify-center items-center">
+                <ActivityIndicator size="large" color={COLORS.primary} />
+                <Text className="text-gray-500 mt-2">{t('reportsPage.loadingData')}</Text>
+            </View>
+        )}
+        {!isLoadingDisplayData && apiError && (
+            <View className="h-20 justify-center items-center">
+                <AppIcon name="alert-circle-outline" family="Ionicons" size={30} color={COLORS.error} />
+                <Text className="text-red-500 text-center mt-1">{apiError?.message || t('reportsPage.errorLoading')}</Text>
+            </View>
+        )}
+        {!isLoadingDisplayData && !apiError && (
+            <View className="grid grid-cols-2 gap-x-4 gap-y-4">
+                <View className="bg-blue-50 p-4 rounded-lg items-center shadow-sm border border-blue-100">
+                    <AppIcon name="briefcase-variant-outline" family="MaterialCommunityIcons" size={30} color={COLORS.blue[600]} />
+                    <Text className="text-sm text-blue-700 mt-1.5 font-medium">{t('reportsPage.kpi.totalWorkUnits')}</Text>
+                    <Text className="text-2xl font-bold text-blue-800 mt-0.5">{totalWorkUnits || '--'}</Text>
+                </View>
+                <View className="bg-green-50 p-4 rounded-lg items-center shadow-sm border border-green-100">
+                    <AppIcon name="cash-multiple" family="MaterialCommunityIcons" size={30} color={COLORS.success} />
+                    <Text className="text-sm text-green-700 mt-1.5 font-medium">{t('reportsPage.kpi.totalEarnings')}</Text>
+                    <Text className="text-2xl font-bold text-green-800 mt-0.5">₹{(totalEarnings || 0).toFixed(0)}</Text>
+                </View>
+            </View>
+        )}
+    </View>
+));
+
+interface VisualSummarySectionProps {
+    t: LanguageContextType['t'];
+    isLoadingDisplayData: boolean;
+    apiError: any;
+    workData: TransformedWorkEntry[];
+    paymentData: TransformedPaymentEntry[];
+}
+const VisualSummarySection = React.memo(({ t, isLoadingDisplayData, apiError, workData, paymentData }: VisualSummarySectionProps) => (
+    <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
+        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.visualSummary')}</Text>
+        {isLoadingDisplayData && (
+            <View className="h-40 justify-center items-center">
+                <ActivityIndicator size="large" color={COLORS.primary} />
+                <Text className="text-gray-500 mt-2">{t('reportsPage.loadingCharts')}</Text>
+            </View>
+        )}
+        {!isLoadingDisplayData && apiError && (
+            <View className="h-40 justify-center items-center">
+                <AppIcon name="bar-chart-outline" family="Ionicons" size={30} color={COLORS.error} />
+                <Text className="text-red-500 text-center mt-1">{t('reportsPage.errorLoadingCharts')}</Text>
+            </View>
+        )}
+        {!isLoadingDisplayData && !apiError && (workData.length > 0 || paymentData.length > 0) && (
+            <>
+                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg mb-3 p-2">
+                    <Text className="text-gray-500 text-center">{t('reportsPage.charts.workUnitsBar')}</Text>
+                </View>
+                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg mb-3 p-2">
+                    <Text className="text-gray-500 text-center">{t('reportsPage.charts.earningsTrendLine')}</Text>
+                </View>
+                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg mb-3 p-2">
+                    <Text className="text-gray-500 text-center">{t('reportsPage.charts.paymentRatioPie')}</Text>
+                </View>
+                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg p-2">
+                    <Text className="text-gray-500 text-center">{t('reportsPage.charts.workDensityHeatmap')}</Text>
+                </View>
+            </>
+        )}
+        {!isLoadingDisplayData && !apiError && workData.length === 0 && paymentData.length === 0 && (
+            <View className="py-10 items-center">
+                <AppIcon name="analytics-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
+                <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForCharts')}</Text>
+            </View>
+        )}
+    </View>
+));
+
+interface WorkListSectionProps {
+    t: LanguageContextType['t'];
+    locale: string;
+    isLoadingDisplayData: boolean;
+    apiError: any;
+    filters: ReportFilters;
+    workData: TransformedWorkEntry[];
+}
+const WorkListSection = React.memo(({ t, locale, isLoadingDisplayData, apiError, filters, workData }: WorkListSectionProps) => {
+    const renderWorkItem = useCallback(({ item }: { item: TransformedWorkEntry }) => {
+        const jobTypeDetails = STATIC_JOB_TYPES.find(jt => jt.code === item.task_type_code);
+        let displayJobTypeName = item.task_type_code || 'N/A';
+        if (jobTypeDetails) {
+            displayJobTypeName = (locale === 'gu' && jobTypeDetails.name_gu ? jobTypeDetails.name_gu : locale === 'hi' && jobTypeDetails.name_hi ? jobTypeDetails.name_hi : jobTypeDetails.name_en || jobTypeDetails.name);
+        }
+
+        return (
+            <View className="border-b border-gray-200 py-3.5 px-1">
+                <View className="flex-row justify-between items-start mb-1">
+                    <View className="flex-1 pr-2">
+                        <Text className="text-base text-gray-800 font-semibold mb-0.5">{item.title || t('reportsPage.noDescription')}</Text>
+                        <Text className="text-xs text-gray-600">{t('reportsPage.jobType')}{displayJobTypeName}</Text>
+                    </View>
+                    <Text className="text-base font-semibold text-blue-600">{`${item.quantity}`}</Text>
+                </View>
+                <View className="flex-row justify-between items-center">
+                    <Text className="text-sm text-green-700 font-medium">{t('reportsPage.earning')} <Text className="font-semibold">₹{(item.calculated_earning || 0).toFixed(2)}</Text></Text>
+                </View>
+                {item.notes && (
+                    <View className="mt-2 bg-gray-50 p-2 rounded-md border border-gray-100">
+                        <Text className="text-xs text-gray-500 italic">{t('reportsPage.notes')}{item.notes}</Text>
+                    </View>
+                )}
+            </View>
+        );
+    }, [locale, t]);
+
+    if (isLoadingDisplayData) return <View className="h-60 justify-center items-center bg-white p-4 rounded-lg shadow mb-4 mx-3"><ActivityIndicator size="large" color={COLORS.primary} /><Text className="text-gray-500 mt-2">{t('reportsPage.loadingTable')}</Text></View>;
+    if (!isLoadingDisplayData && apiError) return <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3 items-center"><AppIcon name="cloud-offline-outline" family="Ionicons" size={30} color={COLORS.error} /><Text className="text-red-500 text-center mt-1">{apiError?.message || t('reportsPage.errorLoading')}</Text></View>;
+    if (!(filters.viewMode === 'work' || filters.viewMode === 'combined')) return null;
+
+    return (
+        <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
+            <Text className="text-lg font-medium text-gray-700 mb-3 mt-1">{t('reportsPage.workEntriesTitle')}</Text>
+            <FlatList
+                data={workData}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={renderWorkItem}
+                ListEmptyComponent={() => (
+                    !isLoadingDisplayData && !apiError && workData.length === 0 && (
+                        <View className="py-10 items-center">
+                            <AppIcon name="file-tray-stacked-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
+                            <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForFilters')}</Text>
+                        </View>
+                    )
+                )}
+                scrollEnabled={false}
+            />
+        </View>
+    );
+});
+
+interface PaymentListSectionProps {
+    t: LanguageContextType['t'];
+    locale: string;
+    isLoadingDisplayData: boolean;
+    apiError: any;
+    filters: ReportFilters;
+    paymentData: TransformedPaymentEntry[];
+    workDataLength: number;
+}
+const PaymentListSection = React.memo(({ t, locale, isLoadingDisplayData, apiError, filters, paymentData, workDataLength }: PaymentListSectionProps) => {
+    const renderPaymentItem = useCallback(({ item }: { item: TransformedPaymentEntry }) => (
+        <View className="border-b border-gray-200 py-3.5 px-1">
+            <View className="flex-row justify-between items-start mb-1">
+                <View className="flex-1 pr-2">
+                    <Text className="text-base text-green-700 font-semibold">
+                        {t('reportsPage.paymentAmount')}₹{(item.amount || 0).toFixed(2)}
+                    </Text>
+                    {item.from && <Text className="text-sm text-gray-700 mt-0.5">{t('reportsPage.paymentFrom')}{item.from}</Text>}
+                </View>
+                <Text className="text-sm text-gray-600">{new Date(item.date).toLocaleDateString(locale || 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</Text>
+            </View>
+            {item.notes && (
+                <View className="mt-1.5 bg-gray-50 p-2 rounded-md border border-gray-100">
+                    <Text className="text-xs text-gray-500 italic">{t('reportsPage.notes')}{item.notes}</Text>
+                </View>
+            )}
+        </View>
+    ), [locale, t]);
+
+    if (isLoadingDisplayData) return <View className="h-60 justify-center items-center bg-white p-4 rounded-lg shadow mb-4 mx-3"><ActivityIndicator size="large" color={COLORS.primary} /><Text className="text-gray-500 mt-2">{t('reportsPage.loadingTable')}</Text></View>;
+    if (!isLoadingDisplayData && apiError) return <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3 items-center"><AppIcon name="card-outline" family="Ionicons" size={30} color={COLORS.error} /><Text className="text-red-500 text-center mt-1">{apiError?.message || t('reportsPage.errorLoading')}</Text></View>;
+    if (!(filters.viewMode === 'payment' || filters.viewMode === 'combined')) return null;
+
+    return (
+        <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
+            {(filters.viewMode === 'payment' || (filters.viewMode === 'combined' && workDataLength === 0)) &&
+                <Text className="text-xl font-semibold text-gray-800 mb-1">{t('reportsPage.detailedData')}</Text>}
+            <Text className="text-lg font-medium text-gray-700 mb-3 mt-1">{t('reportsPage.paymentEntriesTitle')}</Text>
+            <FlatList
+                data={paymentData}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={renderPaymentItem}
+                ListEmptyComponent={() => (
+                    !isLoadingDisplayData && !apiError && paymentData.length === 0 && (
+                        <View className="py-10 items-center">
+                            <AppIcon name="file-tray-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
+                            <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForFilters')}</Text>
+                        </View>
+                    )
+                )}
+                scrollEnabled={false}
+            />
+            {!isLoadingDisplayData && !apiError && filters.viewMode === 'combined' && workDataLength === 0 && paymentData.length === 0 && (
+                <View className="py-10 items-center">
+                    <AppIcon name="documents-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
+                    <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForFilters')}</Text>
+                </View>
+            )}
+        </View>
+    );
+});
+
+interface ExportAndShareSectionProps {
+    t: LanguageContextType['t'];
+    exportReport: (format: 'pdf' | 'csv') => void;
+}
+const ExportAndShareSection = React.memo(({ t, exportReport }: ExportAndShareSectionProps) => (
+    <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
+        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.exportAndShare')}</Text>
+        <TouchableOpacity
+            className="flex-row items-center justify-center bg-red-100 border border-red-300 p-3.5 rounded-md mb-3 active:bg-red-200"
+            onPress={() => exportReport('pdf')}
+        >
+            <AppIcon name="file-pdf-box" family="MaterialCommunityIcons" size={22} color={COLORS.error} />
+            <Text className="ml-2 text-red-700 font-semibold">{t('reportsPage.exportAsPDF')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+            className="flex-row items-center justify-center bg-green-100 border border-green-300 p-3.5 rounded-md active:bg-green-200"
+            onPress={() => exportReport('csv')}
+        >
+            <AppIcon name="file-excel-box" family="MaterialCommunityIcons" size={22} color={COLORS.success} />
+            <Text className="ml-2 text-green-700 font-semibold">{t('reportsPage.exportAsCSV')}</Text>
+        </TouchableOpacity>
+    </View>
+));
+
 const ReportsScreen = () => {
     const { t, locale } = useLanguage();
     const { execute, isLoading: apiIsLoading, error: apiError, data: rawApiData } = useApi<ApiResponseData>();
 
     const [filters, setFilters] = useState<ReportFilters>({
-        quickFilter: 'thisMonth',
-        startDate: getDateRangeForQuickFilter('thisMonth').startDate,
-        endDate: getDateRangeForQuickFilter('thisMonth').endDate,
+        quickFilter: 'today',
+        startDate: getDateRangeForQuickFilter('today').startDate,
+        endDate: getDateRangeForQuickFilter('today').endDate,
         viewMode: 'combined',
         searchQuery: '',
         taskTypeCode: null,
@@ -111,20 +509,29 @@ const ReportsScreen = () => {
 
     const [isProcessingData, setIsProcessingData] = useState(false);
 
-    useEffect(() => {
-        const fetchAndProcessReportData = async () => {
-            if (!filters.startDate || !filters.endDate) {
-                setWorkData([]); setPaymentData([]); setReportSummary(null); return;
-            }
-            setIsProcessingData(true); setWorkData([]); setPaymentData([]); setReportSummary(null);
-            try {
-                await execute(() => reportService.fetchReportData(filters));
-            }
-            catch (err) {
-            }
-        };
-        fetchAndProcessReportData();
+    const fetchAndProcessReportData = useCallback(async () => {
+        if (!filters.startDate || !filters.endDate) {
+            setWorkData([]); setPaymentData([]); setReportSummary(null); return;
+        }
+        setIsProcessingData(true); setWorkData([]); setPaymentData([]); setReportSummary(null);
+
+        const paramsForApi: ReportFilters = { ...filters };
+        // if (paramsForApi.viewMode === 'payment' && paramsForApi.taskTypeCode) {
+        //     // If API strictly needs taskTypeCode removed for payments, uncomment:
+        //     // delete (paramsForApi as any).taskTypeCode; 
+        // }
+
+        try {
+            await execute(() => reportService.fetchReportData(paramsForApi));
+        }
+        catch (err) {
+            // error is handled by useApi hook
+        }
     }, [filters, execute]);
+
+    useEffect(() => {
+        fetchAndProcessReportData();
+    }, [fetchAndProcessReportData]);
 
     useEffect(() => {
         if (rawApiData && !apiIsLoading) {
@@ -166,7 +573,11 @@ const ReportsScreen = () => {
         }
     }, [rawApiData, apiIsLoading, apiError]);
 
-    const handleQuickFilterChange = (filterKey: QuickFilterType) => {
+    const openCustomDateRangePicker = useCallback(() => {
+        console.log("Open custom date range picker - to be implemented");
+    }, []);
+
+    const handleQuickFilterChange = useCallback((filterKey: QuickFilterType) => {
         if (filterKey === 'custom') {
             setFilters(prev => ({ ...prev, quickFilter: 'custom' }));
             openCustomDateRangePicker();
@@ -179,50 +590,46 @@ const ReportsScreen = () => {
             startDate,
             endDate,
         }));
-    };
+    }, [openCustomDateRangePicker]);
 
-    const openCustomDateRangePicker = () => {
-        console.log("Open custom date range picker - to be implemented");
-    };
-
-    const saveCurrentFilter = () => {
+    const saveCurrentFilter = useCallback(() => {
         const filterName = `Saved Filter ${savedFiltersList.length + 1}`;
         setSavedFiltersList(prev => [...prev, { name: filterName, criteria: { ...filters } }]);
         console.log("Save current filter:", filterName, filters);
-    };
+    }, [filters, savedFiltersList.length]);
 
-    const applySavedFilter = (savedFilter: { name: string; criteria: ReportFilters }) => {
+    const applySavedFilter = useCallback((savedFilter: { name: string; criteria: ReportFilters }) => {
         setFilters(savedFilter.criteria);
-    };
+    }, []);
 
-    const removeSavedFilter = (filterNameToRemove: string) => {
+    const removeSavedFilter = useCallback((filterNameToRemove: string) => {
         setSavedFiltersList(prev => prev.filter(f => f.name !== filterNameToRemove));
-    };
+    }, []);
 
-    const handleViewModeChange = (mode: ViewMode) => {
+    const handleViewModeChange = useCallback((mode: ViewMode) => {
         setFilters(prev => ({ ...prev, viewMode: mode }));
-    };
+    }, []);
 
-    const handleSearchQueryChange = (text: string) => {
+    const handleSearchQueryChange = useCallback((text: string) => {
         setFilters(prev => ({ ...prev, searchQuery: text }));
-    };
+    }, []);
 
-    const handleTaskTypeCodeFilterChange = (code: string | null) => {
+    const handleTaskTypeCodeFilterChange = useCallback((code: string | null) => {
         setFilters(prev => ({ ...prev, taskTypeCode: code }));
-    };
+    }, []);
 
-    const exportReport = (format: 'pdf' | 'csv') => {
+    const exportReport = useCallback((format: 'pdf' | 'csv') => {
         console.log(`Exporting report as ${format} with filters:`, filters);
-    };
+    }, [filters]);
 
-    const quickFilterOptions: { key: QuickFilterType; label: string; icon?: string, iconFamily?: IconFamily }[] = [
-        { key: 'today', label: t('reportsPage.filters.today'), icon: 'calendar-today' },
-        { key: 'yesterday', label: t('reportsPage.filters.yesterday'), icon: 'calendar-clock' },
-        { key: 'last7', label: t('reportsPage.filters.last7Days'), icon: 'calendar-week' },
-        { key: 'last30', label: t('reportsPage.filters.last30Days'), icon: 'calendar-month' },
-        { key: 'thisMonth', label: t('reportsPage.filters.thisMonth'), icon: 'calendar-month-outline' },
-        { key: 'lastMonth', label: t('reportsPage.filters.lastMonth'), icon: 'calendar-arrow-left' },
-    ];
+    const quickFilterOptions = useMemo(() => [
+        { key: 'today' as QuickFilterType, label: t('reportsPage.filters.today'), icon: 'calendar-today' },
+        { key: 'yesterday' as QuickFilterType, label: t('reportsPage.filters.yesterday'), icon: 'calendar-clock' },
+        { key: 'last7' as QuickFilterType, label: t('reportsPage.filters.last7Days'), icon: 'calendar-week' },
+        { key: 'last30' as QuickFilterType, label: t('reportsPage.filters.last30Days'), icon: 'calendar-month' },
+        { key: 'thisMonth' as QuickFilterType, label: t('reportsPage.filters.thisMonth'), icon: 'calendar-month-outline' },
+        { key: 'lastMonth' as QuickFilterType, label: t('reportsPage.filters.lastMonth'), icon: 'calendar-arrow-left' },
+    ], [t]);
 
     const jobTypeFilterOptions = useMemo(() => {
         const getLocalizedName = (jt: JobType) => {
@@ -244,346 +651,91 @@ const ReportsScreen = () => {
     }, [locale, t]);
 
     const { totalWorkUnits, totalEarnings } = useMemo(() => {
-        let units = 0;
-        let earnings = 0;
+        let currentWorkUnits = 0;
+        let currentWorkEarnings = 0;
 
-        if (reportSummary) {
-            if (filters.viewMode === 'work') {
-                units = workData.reduce((sum, entry) => sum + entry.quantity, 0);
-                earnings = reportSummary.work?.total_amount || 0;
-            } else if (filters.viewMode === 'payments') {
-                units = 0;
-                earnings = 0;
-            } else {
-                units = workData.reduce((sum, entry) => sum + entry.quantity, 0);
-                earnings = reportSummary.work?.total_amount || 0;
-            }
-        } else {
-            units = workData.reduce((sum, entry) => sum + entry.quantity, 0);
-            earnings = workData.reduce((sum, entry) => sum + entry.calculated_earning, 0);
+        if (filters.viewMode === 'work' || filters.viewMode === 'combined') {
+            currentWorkUnits = workData.reduce((sum, entry) => sum + (Number(entry.quantity) || 0), 0);
+            currentWorkEarnings = workData.reduce((sum, entry) => sum + (Number(entry.calculated_earning) || 0), 0);
         }
-        return { totalWorkUnits: units, totalEarnings: earnings };
-    }, [reportSummary, workData, filters.viewMode]);
+
+        return { totalWorkUnits: currentWorkUnits, totalEarnings: currentWorkEarnings };
+    }, [workData, filters.viewMode]);
 
     const isLoadingDisplayData = apiIsLoading || isProcessingData;
 
-    const renderScreenSection = ({ item }: { item: ScreenSection }) => {
+    const renderScreenSection = useCallback(({ item }: { item: ScreenSection }) => {
         switch (item.id) {
             case 'header':
-                return (
-                    <View className={`flex-row justify-between items-center px-5 bg-white border-b border-gray-200 ${Platform.OS === 'android' ? 'pt-8' : 'pt-12'} pb-4`}>
-                        <Text className="text-2xl font-semibold text-gray-800">{t('reportsPage.title')}</Text>
-                        <TouchableOpacity onPress={() => console.log("Help pressed - to be implemented")}>
-                            <AppIcon name="help-circle-outline" size={28} color={COLORS.primary} family="Ionicons" />
-                        </TouchableOpacity>
-                    </View>
-                );
+                return <HeaderSection t={t} />;
             case 'filters':
-                return (
-                    <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3 mt-3">
-                        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.selectTime')}</Text>
-                        <FlatList
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            data={quickFilterOptions}
-                            keyExtractor={(opt) => opt.key}
-                            className="mb-4 -mx-2 px-2"
-                            renderItem={({ item: opt }) => (
-                                <TouchableOpacity
-                                    key={opt.key}
-                                    className={`px-4 py-2.5 rounded-full mr-2 border ${filters.quickFilter === opt.key ? 'bg-primary-500 border-primary-500' : 'bg-gray-100 border-gray-300'}`}
-                                    onPress={() => handleQuickFilterChange(opt.key)}
-                                >
-                                    <Text className={`${filters.quickFilter === opt.key ? 'text-white' : 'text-gray-700'} font-medium text-sm`}>{opt.label}</Text>
-                                </TouchableOpacity>
-                            )}
-                        />
-                        <TouchableOpacity
-                            className="flex-row items-center justify-center bg-blue-50 border border-blue-500 p-3.5 rounded-md mb-4 active:bg-blue-100"
-                            onPress={openCustomDateRangePicker}
-                        >
-                            <AppIcon name="calendar-range" family="MaterialCommunityIcons" size={20} color={COLORS.primary} />
-                            <Text className="ml-2 text-blue-600 font-semibold">{t('reportsPage.chooseDates')}</Text>
-                        </TouchableOpacity>
-
-                        {savedFiltersList.length > 0 && (
-                            <View className="mb-4 pt-3 border-t border-gray-200">
-                                <Text className="text-base text-gray-700 mb-2 font-medium">{t('reportsPage.savedFilters')}</Text>
-                                {savedFiltersList.map(sf => (
-                                    <View key={sf.name} className="flex-row justify-between items-center mb-1.5 p-2.5 bg-gray-50 rounded-md border border-gray-200">
-                                        <TouchableOpacity onPress={() => applySavedFilter(sf)} className="flex-1">
-                                            <Text className="text-sm text-gray-800">{sf.name}</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity onPress={() => removeSavedFilter(sf.name)} className="p-1">
-                                            <AppIcon name="close-circle-outline" family="Ionicons" size={20} color={COLORS.error} />
-                                        </TouchableOpacity>
-                                    </View>
-                                ))}
-                            </View>
-                        )}
-                        <TouchableOpacity
-                            className="flex-row items-center justify-center bg-green-50 border border-green-500 p-3.5 rounded-md active:bg-green-100"
-                            onPress={saveCurrentFilter}
-                        >
-                            <AppIcon name="content-save-all-outline" family="MaterialCommunityIcons" size={20} color={COLORS.success} />
-                            <Text className="ml-2 text-green-700 font-semibold">{t('reportsPage.saveCurrentFilter')}</Text>
-                        </TouchableOpacity>
-                    </View>
-                );
+                return <FiltersSection
+                    t={t}
+                    filters={filters}
+                    quickFilterOptions={quickFilterOptions}
+                    savedFiltersList={savedFiltersList}
+                    handleQuickFilterChange={handleQuickFilterChange}
+                    openCustomDateRangePicker={openCustomDateRangePicker}
+                    applySavedFilter={applySavedFilter}
+                    removeSavedFilter={removeSavedFilter}
+                    saveCurrentFilter={saveCurrentFilter}
+                />;
             case 'viewAndSearch':
-                return (
-                    <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
-                        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.viewAndSearch')}</Text>
-                        <View className="flex-row justify-center mb-4 bg-gray-100 rounded-full p-1">
-                            {(['work', 'payments', 'combined'] as ViewMode[]).map(mode => (
-                                <TouchableOpacity
-                                    key={mode}
-                                    className={`flex-1 py-2.5 px-3 rounded-full items-center ${filters.viewMode === mode ? 'bg-primary-500 shadow-md' : ''}`}
-                                    onPress={() => handleViewModeChange(mode)}
-                                >
-                                    <Text className={`${filters.viewMode === mode ? 'text-white' : 'text-primary-700'} font-semibold capitalize`}>
-                                        {t(`reportsPage.viewModes.${mode}` as any)}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                        <View className="flex-row items-center bg-gray-50 rounded-md p-0.5 border border-gray-300 mb-4">
-                            <AppIcon name="magnify" family="MaterialCommunityIcons" size={22} color={COLORS.gray[500]} style={{ marginLeft: 10, marginRight: 6 }} />
-                            <TextInput
-                                className="flex-1 h-11 text-base text-gray-800 px-2"
-                                placeholder={t('reportsPage.searchPlaceholder')}
-                                value={filters.searchQuery}
-                                onChangeText={handleSearchQueryChange}
-                                placeholderTextColor={COLORS.gray[400]}
-                            />
-                        </View>
-                        {STATIC_JOB_TYPES.length > 0 && (
-                            <View className="mt-2">
-                                <Text className="text-base text-gray-700 mb-2 font-medium">{t('reportsPage.filters.filterByJobType')}</Text>
-                                <FlatList
-                                    horizontal
-                                    showsHorizontalScrollIndicator={false}
-                                    data={jobTypeFilterOptions}
-                                    keyExtractor={(jt) => jt.code || 'all-types-filter'}
-                                    className="-mx-1 px-1 py-1 mb-1"
-                                    renderItem={({ item: jt }) => {
-                                        let displayName = jt.name_en;
-                                        if (locale === 'gu' && jt.name_gu) displayName = jt.name_gu;
-                                        else if (locale === 'hi' && jt.name_hi) displayName = jt.name_hi;
-                                        else if (jt.name) displayName = jt.name;
-
-                                        return (
-                                            <TouchableOpacity
-                                                onPress={() => handleTaskTypeCodeFilterChange(jt.code)}
-                                                className={`px-3.5 py-1.5 rounded-full border text-xs mr-2 ${filters.taskTypeCode === jt.code ? 'bg-secondary-500 border-secondary-500' : 'bg-gray-100 border-gray-300'}`}
-                                            >
-                                                <Text className={`${filters.taskTypeCode === jt.code ? 'text-white' : 'text-secondary-700'} font-medium`}>
-                                                    {displayName}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        );
-                                    }}
-                                />
-                            </View>
-                        )}
-                    </View>
-                );
+                return <ViewAndSearchSection
+                    t={t}
+                    filters={filters}
+                    jobTypeFilterOptions={jobTypeFilterOptions}
+                    locale={locale}
+                    handleViewModeChange={handleViewModeChange}
+                    handleSearchQueryChange={handleSearchQueryChange}
+                    handleTaskTypeCodeFilterChange={handleTaskTypeCodeFilterChange}
+                />;
             case 'kpis':
-                return (
-                    <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
-                        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.keyNumbers')}</Text>
-                        {isLoadingDisplayData && (
-                            <View className="h-20 justify-center items-center">
-                                <ActivityIndicator size="large" color={COLORS.primary} />
-                                <Text className="text-gray-500 mt-2">{t('reportsPage.loadingData')}</Text>
-                            </View>
-                        )}
-                        {!isLoadingDisplayData && apiError && (
-                            <View className="h-20 justify-center items-center">
-                                <AppIcon name="alert-circle-outline" family="Ionicons" size={30} color={COLORS.error} />
-                                <Text className="text-red-500 text-center mt-1">{apiError.message || t('reportsPage.errorLoading')}</Text>
-                            </View>
-                        )}
-                        {!isLoadingDisplayData && !apiError && (
-                            <View className="grid grid-cols-2 gap-x-4 gap-y-4">
-                                <View className="bg-blue-50 p-4 rounded-lg items-center shadow-sm border border-blue-100">
-                                    <AppIcon name="briefcase-variant-outline" family="MaterialCommunityIcons" size={30} color={COLORS.blue[600]} />
-                                    <Text className="text-sm text-blue-700 mt-1.5 font-medium">{t('reportsPage.kpi.totalWorkUnits')}</Text>
-                                    <Text className="text-2xl font-bold text-blue-800 mt-0.5">{totalWorkUnits || '--'}</Text>
-                                </View>
-                                <View className="bg-green-50 p-4 rounded-lg items-center shadow-sm border border-green-100">
-                                    <AppIcon name="cash-multiple" family="MaterialCommunityIcons" size={30} color={COLORS.success} />
-                                    <Text className="text-sm text-green-700 mt-1.5 font-medium">{t('reportsPage.kpi.totalEarnings')}</Text>
-                                    <Text className="text-2xl font-bold text-green-800 mt-0.5">₹{(totalEarnings || 0).toFixed(0)}</Text>
-                                </View>
-                            </View>
-                        )}
-                    </View>
-                );
+                return <KpisSection
+                    t={t}
+                    isLoadingDisplayData={isLoadingDisplayData}
+                    apiError={apiError}
+                    totalWorkUnits={totalWorkUnits}
+                    totalEarnings={totalEarnings}
+                />;
             case 'visualSummary':
-                return (
-                    <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
-                        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.visualSummary')}</Text>
-                        {isLoadingDisplayData && (
-                            <View className="h-40 justify-center items-center">
-                                <ActivityIndicator size="large" color={COLORS.primary} />
-                                <Text className="text-gray-500 mt-2">{t('reportsPage.loadingCharts')}</Text>
-                            </View>
-                        )}
-                        {!isLoadingDisplayData && apiError && (
-                            <View className="h-40 justify-center items-center">
-                                <AppIcon name="bar-chart-outline" family="Ionicons" size={30} color={COLORS.error} />
-                                <Text className="text-red-500 text-center mt-1">{t('reportsPage.errorLoadingCharts')}</Text>
-                            </View>
-                        )}
-                        {!isLoadingDisplayData && !apiError && (workData.length > 0 || paymentData.length > 0) && (
-                            <>
-                                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg mb-3 p-2">
-                                    <Text className="text-gray-500 text-center">{t('reportsPage.charts.workUnitsBar')}</Text>
-                                </View>
-                                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg mb-3 p-2">
-                                    <Text className="text-gray-500 text-center">{t('reportsPage.charts.earningsTrendLine')}</Text>
-                                </View>
-                                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg mb-3 p-2">
-                                    <Text className="text-gray-500 text-center">{t('reportsPage.charts.paymentRatioPie')}</Text>
-                                </View>
-                                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg p-2">
-                                    <Text className="text-gray-500 text-center">{t('reportsPage.charts.workDensityHeatmap')}</Text>
-                                </View>
-                            </>
-                        )}
-                        {!isLoadingDisplayData && !apiError && workData.length === 0 && paymentData.length === 0 && (
-                            <View className="py-10 items-center">
-                                <AppIcon name="analytics-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
-                                <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForCharts')}</Text>
-                            </View>
-                        )}
-                    </View>
-                );
+                return <VisualSummarySection
+                    t={t}
+                    isLoadingDisplayData={isLoadingDisplayData}
+                    apiError={apiError}
+                    workData={workData}
+                    paymentData={paymentData}
+                />;
             case 'workList':
-                if (isLoadingDisplayData) return <View className="h-60 justify-center items-center bg-white p-4 rounded-lg shadow mb-4 mx-3"><ActivityIndicator size="large" color={COLORS.primary} /><Text className="text-gray-500 mt-2">{t('reportsPage.loadingTable')}</Text></View>;
-                if (!isLoadingDisplayData && apiError) return <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3 items-center"><AppIcon name="cloud-offline-outline" family="Ionicons" size={30} color={COLORS.error} /><Text className="text-red-500 text-center mt-1">{apiError.message || t('reportsPage.errorLoading')}</Text></View>;
-                if (!(filters.viewMode === 'work' || filters.viewMode === 'combined')) return null;
-
-                return (
-                    <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
-                        <Text className="text-xl font-semibold text-gray-800 mb-1">{t('reportsPage.detailedData')}</Text>
-                        <Text className="text-lg font-medium text-gray-700 mb-3 mt-1">{t('reportsPage.workEntriesTitle')}</Text>
-                        <FlatList
-                            data={workData}
-                            keyExtractor={(item) => item.id.toString()}
-                            renderItem={({ item }: { item: TransformedWorkEntry }) => {
-                                const jobTypeDetails = STATIC_JOB_TYPES.find(jt => jt.code === item.task_type_code);
-                                let displayJobTypeName = item.task_type_code || 'N/A';
-                                if (jobTypeDetails) {
-                                    displayJobTypeName = (locale === 'gu' && jobTypeDetails.name_gu ? jobTypeDetails.name_gu : locale === 'hi' && jobTypeDetails.name_hi ? jobTypeDetails.name_hi : jobTypeDetails.name_en || jobTypeDetails.name);
-                                }
-
-                                return (
-                                    <View className="border-b border-gray-200 py-3.5 px-1">
-                                        <View className="flex-row justify-between items-start mb-1">
-                                            <View className="flex-1 pr-2">
-                                                <Text className="text-base text-gray-800 font-semibold mb-0.5">{item.title || t('reportsPage.noDescription')}</Text>
-                                                <Text className="text-xs text-gray-600">{t('reportsPage.jobType')}{displayJobTypeName}</Text>
-                                            </View>
-                                            <Text className="text-base font-semibold text-blue-600">{`${item.quantity}`}</Text>
-                                        </View>
-                                        <View className="flex-row justify-between items-center">
-                                            <Text className="text-sm text-green-700 font-medium">{t('reportsPage.earning')} <Text className="font-semibold">₹{(item.calculated_earning || 0).toFixed(2)}</Text></Text>
-                                        </View>
-                                        {item.notes && (
-                                            <View className="mt-2 bg-gray-50 p-2 rounded-md border border-gray-100">
-                                                <Text className="text-xs text-gray-500 italic">{t('reportsPage.notes')}{item.notes}</Text>
-                                            </View>
-                                        )}
-                                    </View>
-                                );
-                            }}
-                            ListEmptyComponent={() => (
-                                !isLoadingDisplayData && !apiError && workData.length === 0 && (
-                                    <View className="py-10 items-center">
-                                        <AppIcon name="file-tray-stacked-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
-                                        <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForFilters')}</Text>
-                                    </View>
-                                )
-                            )}
-                            scrollEnabled={false}
-                        />
-                    </View>
-                );
+                return <WorkListSection
+                    t={t}
+                    locale={locale}
+                    isLoadingDisplayData={isLoadingDisplayData}
+                    apiError={apiError}
+                    filters={filters}
+                    workData={workData}
+                />;
             case 'paymentList':
-                if (isLoadingDisplayData) return <View className="h-60 justify-center items-center bg-white p-4 rounded-lg shadow mb-4 mx-3"><ActivityIndicator size="large" color={COLORS.primary} /><Text className="text-gray-500 mt-2">{t('reportsPage.loadingTable')}</Text></View>;
-                if (!isLoadingDisplayData && apiError) return <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3 items-center"><AppIcon name="card-outline" family="Ionicons" size={30} color={COLORS.error} /><Text className="text-red-500 text-center mt-1">{apiError.message || t('reportsPage.errorLoading')}</Text></View>;
-                if (!(filters.viewMode === 'payments' || filters.viewMode === 'combined')) return null;
-
-                return (
-                    <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
-                        {(filters.viewMode === 'payments' || (filters.viewMode === 'combined' && workData.length === 0)) &&
-                            <Text className="text-xl font-semibold text-gray-800 mb-1">{t('reportsPage.detailedData')}</Text>}
-                        <Text className="text-lg font-medium text-gray-700 mb-3 mt-1">{t('reportsPage.paymentEntriesTitle')}</Text>
-                        <FlatList
-                            data={paymentData}
-                            keyExtractor={(item) => item.id.toString()}
-                            renderItem={({ item }: { item: TransformedPaymentEntry }) => (
-                                <View className="border-b border-gray-200 py-3.5 px-1">
-                                    <View className="flex-row justify-between items-start mb-1">
-                                        <View className="flex-1 pr-2">
-                                            <Text className="text-base text-green-700 font-semibold">
-                                                {t('reportsPage.paymentAmount')}₹{(item.amount || 0).toFixed(2)}
-                                            </Text>
-                                            {item.from && <Text className="text-sm text-gray-700 mt-0.5">{t('reportsPage.paymentFrom')}{item.from}</Text>}
-                                        </View>
-                                        <Text className="text-sm text-gray-600">{new Date(item.date).toLocaleDateString(locale || 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</Text>
-                                    </View>
-                                    {item.notes && (
-                                        <View className="mt-1.5 bg-gray-50 p-2 rounded-md border border-gray-100">
-                                            <Text className="text-xs text-gray-500 italic">{t('reportsPage.notes')}{item.notes}</Text>
-                                        </View>
-                                    )}
-                                </View>
-                            )}
-                            ListEmptyComponent={() => (
-                                !isLoadingDisplayData && !apiError && paymentData.length === 0 && (
-                                    <View className="py-10 items-center">
-                                        <AppIcon name="file-tray-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
-                                        <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForFilters')}</Text>
-                                    </View>
-                                )
-                            )}
-                            scrollEnabled={false}
-                        />
-                        {!isLoadingDisplayData && !apiError && filters.viewMode === 'combined' && workData.length === 0 && paymentData.length === 0 && (
-                            <View className="py-10 items-center">
-                                <AppIcon name="documents-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
-                                <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForFilters')}</Text>
-                            </View>
-                        )}
-                    </View>
-                );
+                return <PaymentListSection
+                    t={t}
+                    locale={locale}
+                    isLoadingDisplayData={isLoadingDisplayData}
+                    apiError={apiError}
+                    filters={filters}
+                    paymentData={paymentData}
+                    workDataLength={workData.length}
+                />;
             case 'exportAndShare':
-                return (
-                    <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
-                        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.exportAndShare')}</Text>
-                        <TouchableOpacity
-                            className="flex-row items-center justify-center bg-red-100 border border-red-300 p-3.5 rounded-md mb-3 active:bg-red-200"
-                            onPress={() => exportReport('pdf')}
-                        >
-                            <AppIcon name="file-pdf-box" family="MaterialCommunityIcons" size={22} color={COLORS.error} />
-                            <Text className="ml-2 text-red-700 font-semibold">{t('reportsPage.exportAsPDF')}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            className="flex-row items-center justify-center bg-green-100 border border-green-300 p-3.5 rounded-md active:bg-green-200"
-                            onPress={() => exportReport('csv')}
-                        >
-                            <AppIcon name="file-excel-box" family="MaterialCommunityIcons" size={22} color={COLORS.success} />
-                            <Text className="ml-2 text-green-700 font-semibold">{t('reportsPage.exportAsCSV')}</Text>
-                        </TouchableOpacity>
-                    </View>
-                );
+                return <ExportAndShareSection t={t} exportReport={exportReport} />;
             default:
                 return null;
         }
-    };
+    }, [
+        t, locale, filters, quickFilterOptions, savedFiltersList, jobTypeFilterOptions,
+        isLoadingDisplayData, apiError, workData, paymentData, totalWorkUnits, totalEarnings,
+        handleQuickFilterChange, openCustomDateRangePicker, applySavedFilter, removeSavedFilter, saveCurrentFilter,
+        handleViewModeChange, handleSearchQueryChange, handleTaskTypeCodeFilterChange, exportReport
+    ]);
 
     return (
         <FlatList
@@ -591,7 +743,7 @@ const ReportsScreen = () => {
             data={screenSections}
             renderItem={renderScreenSection}
             keyExtractor={(item) => item.id}
-            ListFooterComponent={<View className="h-12" />}
+            ListFooterComponent={<View className="h-12" />} // Consider making this a memoized component if complex
         />
     );
 };

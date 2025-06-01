@@ -7,7 +7,7 @@ import en from '../locales/en.json';
 type TranslationKey = keyof typeof en;
 type ImportedTranslationsType = any;
 
-interface LanguageContextType {
+export interface LanguageContextType {
     locale: string;
     setLocale: (locale: string) => Promise<void>;
     t: (key: TranslationKey, variables?: Record<string, any>) => string;

@@ -7,15 +7,8 @@ const reportService = {
             return Promise.reject(new Error('Start date and end date are required for fetching report data.'));
         }
 
-        let reportTypeParam = '';
-        if (filters.viewMode === 'work') {
-            reportTypeParam = 'work';
-        } else if (filters.viewMode === 'payments') {
-            reportTypeParam = 'payment';
-        } // For 'combined', reportTypeParam remains empty
-
         const params: Record<string, any> = {
-            report_type: reportTypeParam,
+            report_type: filters.viewMode,
             start_date: filters.startDate,
             end_date: filters.endDate,
         };

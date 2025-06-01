@@ -124,7 +124,7 @@ export interface ReportPaymentEntry { // Based on Payment from types/payment.ts
   updated_at?: string;
 }
 
-export type ViewMode = 'work' | 'payments' | 'combined';
+export type ViewMode = 'work' | 'payment' | 'combined';
 export type QuickFilterType = 'today' | 'yesterday' | 'last7' | 'last15' | 'last30' | 'thisMonth' | 'lastMonth' | 'custom';
 
 export interface ReportFilters {
