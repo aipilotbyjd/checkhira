@@ -362,6 +362,10 @@
     "reportsPage.kpi.totalWorkUnits": "कुल कार्य इकाइयाँ",
     "reportsPage.kpi.totalEarnings": "कुल कमाई",
     "reportsPage.kpi.unpaidBalance": "अपेक्षित भुगतान",
+    "reportsPage.kpi.workTotalRecords": "[HI Total Work Records]",
+    "reportsPage.kpi.workTotalAmount": "[HI Total Work Amount]",
+    "reportsPage.kpi.paymentTotalRecords": "[HI Total Payment Records]",
+    "reportsPage.kpi.paymentTotalAmount": "[HI Total Payment Amount]",
     "reportsPage.visualSummary": "विज़ुअल सारांश",
     "reportsPage.loadingCharts": "चार्ट लोड हो रहे हैं...",
     "reportsPage.charts.workUnitsBar": "दिन/सप्ताह/महीने के आधार पर कार्य इकाइयाँ बार चार्ट",
@@ -389,5 +393,9 @@
     "reportsPage.errorLoading": "डेटा लोड हो रहा है। कृपया पुनः प्रयास करें।",
     "reportsPage.errorLoadingCharts": "चार्ट डेटा लोड हो रहा है। कृपया पुनः प्रयास करें।",
     "reportsPage.kpi.totalPaymentEntries": "कुल भुगतान इनपुट",
-    "reportsPage.kpi.totalPaymentsReceived": "कुल भुगतान प्राप्त"
+    "reportsPage.kpi.totalPaymentsReceived": "कुल भुगतान प्राप्त",
+    "reportsPage.charts.unitsSuffix": " इकाइयाँ",
+    "reportsPage.charts.unknownSource": "अज्ञात स्रोत",
+    "reportsPage.charts.otherSources": "अन्य स्रोत",
+    "reportsPage.tryAdjustingFilters": "फ़िल्टर समायोजित करने या अधिक डेटा जोड़ने का प्रयास करें।"
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Platform, TextInput, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, TextInput, FlatList, ActivityIndicator, Dimensions, ScrollView } from 'react-native';
+// import { BarChart, LineChart, PieChart, ContributionGraph } from 'react-native-chart-kit';
 import { useLanguage, LanguageContextType } from '../../../contexts/LanguageContext';
 import AppIcon, { IconFamily } from '../../../components/common/Icon';
 import { COLORS } from '../../../constants/theme';
@@ -74,7 +75,7 @@ const getDateRangeForQuickFilter = (filter: QuickFilterType): { startDate: strin
     };
 };
 
-type ScreenSectionType = 'header' | 'filters' | 'viewAndSearch' | 'kpis' | 'visualSummary' | 'workList' | 'paymentList' | 'exportAndShare';
+type ScreenSectionType = 'header' | 'filters' | 'viewAndSearch' | 'kpis' | 'workList' | 'paymentList' | 'exportAndShare';
 interface ScreenSection {
     id: ScreenSectionType;
 }
@@ -84,11 +85,33 @@ const screenSections: ScreenSection[] = [
     { id: 'filters' },
     { id: 'viewAndSearch' },
     { id: 'kpis' },
-    { id: 'visualSummary' },
     { id: 'workList' },
     { id: 'paymentList' },
     { id: 'exportAndShare' },
 ];
+
+// Helper function to convert hex to rgba for opacity
+// const hexToRgba = (hex: string, opacity: number): string => {
+//     hex = hex.replace('#', '');
+//     const r = parseInt(hex.substring(0, 2), 16);
+//     const g = parseInt(hex.substring(2, 4), 16);
+//     const b = parseInt(hex.substring(4, 6), 16);
+//     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+// };
+
+// const MAX_PIE_SLICES = 5; // Show top N slices + "Other"
+// const DAILY_THRESHOLD = 35; // Up to 35 data points, show daily
+// const WEEKLY_THRESHOLD = 120; // Up to 120 data points (approx 4 months), show weekly. Beyond this, monthly.
+
+// Helper to get week number for a date
+// const getWeekNumber = (d: Date): number => {
+//     d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+//     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+//     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+//     // @ts-ignore
+//     const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+//     return weekNo;
+// };
 
 // Section Components
 interface HeaderSectionProps { t: LanguageContextType['t']; }
@@ -184,12 +207,6 @@ const ViewAndSearchSection = React.memo(({
         const keySuffix = mode === 'payment' ? 'payments' : mode;
         const translationKey = `reportsPage.viewModes.${keySuffix}`;
 
-        // Define a type that represents the actual keys we expect after mapping.
-        type ActualTranslationKeys =
-            | "reportsPage.viewModes.work"
-            | "reportsPage.viewModes.payments"
-            | "reportsPage.viewModes.combined";
-
         return (
             <TouchableOpacity
                 key={mode}
@@ -197,7 +214,7 @@ const ViewAndSearchSection = React.memo(({
                 onPress={() => handleViewModeChange(mode)}
             >
                 <Text className={`${filters.viewMode === mode ? 'text-white' : 'text-primary-700'} font-semibold capitalize`}>
-                    {t(translationKey as ActualTranslationKeys)}
+                    {t(translationKey as any)}
                 </Text>
             </TouchableOpacity>
         );
@@ -258,10 +275,16 @@ interface KpisSectionProps {
     t: LanguageContextType['t'];
     isLoadingDisplayData: boolean;
     apiError: any;
-    totalWorkUnits: number;
-    totalEarnings: number;
+    filters: ReportFilters;
+    totalWorkRecords: number;
+    totalWorkAmount: number;
+    totalPaymentRecords: number;
+    totalPaymentAmount: number;
 }
-const KpisSection = React.memo(({ t, isLoadingDisplayData, apiError, totalWorkUnits, totalEarnings }: KpisSectionProps) => (
+const KpisSection = React.memo(({
+    t, isLoadingDisplayData, apiError, filters,
+    totalWorkRecords, totalWorkAmount, totalPaymentRecords, totalPaymentAmount
+}: KpisSectionProps) => (
     <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
         <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.keyNumbers')}</Text>
         {isLoadingDisplayData && (
@@ -278,63 +301,34 @@ const KpisSection = React.memo(({ t, isLoadingDisplayData, apiError, totalWorkUn
         )}
         {!isLoadingDisplayData && !apiError && (
             <View className="grid grid-cols-2 gap-x-4 gap-y-4">
-                <View className="bg-blue-50 p-4 rounded-lg items-center shadow-sm border border-blue-100">
-                    <AppIcon name="briefcase-variant-outline" family="MaterialCommunityIcons" size={30} color={COLORS.blue[600]} />
-                    <Text className="text-sm text-blue-700 mt-1.5 font-medium">{t('reportsPage.kpi.totalWorkUnits')}</Text>
-                    <Text className="text-2xl font-bold text-blue-800 mt-0.5">{totalWorkUnits || '--'}</Text>
-                </View>
-                <View className="bg-green-50 p-4 rounded-lg items-center shadow-sm border border-green-100">
-                    <AppIcon name="cash-multiple" family="MaterialCommunityIcons" size={30} color={COLORS.success} />
-                    <Text className="text-sm text-green-700 mt-1.5 font-medium">{t('reportsPage.kpi.totalEarnings')}</Text>
-                    <Text className="text-2xl font-bold text-green-800 mt-0.5">₹{(totalEarnings || 0).toFixed(0)}</Text>
-                </View>
-            </View>
-        )}
-    </View>
-));
-
-interface VisualSummarySectionProps {
-    t: LanguageContextType['t'];
-    isLoadingDisplayData: boolean;
-    apiError: any;
-    workData: TransformedWorkEntry[];
-    paymentData: TransformedPaymentEntry[];
-}
-const VisualSummarySection = React.memo(({ t, isLoadingDisplayData, apiError, workData, paymentData }: VisualSummarySectionProps) => (
-    <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
-        <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.visualSummary')}</Text>
-        {isLoadingDisplayData && (
-            <View className="h-40 justify-center items-center">
-                <ActivityIndicator size="large" color={COLORS.primary} />
-                <Text className="text-gray-500 mt-2">{t('reportsPage.loadingCharts')}</Text>
-            </View>
-        )}
-        {!isLoadingDisplayData && apiError && (
-            <View className="h-40 justify-center items-center">
-                <AppIcon name="bar-chart-outline" family="Ionicons" size={30} color={COLORS.error} />
-                <Text className="text-red-500 text-center mt-1">{t('reportsPage.errorLoadingCharts')}</Text>
-            </View>
-        )}
-        {!isLoadingDisplayData && !apiError && (workData.length > 0 || paymentData.length > 0) && (
-            <>
-                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg mb-3 p-2">
-                    <Text className="text-gray-500 text-center">{t('reportsPage.charts.workUnitsBar')}</Text>
-                </View>
-                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg mb-3 p-2">
-                    <Text className="text-gray-500 text-center">{t('reportsPage.charts.earningsTrendLine')}</Text>
-                </View>
-                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg mb-3 p-2">
-                    <Text className="text-gray-500 text-center">{t('reportsPage.charts.paymentRatioPie')}</Text>
-                </View>
-                <View className="h-48 bg-gray-50 border border-gray-200 justify-center items-center rounded-lg p-2">
-                    <Text className="text-gray-500 text-center">{t('reportsPage.charts.workDensityHeatmap')}</Text>
-                </View>
-            </>
-        )}
-        {!isLoadingDisplayData && !apiError && workData.length === 0 && paymentData.length === 0 && (
-            <View className="py-10 items-center">
-                <AppIcon name="analytics-outline" family="Ionicons" size={40} color={COLORS.gray[300]} />
-                <Text className="text-gray-500 text-center mt-2">{t('reportsPage.noDataForCharts')}</Text>
+                {(filters.viewMode === 'work' || filters.viewMode === 'combined') && (
+                    <>
+                        <View className="bg-blue-50 p-4 rounded-lg items-center shadow-sm border border-blue-100">
+                            <AppIcon name="briefcase-variant-outline" family="MaterialCommunityIcons" size={30} color={COLORS.primary} />
+                            <Text className="text-sm text-blue-700 mt-1.5 font-medium">{t('reportsPage.kpi.workTotalRecords' as any)}</Text>
+                            <Text className="text-2xl font-bold text-blue-800 mt-0.5">{totalWorkRecords || '--'}</Text>
+                        </View>
+                        <View className="bg-green-50 p-4 rounded-lg items-center shadow-sm border border-green-100">
+                            <AppIcon name="cash-multiple" family="MaterialCommunityIcons" size={30} color={COLORS.success} />
+                            <Text className="text-sm text-green-700 mt-1.5 font-medium">{t('reportsPage.kpi.workTotalAmount' as any)}</Text>
+                            <Text className="text-2xl font-bold text-green-800 mt-0.5">₹{(totalWorkAmount || 0).toFixed(0)}</Text>
+                        </View>
+                    </>
+                )}
+                {(filters.viewMode === 'payment' || filters.viewMode === 'combined') && (
+                    <>
+                        <View className="bg-orange-50 p-4 rounded-lg items-center shadow-sm border border-orange-100">
+                            <AppIcon name="format-list-numbered" family="MaterialCommunityIcons" size={30} color={COLORS.warning} />
+                            <Text className="text-sm text-orange-700 mt-1.5 font-medium">{t('reportsPage.kpi.paymentTotalRecords' as any)}</Text>
+                            <Text className="text-2xl font-bold text-orange-800 mt-0.5">{totalPaymentRecords || '--'}</Text>
+                        </View>
+                        <View className="bg-fuchsia-50 p-4 rounded-lg items-center shadow-sm border border-fuchsia-100">
+                            <AppIcon name="credit-card-check-outline" family="MaterialCommunityIcons" size={30} color={COLORS.secondary} />
+                            <Text className="text-sm text-fuchsia-700 mt-1.5 font-medium">{t('reportsPage.kpi.paymentTotalAmount' as any)}</Text>
+                            <Text className="text-2xl font-bold text-fuchsia-800 mt-0.5">₹{(totalPaymentAmount || 0).toFixed(0)}</Text>
+                        </View>
+                    </>
+                )}
             </View>
         )}
     </View>
@@ -379,7 +373,7 @@ const WorkListSection = React.memo(({ t, locale, isLoadingDisplayData, apiError,
 
     if (isLoadingDisplayData) return <View className="h-60 justify-center items-center bg-white p-4 rounded-lg shadow mb-4 mx-3"><ActivityIndicator size="large" color={COLORS.primary} /><Text className="text-gray-500 mt-2">{t('reportsPage.loadingTable')}</Text></View>;
     if (!isLoadingDisplayData && apiError) return <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3 items-center"><AppIcon name="cloud-offline-outline" family="Ionicons" size={30} color={COLORS.error} /><Text className="text-red-500 text-center mt-1">{apiError?.message || t('reportsPage.errorLoading')}</Text></View>;
-    if (!(filters.viewMode === 'work' || filters.viewMode === 'combined')) return null;
+    if (filters.viewMode === 'payment') return null;
 
     return (
         <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
@@ -433,7 +427,7 @@ const PaymentListSection = React.memo(({ t, locale, isLoadingDisplayData, apiErr
 
     if (isLoadingDisplayData) return <View className="h-60 justify-center items-center bg-white p-4 rounded-lg shadow mb-4 mx-3"><ActivityIndicator size="large" color={COLORS.primary} /><Text className="text-gray-500 mt-2">{t('reportsPage.loadingTable')}</Text></View>;
     if (!isLoadingDisplayData && apiError) return <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3 items-center"><AppIcon name="card-outline" family="Ionicons" size={30} color={COLORS.error} /><Text className="text-red-500 text-center mt-1">{apiError?.message || t('reportsPage.errorLoading')}</Text></View>;
-    if (!(filters.viewMode === 'payment' || filters.viewMode === 'combined')) return null;
+    if (filters.viewMode === 'work') return null;
 
     return (
         <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3">
@@ -516,11 +510,6 @@ const ReportsScreen = () => {
         setIsProcessingData(true); setWorkData([]); setPaymentData([]); setReportSummary(null);
 
         const paramsForApi: ReportFilters = { ...filters };
-        // if (paramsForApi.viewMode === 'payment' && paramsForApi.taskTypeCode) {
-        //     // If API strictly needs taskTypeCode removed for payments, uncomment:
-        //     // delete (paramsForApi as any).taskTypeCode; 
-        // }
-
         try {
             await execute(() => reportService.fetchReportData(paramsForApi));
         }
@@ -532,6 +521,41 @@ const ReportsScreen = () => {
     useEffect(() => {
         fetchAndProcessReportData();
     }, [fetchAndProcessReportData]);
+
+    useEffect(() => {
+        if (!rawApiData && !apiIsLoading && !apiError && workData.length === 0 && paymentData.length === 0) {
+            const today = new Date();
+            const sampleWork: TransformedWorkEntry[] = [];
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                sampleWork.push({
+                    id: i + 1,
+                    date: date.toISOString(),
+                    title: `Sample Task ${30 - i}`,
+                    quantity: Math.floor(Math.random() * 5) + (i % 7 === 0 || i % 7 === 1 ? 0 : 1),
+                    calculated_earning: (Math.floor(Math.random() * 5) + 1) * (Math.random() * 100 + 50),
+                    task_type_code: A_Z_LETTERS[i % A_Z_LETTERS.length]
+                });
+            }
+            setWorkData(sampleWork);
+
+            const samplePayments: TransformedPaymentEntry[] = [];
+            const paymentSources = ['Client Alpha', 'Beta Services', 'Gamma Inc.', 'Delta Corp'];
+            for (let i = 0; i < 5; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - (Math.floor(Math.random() * 30)));
+                samplePayments.push({
+                    id: i + 1,
+                    date: date.toISOString(),
+                    amount: Math.floor(Math.random() * 2000) + 500,
+                    from: paymentSources[i % paymentSources.length],
+                    notes: `Payment for services rendered project ${A_Z_LETTERS[i % A_Z_LETTERS.length]}`
+                });
+            }
+            setPaymentData(samplePayments);
+        }
+    }, [rawApiData, apiIsLoading, apiError, workData.length, paymentData.length]);
 
     useEffect(() => {
         if (rawApiData && !apiIsLoading) {
@@ -560,10 +584,7 @@ const ReportsScreen = () => {
             setPaymentData(transformedPayments);
             setReportSummary(summary);
             setIsProcessingData(false);
-        } else if (!apiIsLoading && rawApiData === null && !apiError) {
-            setWorkData([]);
-            setPaymentData([]);
-            setReportSummary(null);
+        } else if (!apiIsLoading && !apiError && !rawApiData) {
             setIsProcessingData(false);
         } else if (apiError) {
             setIsProcessingData(false);
@@ -607,7 +628,7 @@ const ReportsScreen = () => {
     }, []);
 
     const handleViewModeChange = useCallback((mode: ViewMode) => {
-        setFilters(prev => ({ ...prev, viewMode: mode }));
+        setFilters(prev => ({ ...prev, viewMode: mode, taskTypeCode: null }));
     }, []);
 
     const handleSearchQueryChange = useCallback((text: string) => {
@@ -650,19 +671,32 @@ const ReportsScreen = () => {
         ] as (JobType | { code: null; name: string; name_en: string; name_gu: string; name_hi: string; id: string; })[];
     }, [locale, t]);
 
-    const { totalWorkUnits, totalEarnings } = useMemo(() => {
-        let currentWorkUnits = 0;
-        let currentWorkEarnings = 0;
+    const { totalWorkRecords, totalWorkAmount, totalPaymentRecords, totalPaymentAmount } = useMemo(() => {
+        let currentWorkRecords = 0;
+        let currentWorkAmount = 0;
+        let currentPaymentRecords = 0;
+        let currentPaymentAmount = 0;
 
         if (filters.viewMode === 'work' || filters.viewMode === 'combined') {
-            currentWorkUnits = workData.reduce((sum, entry) => sum + (Number(entry.quantity) || 0), 0);
-            currentWorkEarnings = workData.reduce((sum, entry) => sum + (Number(entry.calculated_earning) || 0), 0);
+            currentWorkRecords = workData.length;
+            currentWorkAmount = workData.reduce((sum, entry) => sum + (Number(entry.calculated_earning) || 0), 0);
         }
 
-        return { totalWorkUnits: currentWorkUnits, totalEarnings: currentWorkEarnings };
-    }, [workData, filters.viewMode]);
+        if (filters.viewMode === 'payment' || filters.viewMode === 'combined') {
+            currentPaymentRecords = paymentData.length;
+            currentPaymentAmount = paymentData.reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0);
+        }
+
+        return {
+            totalWorkRecords: currentWorkRecords,
+            totalWorkAmount: currentWorkAmount,
+            totalPaymentRecords: currentPaymentRecords,
+            totalPaymentAmount: currentPaymentAmount
+        };
+    }, [workData, paymentData, filters.viewMode]);
 
     const isLoadingDisplayData = apiIsLoading || isProcessingData;
+    const screenWidth = Dimensions.get('window').width;
 
     const renderScreenSection = useCallback(({ item }: { item: ScreenSection }) => {
         switch (item.id) {
@@ -695,16 +729,11 @@ const ReportsScreen = () => {
                     t={t}
                     isLoadingDisplayData={isLoadingDisplayData}
                     apiError={apiError}
-                    totalWorkUnits={totalWorkUnits}
-                    totalEarnings={totalEarnings}
-                />;
-            case 'visualSummary':
-                return <VisualSummarySection
-                    t={t}
-                    isLoadingDisplayData={isLoadingDisplayData}
-                    apiError={apiError}
-                    workData={workData}
-                    paymentData={paymentData}
+                    filters={filters}
+                    totalWorkRecords={totalWorkRecords}
+                    totalWorkAmount={totalWorkAmount}
+                    totalPaymentRecords={totalPaymentRecords}
+                    totalPaymentAmount={totalPaymentAmount}
                 />;
             case 'workList':
                 return <WorkListSection
@@ -732,18 +761,21 @@ const ReportsScreen = () => {
         }
     }, [
         t, locale, filters, quickFilterOptions, savedFiltersList, jobTypeFilterOptions,
-        isLoadingDisplayData, apiError, workData, paymentData, totalWorkUnits, totalEarnings,
+        isLoadingDisplayData, apiError, workData, paymentData,
+        totalWorkRecords, totalWorkAmount, totalPaymentRecords, totalPaymentAmount,
         handleQuickFilterChange, openCustomDateRangePicker, applySavedFilter, removeSavedFilter, saveCurrentFilter,
-        handleViewModeChange, handleSearchQueryChange, handleTaskTypeCodeFilterChange, exportReport
+        handleViewModeChange, handleSearchQueryChange, handleTaskTypeCodeFilterChange, exportReport,
+        screenWidth
     ]);
 
     return (
         <FlatList
-            className="flex-1 bg-gray-50"
+            className="flex-1 bg-gray-100"
             data={screenSections}
             renderItem={renderScreenSection}
             keyExtractor={(item) => item.id}
-            ListFooterComponent={<View className="h-12" />} // Consider making this a memoized component if complex
+            ListFooterComponent={<View className="h-16" />}
+            showsVerticalScrollIndicator={false}
         />
     );
 };

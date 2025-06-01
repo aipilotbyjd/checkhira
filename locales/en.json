@@ -575,6 +575,10 @@
   "reportsPage.kpi.totalWorkUnits": "Total Work Units",
   "reportsPage.kpi.totalEarnings": "Total Earnings",
   "reportsPage.kpi.unpaidBalance": "Unpaid Balance",
+  "reportsPage.kpi.workTotalRecords": "Total Work Records",
+  "reportsPage.kpi.workTotalAmount": "Total Work Amount",
+  "reportsPage.kpi.paymentTotalRecords": "Total Payment Records",
+  "reportsPage.kpi.paymentTotalAmount": "Total Payment Amount",
   "reportsPage.visualSummary": "Visual Summary",
   "reportsPage.loadingCharts": "Loading charts...",
   "reportsPage.charts.workUnitsBar": "Bar Chart: Work units per day/week/month",
@@ -603,5 +607,9 @@
   "reportsPage.errorLoading": "Error loading data. Please try again.",
   "reportsPage.errorLoadingCharts": "Error loading chart data. Please try again.",
   "reportsPage.kpi.totalPaymentEntries": "Total Payment Entries",
-  "reportsPage.kpi.totalPaymentsReceived": "Total Payments Received"
+  "reportsPage.kpi.totalPaymentsReceived": "Total Payments Received",
+  "reportsPage.charts.unitsSuffix": " units",
+  "reportsPage.charts.unknownSource": "Unknown Source",
+  "reportsPage.charts.otherSources": "Other Sources",
+  "reportsPage.tryAdjustingFilters": "Try adjusting filters or adding more data."
 }

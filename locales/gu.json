@@ -351,6 +351,10 @@
   "reportsPage.kpi.totalWorkUnits": "[GU Total Work Units]",
   "reportsPage.kpi.totalEarnings": "[GU Total Earnings]",
   "reportsPage.kpi.unpaidBalance": "[GU Unpaid Balance]",
+  "reportsPage.kpi.workTotalRecords": "[GU Total Work Records]",
+  "reportsPage.kpi.workTotalAmount": "[GU Total Work Amount]",
+  "reportsPage.kpi.paymentTotalRecords": "[GU Total Payment Records]",
+  "reportsPage.kpi.paymentTotalAmount": "[GU Total Payment Amount]",
   "reportsPage.visualSummary": "[GU Visual Summary]",
   "reportsPage.loadingCharts": "[GU Loading charts...]",
   "reportsPage.charts.workUnitsBar": "[GU Bar Chart: Work units per day/week/month]",
@@ -379,5 +383,9 @@
   "reportsPage.errorLoading": "[GU Error loading data. Please try again.]",
   "reportsPage.errorLoadingCharts": "[GU Error loading chart data. Please try again.]",
   "reportsPage.kpi.totalPaymentEntries": "[GU Total Payment Entries]",
-  "reportsPage.kpi.totalPaymentsReceived": "[GU Total Payments Received]"
+  "reportsPage.kpi.totalPaymentsReceived": "[GU Total Payments Received]",
+  "reportsPage.charts.unitsSuffix": "[GU units]",
+  "reportsPage.charts.unknownSource": "[GU Unknown Source]",
+  "reportsPage.charts.otherSources": "[GU Other Sources]",
+  "reportsPage.tryAdjustingFilters": "[GU Try adjusting filters or adding more data.]"
 }
