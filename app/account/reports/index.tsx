@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Platform, TextInput, FlatList, ActivityIndicator, Dimensions, ScrollView } from 'react-native';
-// import { BarChart, LineChart, PieChart, ContributionGraph } from 'react-native-chart-kit';
 import { useLanguage, LanguageContextType } from '../../../contexts/LanguageContext';
 import AppIcon, { IconFamily } from '../../../components/common/Icon';
 import { COLORS } from '../../../constants/theme';
@@ -89,29 +88,6 @@ const screenSections: ScreenSection[] = [
     { id: 'paymentList' },
     { id: 'exportAndShare' },
 ];
-
-// Helper function to convert hex to rgba for opacity
-// const hexToRgba = (hex: string, opacity: number): string => {
-//     hex = hex.replace('#', '');
-//     const r = parseInt(hex.substring(0, 2), 16);
-//     const g = parseInt(hex.substring(2, 4), 16);
-//     const b = parseInt(hex.substring(4, 6), 16);
-//     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-// };
-
-// const MAX_PIE_SLICES = 5; // Show top N slices + "Other"
-// const DAILY_THRESHOLD = 35; // Up to 35 data points, show daily
-// const WEEKLY_THRESHOLD = 120; // Up to 120 data points (approx 4 months), show weekly. Beyond this, monthly.
-
-// Helper to get week number for a date
-// const getWeekNumber = (d: Date): number => {
-//     d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-//     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-//     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-//     // @ts-ignore
-//     const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-//     return weekNo;
-// };
 
 // Section Components
 interface HeaderSectionProps { t: LanguageContextType['t']; }
@@ -490,7 +466,7 @@ const ReportsScreen = () => {
         quickFilter: 'today',
         startDate: getDateRangeForQuickFilter('today').startDate,
         endDate: getDateRangeForQuickFilter('today').endDate,
-        viewMode: 'combined',
+        viewMode: 'payment',
         searchQuery: '',
         taskTypeCode: null,
     });
