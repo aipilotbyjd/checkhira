@@ -604,6 +604,7 @@ const ReportsScreen = () => {
     }, []);
 
     const handleViewModeChange = useCallback((mode: ViewMode) => {
+        console.log("Handle view mode change:", mode);
         setFilters(prev => ({ ...prev, viewMode: mode, taskTypeCode: null }));
     }, []);
 
