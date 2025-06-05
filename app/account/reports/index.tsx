@@ -330,7 +330,7 @@ const FiltersSection = React.memo(({
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        className="flex-row -mx-2 px-2"
+                        className="flex-row mx-2 px-2"
                         contentContainerStyle={{ paddingRight: 16 }}
                     >
                         {savedFiltersList.map(sf => (
