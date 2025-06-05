@@ -61,7 +61,8 @@
   "alreadyHaveAccount": "Already have an account?",
   "yourRights": "Your Rights",
   "yourRightsDesc": "You have the right to access, update, or delete your personal information at any time. You can do this through your account settings or by contacting us directly.",
-  "home": "Home",
+  "home.title": "Home",
+  "home.welcome": "Welcome to Checkhira",
   "worklist": "Work List",
   "payments": "Payments",
   "account": "Account",
@@ -283,7 +284,8 @@
   "searchScreen": "Search Screen",
   "searchResults": "Search Results",
   "noResults": "No results found.",
-  "work": "Work",
+  "work.title": "Work",
+  "work.add_work": "Add Work",
   "clients": "Clients",
   "invoices": "Invoices",
   "templates": "Templates",
@@ -611,5 +613,27 @@
   "reportsPage.charts.unitsSuffix": " units",
   "reportsPage.charts.unknownSource": "Unknown Source",
   "reportsPage.charts.otherSources": "Other Sources",
-  "reportsPage.tryAdjustingFilters": "Try adjusting filters or adding more data."
+  "reportsPage.tryAdjustingFilters": "Try adjusting filters or adding more data.",
+  "reportsPage.startDateLabel": "Start Date",
+  "reportsPage.endDateLabel": "End Date",
+  "reportsPage.common.done": "Done",
+  "reportsPage.common.cancel": "Cancel",
+  "reportsPage.common.apply": "Apply",
+  "reportsPage.invalidDateRange": "Invalid date range.",
+  "reportsPage.selectDate": "Select a date",
+  "reportsPage.reportPeriodLabel": "Report Period",
+  "reportsPage.noDataToExport": "There is no data to export for the selected filters.",
+  "reportsPage.sharingNotAvailable": "Sharing is not available on this device.",
+  "reportsPage.common.delete": "Delete",
+  "reportsPage.common.confirm": "Confirm",
+  "reportsPage.common.loading": "Loading...",
+  "filters": {
+    "today": "Today"
+  },
+  "kpi": {
+    "workTotalRecords": "Work Entries",
+    "workTotalAmount": "Total Earnings",
+    "paymentTotalRecords": "Payment Entries",
+    "paymentTotalAmount": "Total Payments"
+  }
 }

@@ -397,5 +397,10 @@
     "reportsPage.charts.unitsSuffix": " इकाइयाँ",
     "reportsPage.charts.unknownSource": "अज्ञात स्रोत",
     "reportsPage.charts.otherSources": "अन्य स्रोत",
-    "reportsPage.tryAdjustingFilters": "फ़िल्टर समायोजित करने या अधिक डेटा जोड़ने का प्रयास करें।"
+    "reportsPage.tryAdjustingFilters": "फ़िल्टर समायोजित करने या अधिक डेटा जोड़ने का प्रयास करें।",
+    "reportsPage.startDateLabel": "प्रारंभ तिथि",
+    "reportsPage.endDateLabel": "अंतिम तिथि",
+    "reportsPage.common.done": "हो गया",
+    "reportsPage.common.cancel": "रद्द करें",
+    "reportsPage.common.apply": "लागू करें"
 }

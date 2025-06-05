@@ -387,5 +387,10 @@
   "reportsPage.charts.unitsSuffix": "[GU units]",
   "reportsPage.charts.unknownSource": "[GU Unknown Source]",
   "reportsPage.charts.otherSources": "[GU Other Sources]",
-  "reportsPage.tryAdjustingFilters": "[GU Try adjusting filters or adding more data.]"
+  "reportsPage.tryAdjustingFilters": "[GU Try adjusting filters or adding more data.]",
+  "reportsPage.startDateLabel": "શરૂ તારીખ",
+  "reportsPage.endDateLabel": "અંતિમ તારીખ",
+  "reportsPage.common.done": "થઈ ગયું",
+  "reportsPage.common.cancel": "રદ કરો",
+  "reportsPage.common.apply": "લાગુ કરો"
 }
