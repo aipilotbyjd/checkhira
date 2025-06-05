@@ -286,6 +286,8 @@ const FiltersSection = React.memo(({
     return (
         <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3 mt-3">
             <Text className="text-xl font-semibold text-gray-800 mb-4">{t('reportsPage.selectTime')}</Text>
+
+            {/* Quick Filter Buttons */}
             <FlatList
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -302,6 +304,8 @@ const FiltersSection = React.memo(({
                     </TouchableOpacity>
                 )}
             />
+
+            {/* Custom Date Range Button */}
             <View className={`flex-row items-center justify-center border p-3 rounded-md mb-4 ${isCustomDateActive ? 'bg-blue-100 border-blue-500' : 'bg-blue-50 border-blue-500'}`}>
                 <TouchableOpacity
                     className="flex-row items-center justify-center flex-1"
@@ -319,22 +323,28 @@ const FiltersSection = React.memo(({
                 )}
             </View>
 
+            {/* Saved Filters Section */}
             {savedFiltersList.length > 0 && (
                 <View className="mb-4 pt-3 border-t border-gray-200">
                     <Text className="text-base text-gray-700 mb-2 font-medium">{t('reportsPage.savedFilters')}</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row -mx-2 px-2">
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        className="flex-row -mx-2 px-2"
+                        contentContainerStyle={{ paddingRight: 16 }}
+                    >
                         {savedFiltersList.map(sf => (
-                            <View key={sf.name} className="flex-row items-center mr-2">
+                            <View key={sf.name} className="flex-row items-center mr-2 mb-2">
                                 <TouchableOpacity
                                     onPress={() => applySavedFilter(sf)}
-                                    className="flex-row items-center justify-center p-2.5 bg-gray-50 rounded-l-md border border-r-0 border-gray-200 h-full"
+                                    className="flex-row items-center justify-center p-2.5 bg-gray-50 rounded-l-md border border-r-0 border-gray-200"
                                 >
                                     <AppIcon name="filter-variant" family="MaterialCommunityIcons" size={16} color={COLORS.secondary} />
-                                    <Text className="text-sm text-gray-800 ml-1.5">{sf.name}</Text>
+                                    <Text className="text-sm text-gray-800 ml-1.5" numberOfLines={1} style={{ maxWidth: 120 }}>{sf.name}</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     onPress={() => removeSavedFilter(sf.name)}
-                                    className="p-2.5 bg-gray-100 rounded-r-md border border-gray-200 h-full justify-center"
+                                    className="p-2.5 bg-gray-100 rounded-r-md border border-gray-200 justify-center"
                                 >
                                     <AppIcon name="close-circle-outline" family="Ionicons" size={20} color={COLORS.error} />
                                 </TouchableOpacity>
@@ -343,6 +353,8 @@ const FiltersSection = React.memo(({
                     </ScrollView>
                 </View>
             )}
+
+            {/* Save Current Filter Button */}
             <TouchableOpacity
                 className="flex-row items-center justify-center bg-green-50 border border-green-500 p-3.5 rounded-md active:bg-green-100"
                 onPress={saveCurrentFilter}
@@ -790,6 +802,9 @@ const ReportsScreen = () => {
 
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [isSaveFilterModalVisible, setSaveFilterModalVisible] = useState(false);
+    const [newFilterName, setNewFilterName] = useState('');
+    const [saveFilterError, setSaveFilterError] = useState('');
 
     const [filters, setFilters] = useState<ReportFilters>({
         quickFilter: 'today',
@@ -957,29 +972,38 @@ const ReportsScreen = () => {
     }, [handleQuickFilterChange]);
 
     const saveCurrentFilter = useCallback(() => {
-        Alert.prompt(
-            t('reportsPage.saveFilterPrompt.title'),
-            t('reportsPage.saveFilterPrompt.message'),
-            [
-                { text: t('common.cancel' as any), style: 'cancel' },
-                {
-                    text: t('common.save' as any),
-                    onPress: async (filterName) => {
-                        if (filterName && filterName.trim().length > 0) {
-                            if (savedFiltersList.some(f => f.name.toLowerCase() === filterName.trim().toLowerCase())) {
-                                Alert.alert(t('reportsPage.saveFilterPrompt.errorTitle'), t('reportsPage.saveFilterPrompt.errorMessage'));
-                                return;
-                            }
-                            const newSavedFilters = [...savedFiltersList, { name: filterName.trim(), criteria: { ...filters } }];
-                            setSavedFiltersList(newSavedFilters);
-                            await saveFiltersToStorage(newSavedFilters);
-                        }
-                    },
-                },
-            ],
-            'plain-text'
-        );
-    }, [filters, savedFiltersList, t]);
+        setSaveFilterModalVisible(true);
+    }, []);
+
+    const handleSaveFilter = useCallback(async () => {
+        setSaveFilterError('');
+        if (!newFilterName || newFilterName.trim().length === 0) {
+            setSaveFilterError(t('reportsPage.saveFilterPrompt.errorEmpty'));
+            return;
+        }
+
+        const trimmedName = newFilterName.trim();
+        if (savedFiltersList.some(f => f.name.toLowerCase() === trimmedName.toLowerCase())) {
+            setSaveFilterError(t('reportsPage.saveFilterPrompt.errorMessage'));
+            return;
+        }
+
+        try {
+            const newSavedFilters = [...savedFiltersList, { name: trimmedName, criteria: { ...filters } }];
+            setSavedFiltersList(newSavedFilters);
+            await saveFiltersToStorage(newSavedFilters);
+            setNewFilterName('');
+            setSaveFilterModalVisible(false);
+        } catch (error) {
+            setSaveFilterError(t('reportsPage.saveFilterPrompt.errorSave'));
+        }
+    }, [filters, savedFiltersList, newFilterName, t]);
+
+    const handleCloseSaveFilterModal = useCallback(() => {
+        setSaveFilterModalVisible(false);
+        setNewFilterName('');
+        setSaveFilterError('');
+    }, []);
 
     const applySavedFilter = useCallback((savedFilter: { name: string; criteria: ReportFilters }) => {
         setFilters(savedFilter.criteria);
@@ -1163,6 +1187,55 @@ const ReportsScreen = () => {
                 onApply={handleCustomDateChange}
                 locale={locale}
             />
+            <Modal
+                visible={isSaveFilterModalVisible}
+                transparent
+                animationType="slide"
+                onRequestClose={handleCloseSaveFilterModal}
+            >
+                <Pressable onPress={handleCloseSaveFilterModal} className="flex-1 justify-end bg-black/50">
+                    <Pressable onPress={(e) => e.stopPropagation()} className="bg-white rounded-t-2xl p-5 w-full shadow-2xl">
+                        <View className="flex-row justify-between items-center mb-5">
+                            <Text className="text-xl font-bold text-gray-800">{t('reportsPage.saveFilterPrompt.title')}</Text>
+                            <TouchableOpacity onPress={handleCloseSaveFilterModal} className="p-1.5 bg-gray-100 rounded-full active:bg-gray-200">
+                                <AppIcon name="close" family="Ionicons" size={20} color={COLORS.gray[600]} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View className="mb-4">
+                            <TextInput
+                                className={`bg-gray-50 p-3.5 rounded-lg border ${saveFilterError ? 'border-red-500' : 'border-gray-200'} text-base`}
+                                placeholder={t('reportsPage.saveFilterPrompt.message')}
+                                value={newFilterName}
+                                onChangeText={(text) => {
+                                    setNewFilterName(text);
+                                    setSaveFilterError('');
+                                }}
+                                autoFocus
+                                maxLength={30}
+                            />
+                            {saveFilterError ? (
+                                <Text className="text-red-500 text-sm mt-1">{saveFilterError}</Text>
+                            ) : null}
+                        </View>
+
+                        <View className="flex-row justify-end mt-6 pt-5 border-t border-gray-200">
+                            <TouchableOpacity
+                                onPress={handleCloseSaveFilterModal}
+                                className="px-6 py-3 rounded-lg mr-2 border border-gray-300 active:bg-gray-100"
+                            >
+                                <Text className="text-base font-medium text-gray-700">{t('reportsPage.common.cancel' as any)}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={handleSaveFilter}
+                                className="px-7 py-3 bg-fuchsia-500 rounded-lg shadow-md active:bg-fuchsia-600"
+                            >
+                                <Text className="text-base font-semibold text-white">{t('reportsPage.common.save' as any)}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </Pressable>
+                </Pressable>
+            </Modal>
         </>
     );
 };

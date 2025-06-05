@@ -640,5 +640,7 @@
   "reportsPage.saveFilterPrompt.message": "Enter a name for this filter set:",
   "reportsPage.saveFilterPrompt.errorTitle": "Duplicate Name",
   "reportsPage.saveFilterPrompt.errorMessage": "A filter with this name already exists. Please choose a different name.",
+  "reportsPage.saveFilterPrompt.errorEmpty": "Please enter a name for the filter",
+  "reportsPage.saveFilterPrompt.errorSave": "Failed to save the filter. Please try again.",
   "reportsPage.common.save": "Save"
 }
