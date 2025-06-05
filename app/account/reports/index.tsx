@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Platform, TextInput, FlatList, ActivityIndicator, Dimensions, ScrollView, Modal, Button, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, TextInput, FlatList, ActivityIndicator, Dimensions, ScrollView, Modal, Button, Pressable, Alert } from 'react-native';
 import { useLanguage, LanguageContextType } from '../../../contexts/LanguageContext';
 import AppIcon, { IconFamily } from '../../../components/common/Icon';
 import { COLORS } from '../../../constants/theme';
@@ -7,6 +7,7 @@ import { useApi } from '../../../hooks/useApi';
 import reportService from '../../../services/reportService';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     ApiWorkRecord,
     ApiPaymentRecord,
@@ -321,16 +322,25 @@ const FiltersSection = React.memo(({
             {savedFiltersList.length > 0 && (
                 <View className="mb-4 pt-3 border-t border-gray-200">
                     <Text className="text-base text-gray-700 mb-2 font-medium">{t('reportsPage.savedFilters')}</Text>
-                    {savedFiltersList.map(sf => (
-                        <View key={sf.name} className="flex-row justify-between items-center mb-1.5 p-2.5 bg-gray-50 rounded-md border border-gray-200">
-                            <TouchableOpacity onPress={() => applySavedFilter(sf)} className="flex-1">
-                                <Text className="text-sm text-gray-800">{sf.name}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => removeSavedFilter(sf.name)} className="p-1">
-                                <AppIcon name="close-circle-outline" family="Ionicons" size={20} color={COLORS.error} />
-                            </TouchableOpacity>
-                        </View>
-                    ))}
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row -mx-2 px-2">
+                        {savedFiltersList.map(sf => (
+                            <View key={sf.name} className="flex-row items-center mr-2">
+                                <TouchableOpacity
+                                    onPress={() => applySavedFilter(sf)}
+                                    className="flex-row items-center justify-center p-2.5 bg-gray-50 rounded-l-md border border-r-0 border-gray-200 h-full"
+                                >
+                                    <AppIcon name="filter-variant" family="MaterialCommunityIcons" size={16} color={COLORS.secondary} />
+                                    <Text className="text-sm text-gray-800 ml-1.5">{sf.name}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={() => removeSavedFilter(sf.name)}
+                                    className="p-2.5 bg-gray-100 rounded-r-md border border-gray-200 h-full justify-center"
+                                >
+                                    <AppIcon name="close-circle-outline" family="Ionicons" size={20} color={COLORS.error} />
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                    </ScrollView>
                 </View>
             )}
             <TouchableOpacity
@@ -762,10 +772,10 @@ const CustomDateRangePickerModal = ({
 
                     <View className="flex-row justify-end mt-6 pt-5 border-t border-gray-200">
                         <TouchableOpacity onPress={onClose} className="px-6 py-3 rounded-lg mr-2 border border-gray-300 active:bg-gray-100">
-                            <Text className="text-base font-medium text-gray-700">{t('common.cancel' as any)}</Text>
+                            <Text className="text-base font-medium text-gray-700">{t('reportsPage.common.cancel' as any)}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={handleApply} className="px-7 py-3 bg-fuchsia-500 rounded-lg shadow-md active:bg-fuchsia-600">
-                            <Text className="text-base font-semibold text-white">{t('common.apply' as any)}</Text>
+                            <Text className="text-base font-semibold text-white">{t('reportsPage.common.apply' as any)}</Text>
                         </TouchableOpacity>
                     </View>
                 </Pressable>
@@ -797,6 +807,31 @@ const ReportsScreen = () => {
     const [reportSummary, setReportSummary] = useState<ApiResponseData['summary'] | null>(null);
 
     const [isProcessingData, setIsProcessingData] = useState(false);
+
+    const SAVED_FILTERS_STORAGE_KEY = '@Checkhira/ReportSavedFilters';
+
+    useEffect(() => {
+        const loadSavedFilters = async () => {
+            try {
+                const jsonValue = await AsyncStorage.getItem(SAVED_FILTERS_STORAGE_KEY);
+                if (jsonValue !== null) {
+                    setSavedFiltersList(JSON.parse(jsonValue));
+                }
+            } catch (e) {
+                console.error("Failed to load saved filters.", e);
+            }
+        };
+        loadSavedFilters();
+    }, []);
+
+    const saveFiltersToStorage = async (filtersToSave: { name: string; criteria: ReportFilters }[]) => {
+        try {
+            const jsonValue = JSON.stringify(filtersToSave);
+            await AsyncStorage.setItem(SAVED_FILTERS_STORAGE_KEY, jsonValue);
+        } catch (e) {
+            console.error("Failed to save filters.", e);
+        }
+    };
 
     const fetchAndProcessReportData = useCallback(async () => {
         if (!filters.startDate || !filters.endDate) {
@@ -922,18 +957,39 @@ const ReportsScreen = () => {
     }, [handleQuickFilterChange]);
 
     const saveCurrentFilter = useCallback(() => {
-        const filterName = `Saved Filter ${savedFiltersList.length + 1}`;
-        setSavedFiltersList(prev => [...prev, { name: filterName, criteria: { ...filters } }]);
-        console.log("Save current filter:", filterName, filters);
-    }, [filters, savedFiltersList.length]);
+        Alert.prompt(
+            t('reportsPage.saveFilterPrompt.title'),
+            t('reportsPage.saveFilterPrompt.message'),
+            [
+                { text: t('common.cancel' as any), style: 'cancel' },
+                {
+                    text: t('common.save' as any),
+                    onPress: async (filterName) => {
+                        if (filterName && filterName.trim().length > 0) {
+                            if (savedFiltersList.some(f => f.name.toLowerCase() === filterName.trim().toLowerCase())) {
+                                Alert.alert(t('reportsPage.saveFilterPrompt.errorTitle'), t('reportsPage.saveFilterPrompt.errorMessage'));
+                                return;
+                            }
+                            const newSavedFilters = [...savedFiltersList, { name: filterName.trim(), criteria: { ...filters } }];
+                            setSavedFiltersList(newSavedFilters);
+                            await saveFiltersToStorage(newSavedFilters);
+                        }
+                    },
+                },
+            ],
+            'plain-text'
+        );
+    }, [filters, savedFiltersList, t]);
 
     const applySavedFilter = useCallback((savedFilter: { name: string; criteria: ReportFilters }) => {
         setFilters(savedFilter.criteria);
     }, []);
 
-    const removeSavedFilter = useCallback((filterNameToRemove: string) => {
-        setSavedFiltersList(prev => prev.filter(f => f.name !== filterNameToRemove));
-    }, []);
+    const removeSavedFilter = useCallback(async (filterNameToRemove: string) => {
+        const newSavedFilters = savedFiltersList.filter(f => f.name !== filterNameToRemove);
+        setSavedFiltersList(newSavedFilters);
+        await saveFiltersToStorage(newSavedFilters);
+    }, [savedFiltersList]);
 
     const handleViewModeChange = useCallback((mode: ViewMode) => {
         console.log("Handle view mode change:", mode);

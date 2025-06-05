@@ -392,5 +392,10 @@
   "reportsPage.endDateLabel": "અંતિમ તારીખ",
   "reportsPage.common.done": "થઈ ગયું",
   "reportsPage.common.cancel": "રદ કરો",
-  "reportsPage.common.apply": "લાગુ કરો"
+  "reportsPage.common.apply": "લાગુ કરો",
+  "reportsPage.common.save": "સાચવો",
+  "reportsPage.saveFilterPrompt.title": "ફિલ્ટર સાચવો",
+  "reportsPage.saveFilterPrompt.message": "આ ફિલ્ટર સેટ માટે નામ દાખલ કરો:",
+  "reportsPage.saveFilterPrompt.errorTitle": "ડુપ્લિકેટ નામ",
+  "reportsPage.saveFilterPrompt.errorMessage": "આ નામ સાથેનું ફિલ્ટર પહેલેથી અસ્તિત્વમાં છે. કૃપા કરીને બીજું નામ પસંદ કરો."
 }

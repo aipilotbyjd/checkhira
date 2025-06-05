@@ -402,5 +402,10 @@
     "reportsPage.endDateLabel": "अंतिम तिथि",
     "reportsPage.common.done": "हो गया",
     "reportsPage.common.cancel": "रद्द करें",
-    "reportsPage.common.apply": "लागू करें"
+    "reportsPage.common.apply": "लागू करें",
+    "reportsPage.common.save": "सहेजें",
+    "reportsPage.saveFilterPrompt.title": "फ़िल्टर सहेजें",
+    "reportsPage.saveFilterPrompt.message": "इस फ़िल्टर सेट के लिए एक नाम दर्ज करें:",
+    "reportsPage.saveFilterPrompt.errorTitle": "डुप्लिकेट नाम",
+    "reportsPage.saveFilterPrompt.errorMessage": "इस नाम का फ़िल्टर पहले से मौजूद है। कृपया कोई दूसरा नाम चुनें।"
 }

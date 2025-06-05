@@ -635,5 +635,10 @@
     "workTotalAmount": "Total Earnings",
     "paymentTotalRecords": "Payment Entries",
     "paymentTotalAmount": "Total Payments"
-  }
+  },
+  "reportsPage.saveFilterPrompt.title": "Save Filter",
+  "reportsPage.saveFilterPrompt.message": "Enter a name for this filter set:",
+  "reportsPage.saveFilterPrompt.errorTitle": "Duplicate Name",
+  "reportsPage.saveFilterPrompt.errorMessage": "A filter with this name already exists. Please choose a different name.",
+  "reportsPage.common.save": "Save"
 }
