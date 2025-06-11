@@ -1,82 +1,18 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Platform, TextInput, FlatList, ActivityIndicator, Dimensions, ScrollView, Modal, Button, Pressable, Alert } from 'react-native';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Platform, TextInput, FlatList, ActivityIndicator, Modal, Button, Pressable, Alert, ScrollView } from 'react-native';
 import { useLanguage, LanguageContextType } from '../../contexts/LanguageContext';
 import AppIcon, { IconFamily } from '../../components/common/Icon';
 import { COLORS } from '../../constants/theme';
-import { useApi } from '../../hooks/useApi';
-import reportService from '../../services/reportService';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-    ApiWorkRecord,
-    ApiPaymentRecord,
     TransformedWorkEntry,
     TransformedPaymentEntry,
-    ApiResponseData,
     JobType,
     ReportFilters,
     ViewMode,
     QuickFilterType
 } from '../../types/reports';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-
-const A_Z_LETTERS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
-
-const STATIC_JOB_TYPES: JobType[] = A_Z_LETTERS.map(letter => ({
-    id: letter,
-    code: letter,
-    name: `Type ${letter}`,
-    name_en: `Type ${letter}`,
-    name_gu: `પ્રકાર ${letter}`,
-    name_hi: `प्रकार ${letter}`,
-    description_en: `Description for Type ${letter}`,
-    description_gu: `પ્રકાર ${letter} માટે વર્ણન`,
-    description_hi: `प्रकार ${letter} के लिए विवरण`,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-}));
-
-const getDateRangeForQuickFilter = (filter: QuickFilterType): { startDate: string, endDate: string } => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    let startDate = new Date(today);
-    let endDate = new Date(today);
-    endDate.setHours(23, 59, 59, 999);
-
-    switch (filter) {
-        case 'today':
-            break;
-        case 'yesterday':
-            startDate.setDate(today.getDate() - 1);
-            endDate.setDate(today.getDate() - 1);
-            endDate.setHours(23, 59, 59, 999);
-            break;
-        case 'last7':
-            startDate.setDate(today.getDate() - 6);
-            break;
-        case 'last15':
-            startDate.setDate(today.getDate() - 14);
-            break;
-        case 'last30':
-            startDate.setDate(today.getDate() - 29);
-            break;
-        case 'thisMonth':
-            startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-            endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-            endDate.setHours(23, 59, 59, 999);
-            break;
-        case 'lastMonth':
-            startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-            endDate = new Date(today.getFullYear(), today.getMonth(), 0);
-            endDate.setHours(23, 59, 59, 999);
-            break;
-    }
-    return {
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
-    };
-};
+import { useReports } from '../../hooks/useReports';
 
 type ScreenSectionType = 'header' | 'filters' | 'viewAndSearch' | 'kpis' | 'workList' | 'paymentList' | 'exportAndShare';
 interface ScreenSection {
@@ -93,161 +29,6 @@ const screenSections: ScreenSection[] = [
     { id: 'exportAndShare' },
 ];
 
-// --- EXPORT LOGIC ---
-const escapeCsvField = (field: any): string => {
-    if (field === null || field === undefined) {
-        return '';
-    }
-    const stringField = String(field);
-    if (/[",\n]/.test(stringField)) {
-        return `"${stringField.replace(/"/g, '""')}"`;
-    }
-    return stringField;
-};
-
-const convertToCsv = (
-    workData: TransformedWorkEntry[],
-    paymentData: TransformedPaymentEntry[],
-    filters: ReportFilters
-): string => {
-    let csvString = '';
-    const headers = {
-        work: ['Date', 'Title', 'Notes', 'Quantity', 'Earning', 'Task Type'],
-        payment: ['Date', 'Amount', 'From', 'Notes'],
-    };
-
-    if ((filters.viewMode === 'work' || filters.viewMode === 'combined') && workData.length > 0) {
-        csvString += headers.work.join(',') + '\n';
-        workData.forEach(item => {
-            const row = [
-                item.date,
-                item.title,
-                item.notes,
-                item.quantity,
-                item.calculated_earning,
-                item.task_type_code,
-            ].map(escapeCsvField).join(',');
-            csvString += row + '\n';
-        });
-        csvString += '\n';
-    }
-
-    if ((filters.viewMode === 'payment' || filters.viewMode === 'combined') && paymentData.length > 0) {
-        csvString += headers.payment.join(',') + '\n';
-        paymentData.forEach(item => {
-            const row = [
-                item.date,
-                item.amount,
-                item.from,
-                item.notes,
-            ].map(escapeCsvField).join(',');
-            csvString += row + '\n';
-        });
-    }
-    return csvString;
-};
-
-const generateHtmlReport = (
-    workData: TransformedWorkEntry[],
-    paymentData: TransformedPaymentEntry[],
-    filters: ReportFilters,
-    summary: any,
-    t: (key: string) => string
-): string => {
-    const { totalWorkRecords, totalWorkAmount, totalPaymentRecords, totalPaymentAmount } = summary;
-
-    let workHtml = '';
-    if ((filters.viewMode === 'work' || filters.viewMode === 'combined') && workData.length > 0) {
-        workHtml = `
-            <h2>${t('reportsPage.workEntriesTitle')}</h2>
-            <p>${t('reportsPage.kpi.workTotalRecords')}: ${totalWorkRecords}</p>
-            <p>${t('reportsPage.kpi.workTotalAmount')}: ${totalWorkAmount.toFixed(2)}</p>
-            <table border="1" cellpadding="5" style="width:100%; border-collapse: collapse;">
-                <tr><th>${t('date')}</th><th>${t('description')}</th><th>${t('quantity')}</th><th>${t('reportsPage.earning')}</th><th>${t('reportsPage.jobType')}</th></tr>
-                ${workData.map(item => `
-                    <tr>
-                        <td>${new Date(item.date).toLocaleDateString()}</td>
-                        <td>${item.title || ''}${item.notes ? `<br/><small><em>${item.notes}</em></small>` : ''}</td>
-                        <td>${item.quantity}</td>
-                        <td>${(item.calculated_earning || 0).toFixed(2)}</td>
-                        <td>${item.task_type_code || 'N/A'}</td>
-                    </tr>`).join('')}
-            </table>`;
-    }
-
-    let paymentHtml = '';
-    if ((filters.viewMode === 'payment' || filters.viewMode === 'combined') && paymentData.length > 0) {
-        paymentHtml = `
-            <h2>${t('reportsPage.paymentEntriesTitle')}</h2>
-            <p>${t('reportsPage.kpi.paymentTotalRecords')}: ${totalPaymentRecords}</p>
-            <p>${t('reportsPage.kpi.paymentTotalAmount')}: ${totalPaymentAmount.toFixed(2)}</p>
-            <table border="1" cellpadding="5" style="width:100%; border-collapse: collapse;">
-                <tr><th>${t('date')}</th><th>${t('amount')}</th><th>${t('from')}</th><th>${t('notes')}</th></tr>
-                ${paymentData.map(item => `
-                    <tr>
-                        <td>${new Date(item.date).toLocaleDateString()}</td>
-                        <td>${(item.amount || 0).toFixed(2)}</td>
-                        <td>${item.from || 'N/A'}</td>
-                        <td>${item.notes || ''}</td>
-                    </tr>`).join('')}
-            </table>`;
-    }
-
-    return `
-        <html>
-            <head><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Report</title><style>body{font-family:sans-serif;font-size:14px;} table{width:100%;border-collapse:collapse;font-size:12px;} th,td{border:1px solid #ddd;padding:8px;text-align:left;} th{background-color:#f2f2f2;} h1{font-size:20px;} h2{font-size:16px; border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:20px;}</style></head>
-            <body>
-                <h1>${t('reportsPage.title')}</h1>
-                <p><strong>${t('reportPeriodLabel')}:</strong> ${new Date(filters.startDate!).toLocaleDateString()} - ${new Date(filters.endDate!).toLocaleDateString()}</p>
-                ${workHtml}
-                ${paymentHtml}
-            </body>
-        </html>`;
-};
-
-const exportReportFile = async (
-    format: 'pdf' | 'csv',
-    workData: TransformedWorkEntry[],
-    paymentData: TransformedPaymentEntry[],
-    filters: ReportFilters,
-    summary: any,
-    t: (key: string) => string
-) => {
-    if (!workData.length && !paymentData.length) {
-        alert(t('noDataToExport'));
-        return;
-    }
-
-    let content = '';
-    let fileExtension = '';
-    let mimeType = '';
-
-    if (format === 'csv') {
-        content = convertToCsv(workData, paymentData, filters);
-        fileExtension = '.csv';
-        mimeType = 'text/csv';
-    } else {
-        content = generateHtmlReport(workData, paymentData, filters, summary, t);
-        fileExtension = '.html';
-        mimeType = 'text/html';
-    }
-
-    const fileName = `Checkhira-Report-${new Date().toISOString().split('T')[0]}${fileExtension}`;
-    const fileUri = FileSystem.documentDirectory + fileName;
-
-    await FileSystem.writeAsStringAsync(fileUri, content, { encoding: FileSystem.EncodingType.UTF8 });
-
-    if (!(await Sharing.isAvailableAsync())) {
-        alert(t('sharingNotAvailable'));
-        return;
-    }
-
-    await Sharing.shareAsync(fileUri, {
-        mimeType,
-        dialogTitle: t(format === 'csv' ? 'reportsPage.exportAsCSV' : 'reportsPage.exportAsPDF'),
-    });
-};
-// --- END EXPORT LOGIC ---
 
 // Section Components
 interface HeaderSectionProps { t: LanguageContextType['t']; }
@@ -430,7 +211,7 @@ const ViewAndSearchSection = React.memo(({
                     placeholderTextColor={COLORS.gray[400]}
                 />
             </View>
-            {STATIC_JOB_TYPES.length > 0 && (filters.viewMode === 'work' || filters.viewMode === 'combined') && (
+            {jobTypeFilterOptions.length > 1 && (filters.viewMode === 'work' || filters.viewMode === 'combined') && (
                 <View className="mt-2">
                     <Text className="text-base text-gray-700 mb-2 font-medium">{t('reportsPage.filters.filterByJobType')}</Text>
                     <FlatList
@@ -517,8 +298,9 @@ interface WorkListSectionProps {
     apiError: any;
     filters: ReportFilters;
     workData: TransformedWorkEntry[];
+    STATIC_JOB_TYPES: JobType[];
 }
-const WorkListSection = React.memo(({ t, locale, isLoadingDisplayData, apiError, filters, workData }: WorkListSectionProps) => {
+const WorkListSection = React.memo(({ t, locale, isLoadingDisplayData, apiError, filters, workData, STATIC_JOB_TYPES }: WorkListSectionProps) => {
     const renderWorkItem = useCallback(({ item }: { item: TransformedWorkEntry }) => {
         const jobTypeDetails = STATIC_JOB_TYPES.find(jt => jt.code === item.task_type_code);
         let displayJobTypeName = item.task_type_code || 'N/A';
@@ -545,7 +327,7 @@ const WorkListSection = React.memo(({ t, locale, isLoadingDisplayData, apiError,
                 )}
             </View>
         );
-    }, [locale, t]);
+    }, [locale, t, STATIC_JOB_TYPES]);
 
     if (isLoadingDisplayData) return <View className="h-60 justify-center items-center bg-white p-4 rounded-lg shadow mb-4 mx-3"><ActivityIndicator size="large" color={COLORS.primary} /><Text className="text-gray-500 mt-2">{t('reportsPage.loadingTable')}</Text></View>;
     if (!isLoadingDisplayData && apiError) return <View className="bg-white p-4 rounded-lg shadow mb-4 mx-3 items-center"><AppIcon name="cloud-offline-outline" family="Ionicons" size={30} color={COLORS.error} /><Text className="text-red-500 text-center mt-1">{apiError?.message || t('reportsPage.errorLoading')}</Text></View>;
@@ -798,206 +580,60 @@ const CustomDateRangePickerModal = ({
 
 const ReportsScreen = () => {
     const { t, locale } = useLanguage();
-    const { execute, isLoading: apiIsLoading, error: apiError, data: rawApiData } = useApi<ApiResponseData>();
+    const {
+        filters,
+        savedFiltersList,
+        workData,
+        paymentData,
+        isLoading,
+        isExporting,
+        apiError,
+        totalWorkRecords,
+        totalWorkAmount,
+        totalPaymentRecords,
+        totalPaymentAmount,
+        quickFilterOptions,
+        jobTypeFilterOptions,
+        STATIC_JOB_TYPES,
+        handleFilterChange,
+        handleQuickFilterChange,
+        handleCustomDateChange,
+        saveCurrentFilter,
+        applySavedFilter,
+        removeSavedFilter,
+        exportReport,
+    } = useReports();
 
     const [isDatePickerVisible, setDatePickerVisible] = useState(false);
-    const [isExporting, setIsExporting] = useState(false);
     const [isSaveFilterModalVisible, setSaveFilterModalVisible] = useState(false);
     const [newFilterName, setNewFilterName] = useState('');
     const [saveFilterError, setSaveFilterError] = useState('');
-
-    const [filters, setFilters] = useState<ReportFilters>({
-        quickFilter: 'today',
-        startDate: getDateRangeForQuickFilter('today').startDate,
-        endDate: getDateRangeForQuickFilter('today').endDate,
-        viewMode: 'payment',
-        searchQuery: '',
-        taskTypeCode: null,
-    });
-
-    const [savedFiltersList, setSavedFiltersList] = useState<{ name: string; criteria: ReportFilters }[]>([]);
-
-    const [workData, setWorkData] = useState<TransformedWorkEntry[]>([]);
-    const [paymentData, setPaymentData] = useState<TransformedPaymentEntry[]>([]);
-    const [reportSummary, setReportSummary] = useState<ApiResponseData['summary'] | null>(null);
-
-    const [isProcessingData, setIsProcessingData] = useState(false);
-
-    const SAVED_FILTERS_STORAGE_KEY = '@Checkhira/ReportSavedFilters';
-
-    useEffect(() => {
-        const loadSavedFilters = async () => {
-            try {
-                const jsonValue = await AsyncStorage.getItem(SAVED_FILTERS_STORAGE_KEY);
-                if (jsonValue !== null) {
-                    setSavedFiltersList(JSON.parse(jsonValue));
-                }
-            } catch (e) {
-                console.error("Failed to load saved filters.", e);
-            }
-        };
-        loadSavedFilters();
-    }, []);
-
-    const saveFiltersToStorage = async (filtersToSave: { name: string; criteria: ReportFilters }[]) => {
-        try {
-            const jsonValue = JSON.stringify(filtersToSave);
-            await AsyncStorage.setItem(SAVED_FILTERS_STORAGE_KEY, jsonValue);
-        } catch (e) {
-            console.error("Failed to save filters.", e);
-        }
-    };
-
-    const fetchAndProcessReportData = useCallback(async () => {
-        if (!filters.startDate || !filters.endDate) {
-            setWorkData([]); setPaymentData([]); setReportSummary(null); return;
-        }
-        setIsProcessingData(true); setWorkData([]); setPaymentData([]); setReportSummary(null);
-
-        const paramsForApi: ReportFilters = { ...filters };
-        try {
-            await execute(() => reportService.fetchReportData(paramsForApi));
-        }
-        catch (err) {
-            // error is handled by useApi hook
-        }
-    }, [filters, execute]);
-
-    useEffect(() => {
-        fetchAndProcessReportData();
-    }, [fetchAndProcessReportData]);
-
-    useEffect(() => {
-        if (!rawApiData && !apiIsLoading && !apiError && workData.length === 0 && paymentData.length === 0) {
-            const today = new Date();
-            const sampleWork: TransformedWorkEntry[] = [];
-            for (let i = 29; i >= 0; i--) {
-                const date = new Date(today);
-                date.setDate(today.getDate() - i);
-                sampleWork.push({
-                    id: i + 1,
-                    date: date.toISOString(),
-                    title: `Sample Task ${30 - i}`,
-                    quantity: Math.floor(Math.random() * 5) + (i % 7 === 0 || i % 7 === 1 ? 0 : 1),
-                    calculated_earning: (Math.floor(Math.random() * 5) + 1) * (Math.random() * 100 + 50),
-                    task_type_code: A_Z_LETTERS[i % A_Z_LETTERS.length]
-                });
-            }
-            setWorkData(sampleWork);
-
-            const samplePayments: TransformedPaymentEntry[] = [];
-            const paymentSources = ['Client Alpha', 'Beta Services', 'Gamma Inc.', 'Delta Corp'];
-            for (let i = 0; i < 5; i++) {
-                const date = new Date(today);
-                date.setDate(today.getDate() - (Math.floor(Math.random() * 30)));
-                samplePayments.push({
-                    id: i + 1,
-                    date: date.toISOString(),
-                    amount: Math.floor(Math.random() * 2000) + 500,
-                    from: paymentSources[i % paymentSources.length],
-                    notes: `Payment for services rendered project ${A_Z_LETTERS[i % A_Z_LETTERS.length]}`
-                });
-            }
-            setPaymentData(samplePayments);
-        }
-    }, [rawApiData, apiIsLoading, apiError, workData.length, paymentData.length]);
-
-    useEffect(() => {
-        if (rawApiData && !apiIsLoading) {
-            setIsProcessingData(true);
-            const { records, summary } = rawApiData;
-
-            const transformedWorks: TransformedWorkEntry[] = (records?.works || []).map((work: ApiWorkRecord) => ({
-                id: work.id,
-                date: work.date,
-                title: work.name,
-                notes: work.description,
-                quantity: work.work_items.reduce((sum, item) => sum + Number(item.diamond || 0), 0),
-                calculated_earning: parseFloat(work.total) || 0,
-                task_type_code: work.work_items[0]?.type,
-            }));
-            setWorkData(transformedWorks);
-
-            const transformedPayments: TransformedPaymentEntry[] = (records?.payments || []).map((payment: ApiPaymentRecord) => ({
-                id: payment.id,
-                date: payment.date,
-                amount: parseFloat(payment.amount) || 0,
-                from: payment.from,
-                notes: payment.description,
-                source_id: payment.source_id,
-            }));
-            setPaymentData(transformedPayments);
-            setReportSummary(summary);
-            setIsProcessingData(false);
-        } else if (!apiIsLoading && !apiError && !rawApiData) {
-            setIsProcessingData(false);
-        } else if (apiError) {
-            setIsProcessingData(false);
-            setWorkData([]);
-            setPaymentData([]);
-            setReportSummary(null);
-        }
-    }, [rawApiData, apiIsLoading, apiError]);
 
     const openCustomDateRangePicker = useCallback(() => {
         setDatePickerVisible(true);
     }, []);
 
-    const handleCustomDateChange = useCallback((newStartDate: string, newEndDate: string) => {
-        setFilters(prev => ({
-            ...prev,
-            quickFilter: 'custom',
-            startDate: newStartDate,
-            endDate: newEndDate,
-        }));
-        setDatePickerVisible(false);
-    }, []);
+    const handleViewModeChange = useCallback((mode: ViewMode) => {
+        handleFilterChange({ viewMode: mode, taskTypeCode: null });
+    }, [handleFilterChange]);
 
-    const handleQuickFilterChange = useCallback((filterKey: QuickFilterType) => {
-        if (filterKey === 'custom') {
-            openCustomDateRangePicker();
-            return;
-        }
-        const { startDate, endDate } = getDateRangeForQuickFilter(filterKey);
-        setFilters(prev => ({
-            ...prev,
-            quickFilter: filterKey,
-            startDate,
-            endDate,
-        }));
-    }, [openCustomDateRangePicker]);
+    const handleSearchQueryChange = useCallback((text: string) => {
+        handleFilterChange({ searchQuery: text });
+    }, [handleFilterChange]);
 
-    const handleClearCustomDateFilter = useCallback(() => {
-        handleQuickFilterChange('today');
-    }, [handleQuickFilterChange]);
-
-    const saveCurrentFilter = useCallback(() => {
-        setSaveFilterModalVisible(true);
-    }, []);
+    const handleTaskTypeCodeFilterChange = useCallback((code: string | null) => {
+        handleFilterChange({ taskTypeCode: code });
+    }, [handleFilterChange]);
 
     const handleSaveFilter = useCallback(async () => {
-        setSaveFilterError('');
-        if (!newFilterName || newFilterName.trim().length === 0) {
-            setSaveFilterError(t('reportsPage.saveFilterPrompt.errorEmpty'));
-            return;
-        }
-
-        const trimmedName = newFilterName.trim();
-        if (savedFiltersList.some(f => f.name.toLowerCase() === trimmedName.toLowerCase())) {
-            setSaveFilterError(t('reportsPage.saveFilterPrompt.errorMessage'));
-            return;
-        }
-
         try {
-            const newSavedFilters = [...savedFiltersList, { name: trimmedName, criteria: { ...filters } }];
-            setSavedFiltersList(newSavedFilters);
-            await saveFiltersToStorage(newSavedFilters);
+            await saveCurrentFilter(newFilterName);
             setNewFilterName('');
             setSaveFilterModalVisible(false);
-        } catch (error) {
-            setSaveFilterError(t('reportsPage.saveFilterPrompt.errorSave'));
+        } catch (error: any) {
+            setSaveFilterError(error.message);
         }
-    }, [filters, savedFiltersList, newFilterName, t]);
+    }, [newFilterName, saveCurrentFilter]);
 
     const handleCloseSaveFilterModal = useCallback(() => {
         setSaveFilterModalVisible(false);
@@ -1005,96 +641,9 @@ const ReportsScreen = () => {
         setSaveFilterError('');
     }, []);
 
-    const applySavedFilter = useCallback((savedFilter: { name: string; criteria: ReportFilters }) => {
-        setFilters(savedFilter.criteria);
-    }, []);
-
-    const removeSavedFilter = useCallback(async (filterNameToRemove: string) => {
-        const newSavedFilters = savedFiltersList.filter(f => f.name !== filterNameToRemove);
-        setSavedFiltersList(newSavedFilters);
-        await saveFiltersToStorage(newSavedFilters);
-    }, [savedFiltersList]);
-
-    const handleViewModeChange = useCallback((mode: ViewMode) => {
-        setFilters(prev => ({ ...prev, viewMode: mode, taskTypeCode: null }));
-    }, [setFilters]);
-
-
-    const handleSearchQueryChange = useCallback((text: string) => {
-        setFilters(prev => ({ ...prev, searchQuery: text }));
-    }, []);
-
-    const handleTaskTypeCodeFilterChange = useCallback((code: string | null) => {
-        setFilters(prev => ({ ...prev, taskTypeCode: code }));
-    }, []);
-
-    const { totalWorkRecords, totalWorkAmount, totalPaymentRecords, totalPaymentAmount } = useMemo(() => {
-        let currentWorkRecords = 0;
-        let currentWorkAmount = 0;
-        let currentPaymentRecords = 0;
-        let currentPaymentAmount = 0;
-
-        if (filters.viewMode === 'work' || filters.viewMode === 'combined') {
-            currentWorkRecords = workData.length;
-            currentWorkAmount = workData.reduce((sum, entry) => sum + (Number(entry.calculated_earning) || 0), 0);
-        }
-
-        if (filters.viewMode === 'payment' || filters.viewMode === 'combined') {
-            currentPaymentRecords = paymentData.length;
-            currentPaymentAmount = paymentData.reduce((sum, entry) => sum + (Number(entry.amount) || 0), 0);
-        }
-
-        return {
-            totalWorkRecords: currentWorkRecords,
-            totalWorkAmount: currentWorkAmount,
-            totalPaymentRecords: currentPaymentRecords,
-            totalPaymentAmount: currentPaymentAmount
-        };
-    }, [workData, paymentData, filters.viewMode]);
-
-    const exportReport = useCallback(async (format: 'pdf' | 'csv') => {
-        setIsExporting(true);
-        try {
-            const summary = { totalWorkRecords, totalWorkAmount, totalPaymentRecords, totalPaymentAmount };
-            await exportReportFile(format, workData, paymentData, filters, summary, t as (key: string) => string);
-        } catch (error: any) {
-            console.error("Export error:", error);
-            alert(error.message || "An unexpected error occurred during export.");
-        } finally {
-            setIsExporting(false);
-        }
-    }, [filters, workData, paymentData, t, totalWorkRecords, totalWorkAmount, totalPaymentRecords, totalPaymentAmount]);
-
-    const quickFilterOptions = useMemo(() => [
-        { key: 'today' as QuickFilterType, label: t('reportsPage.filters.today'), icon: 'calendar-today' },
-        { key: 'yesterday' as QuickFilterType, label: t('reportsPage.filters.yesterday'), icon: 'calendar-clock' },
-        { key: 'last7' as QuickFilterType, label: t('reportsPage.filters.last7Days'), icon: 'calendar-week' },
-        { key: 'last30' as QuickFilterType, label: t('reportsPage.filters.last30Days'), icon: 'calendar-month' },
-        { key: 'thisMonth' as QuickFilterType, label: t('reportsPage.filters.thisMonth'), icon: 'calendar-month-outline' },
-        { key: 'lastMonth' as QuickFilterType, label: t('reportsPage.filters.lastMonth'), icon: 'calendar-arrow-left' },
-    ], [t]);
-
-    const jobTypeFilterOptions = useMemo(() => {
-        const getLocalizedName = (jt: JobType) => {
-            if (locale === 'gu' && jt.name_gu) return jt.name_gu;
-            if (locale === 'hi' && jt.name_hi) return jt.name_hi;
-            return jt.name_en || jt.name || '';
-        };
-        const sortedTypes = [...STATIC_JOB_TYPES]
-            .sort((a, b) => {
-                const nameA = getLocalizedName(a).toLowerCase();
-                const nameB = getLocalizedName(b).toLowerCase();
-                return nameA.localeCompare(nameB);
-            })
-            .slice(0, 10);
-        return [
-            { code: null, name: t('reportsPage.filters.typeAWork'), name_en: t('reportsPage.filters.typeAWork'), name_gu: t('reportsPage.filters.typeAWork'), name_hi: t('reportsPage.filters.typeAWork'), id: 'all-types-filter' },
-            ...sortedTypes
-        ] as (JobType | { code: null; name: string; name_en: string; name_gu: string; name_hi: string; id: string; })[];
-    }, [locale, t]);
-
-    const isLoadingDisplayData = apiIsLoading || isProcessingData;
-    const screenWidth = Dimensions.get('window').width;
+    const handleClearCustomDateFilter = useCallback(() => {
+        handleQuickFilterChange('today');
+    }, [handleQuickFilterChange]);
 
     const renderScreenSection = useCallback(({ item }: { item: ScreenSection }) => {
         switch (item.id) {
@@ -1110,7 +659,7 @@ const ReportsScreen = () => {
                     openCustomDateRangePicker={openCustomDateRangePicker}
                     applySavedFilter={applySavedFilter}
                     removeSavedFilter={removeSavedFilter}
-                    saveCurrentFilter={saveCurrentFilter}
+                    saveCurrentFilter={() => setSaveFilterModalVisible(true)}
                     clearCustomDateFilter={handleClearCustomDateFilter}
                     locale={locale}
                 />;
@@ -1127,7 +676,7 @@ const ReportsScreen = () => {
             case 'kpis':
                 return <KpisSection
                     t={t}
-                    isLoadingDisplayData={isLoadingDisplayData}
+                    isLoadingDisplayData={isLoading}
                     apiError={apiError}
                     filters={filters}
                     totalWorkRecords={totalWorkRecords}
@@ -1139,16 +688,17 @@ const ReportsScreen = () => {
                 return <WorkListSection
                     t={t}
                     locale={locale}
-                    isLoadingDisplayData={isLoadingDisplayData}
+                    isLoadingDisplayData={isLoading}
                     apiError={apiError}
                     filters={filters}
                     workData={workData}
+                    STATIC_JOB_TYPES={STATIC_JOB_TYPES}
                 />;
             case 'paymentList':
                 return <PaymentListSection
                     t={t}
                     locale={locale}
-                    isLoadingDisplayData={isLoadingDisplayData}
+                    isLoadingDisplayData={isLoading}
                     apiError={apiError}
                     filters={filters}
                     paymentData={paymentData}
@@ -1161,11 +711,11 @@ const ReportsScreen = () => {
         }
     }, [
         t, locale, filters, quickFilterOptions, savedFiltersList, jobTypeFilterOptions,
-        isLoadingDisplayData, apiError, workData, paymentData,
+        isLoading, apiError, workData, paymentData,
         totalWorkRecords, totalWorkAmount, totalPaymentRecords, totalPaymentAmount,
-        handleQuickFilterChange, openCustomDateRangePicker, applySavedFilter, removeSavedFilter, saveCurrentFilter,
+        handleQuickFilterChange, openCustomDateRangePicker, applySavedFilter, removeSavedFilter,
         handleViewModeChange, handleSearchQueryChange, handleTaskTypeCodeFilterChange, exportReport,
-        isExporting, screenWidth
+        isExporting, STATIC_JOB_TYPES
     ]);
 
     return (
@@ -1240,4 +790,4 @@ const ReportsScreen = () => {
     );
 };
 
-export default ReportsScreen; 
+export default ReportsScreen;
