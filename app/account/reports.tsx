@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Platform, TextInput, FlatList, ActivityIndicator, Dimensions, ScrollView, Modal, Button, Pressable, Alert } from 'react-native';
-import { useLanguage, LanguageContextType } from '../../../contexts/LanguageContext';
-import AppIcon, { IconFamily } from '../../../components/common/Icon';
-import { COLORS } from '../../../constants/theme';
-import { useApi } from '../../../hooks/useApi';
-import reportService from '../../../services/reportService';
+import { useLanguage, LanguageContextType } from '../../contexts/LanguageContext';
+import AppIcon, { IconFamily } from '../../components/common/Icon';
+import { COLORS } from '../../constants/theme';
+import { useApi } from '../../hooks/useApi';
+import reportService from '../../services/reportService';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,7 +18,7 @@ import {
     ReportFilters,
     ViewMode,
     QuickFilterType
-} from '../../../types/reports';
+} from '../../types/reports';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 const A_Z_LETTERS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
@@ -1016,9 +1016,9 @@ const ReportsScreen = () => {
     }, [savedFiltersList]);
 
     const handleViewModeChange = useCallback((mode: ViewMode) => {
-        console.log("Handle view mode change:", mode);
         setFilters(prev => ({ ...prev, viewMode: mode, taskTypeCode: null }));
-    }, []);
+    }, [setFilters]);
+
 
     const handleSearchQueryChange = useCallback((text: string) => {
         setFilters(prev => ({ ...prev, searchQuery: text }));
