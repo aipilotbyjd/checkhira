@@ -338,7 +338,7 @@
   "reportsPage.saveCurrentFilter": "વર્તમાન ફિલ્ટર સાચવો",
   "reportsPage.viewAndSearch": "જુઓ અને શોધો",
   "reportsPage.viewModes.work": "કાર્ય",
-  "reportsPage.viewModes.payments": "ચુકવણી",
+  "reportsPage.viewMode.payments": "ચુકવણી",
   "reportsPage.viewModes.combined": "સંયુક્ત",
   "reportsPage.searchPlaceholder": "કાર્ય, રકમ, નોંધો દ્વારા શોધો...",
   "reportsPage.filters.allStatus": "બધું",

@@ -564,7 +564,7 @@
   "reportsPage.saveCurrentFilter": "Save Current Filter",
   "reportsPage.viewAndSearch": "View & Search",
   "reportsPage.viewModes.work": "Work",
-  "reportsPage.viewModes.payments": "Payments",
+  "reportsPage.viewModes.payment": "Payments",
   "reportsPage.viewModes.combined": "Combined",
   "reportsPage.searchPlaceholder": "Search by job, amount, notes...",
   "reportsPage.filters.allStatus": "All",

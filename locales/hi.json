@@ -349,7 +349,7 @@
     "reportsPage.saveCurrentFilter": "वर्तमान फ़िल्टर संग्रहीत करें",
     "reportsPage.viewAndSearch": "देखें और खोजें",
     "reportsPage.viewModes.work": "कार्य",
-    "reportsPage.viewModes.payments": "भुगतान",
+    "reportsPage.viewMode.payments": "भुगतान",
     "reportsPage.viewModes.combined": "संयुक्त",
     "reportsPage.searchPlaceholder": "कार्य, राशि, टिप्पणियाँ...",
     "reportsPage.filters.allStatus": "सभी",
