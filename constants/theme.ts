@@ -39,11 +39,21 @@ export const COLORS = {
     primary: '#ffffff',
     secondary: '#f8f8f8',
   },
+  text: '#282c3f',
+  chartColors: [
+    '#4A90E2',
+    '#50E3C2',
+    '#F5A623',
+    '#D0021B',
+    '#BD10E0',
+    '#7ED321',
+    '#9013FE',
+  ],
 } as const;
 
 export const DARK_COLORS = {
-  primary: '#4A9DFF', // Slightly brighter blue for dark mode
-  secondary: '#E6E6E6', // Light grey for text
+  primary: '#4A9DFF',
+  secondary: '#E6E6E6',
   background: {
     primary: '#121212',
     secondary: '#1E1E1E',
@@ -95,7 +105,6 @@ export const SPACING = {
 } as const;
 
 export const SIZES = {
-  // Typography
   h1: SCREEN_SIZES.sm > 375 ? 32 : 28,
   h2: SCREEN_SIZES.sm > 375 ? 24 : 22,
   h3: SCREEN_SIZES.sm > 375 ? 20 : 18,
@@ -103,12 +112,8 @@ export const SIZES = {
   body: SCREEN_SIZES.sm > 375 ? 16 : 14,
   caption: SCREEN_SIZES.sm > 375 ? 14 : 12,
   small: SCREEN_SIZES.sm > 375 ? 12 : 10,
-
-  // Additional typography sizes
-  md: SCREEN_SIZES.sm > 375 ? 16 : 14, // Same as body size
-  xl: SCREEN_SIZES.sm > 375 ? 20 : 18, // Same as h3 size
-
-  // UI Elements
+  md: SCREEN_SIZES.sm > 375 ? 16 : 14,
+  xl: SCREEN_SIZES.sm > 375 ? 20 : 18,
   tabIcon: SCREEN_SIZES.sm > 375 ? 24 : 20,
   tabLabel: SCREEN_SIZES.sm > 375 ? 12 : 10,
   buttonHeight: SCREEN_SIZES.sm > 375 ? 48 : 44,
@@ -186,5 +191,4 @@ export const LAYOUT = {
     xl: 24,
     full: 9999,
   },
-  // Add more layout constants as needed
 };

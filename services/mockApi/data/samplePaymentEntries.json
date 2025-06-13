@@ -1,0 +1,65 @@
+[
+  {
+    "id": "pay1",
+    "date": "2024-03-10",
+    "amount": 750,
+    "description": "Payment for morning cutting batch",
+    "from": "Factory Manager",
+    "source_id": 1,
+    "source": {
+      "id": 1,
+      "name": "Cash",
+      "name_en": "Cash",
+      "name_gu": "રોકડ"
+    },
+    "worker_id": "user123",
+    "notes": "Received in full"
+  },
+  {
+    "id": "pay2",
+    "date": "2024-03-06",
+    "amount": 750,
+    "description": "Payment for assorting work",
+    "from": "Accountant",
+    "source_id": 2,
+    "source": {
+      "id": 2,
+      "name": "Bank Transfer",
+      "name_en": "Bank Transfer",
+      "name_gu": "બેંક ટ્રાન્સફર"
+    },
+    "worker_id": "user123"
+  },
+  {
+    "id": "pay3",
+    "date": "2024-02-22",
+    "amount": 200,
+    "description": "Advance for large stone marking",
+    "from": "Client Y",
+    "source_id": 1,
+     "source": {
+      "id": 1,
+      "name": "Cash",
+      "name_en": "Cash",
+      "name_gu": "રોકડ"
+    },
+    "worker_id": "user123",
+    "notes": "Partial payment"
+  },
+    {
+    "id": "pay4",
+    "date": "2024-03-15",
+    "amount": 1000,
+    "description": "Weekly settlement",
+    "from": "Main Office",
+    "source_id": 3,
+    "source": {
+      "id": 3,
+      "name": "UPI",
+      "name_en": "UPI",
+      "name_gu": "યુપીઆઈ"
+    },
+    "worker_id": "user123",
+    "notes": "For various small tasks"
+  }
+] 

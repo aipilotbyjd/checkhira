@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,15 @@ import {
   Pressable,
   RefreshControl,
   ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Platform,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-import { COLORS } from '../../constants/theme';
+import { COLORS, SPACING, SIZES, FONTS } from '../../constants/theme';
+// import { SPACING } from '../../constants/spacing'; // Ensure this is commented out or removed if module doesn't exist
 import { WorkListItem } from '../../components/WorkListItem';
 import { WorkSkeleton } from '../../components/WorkSkeleton';
 import { useToast } from '../../contexts/ToastContext';
@@ -23,6 +27,10 @@ import { useAnalytics } from '../../hooks/useAnalytics';
 import { analyticsService } from '../../utils/analytics';
 import { BannerAdComponent, NativeAdComponent } from '../../components/ads';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PREFERENCE_KEYS } from '../account/list-preferences';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 export default function WorkListScreen() {
   useAnalytics('WorkListTabScreen');
@@ -40,16 +48,19 @@ export default function WorkListScreen() {
   const [todayTotal, setTodayTotal] = useState(0);
   const { refreshUnreadCount } = useNotification();
 
+  // State for sorting preferences
+  const [sortField, setSortField] = useState('date'); // Default sort field
+  const [sortDirection, setSortDirection] = useState('desc'); // Default sort direction
   // Use the modern API hook pattern
-  const { execute: executeGetWorks, isLoading } = useApi({
+  const { execute: executeGetWorks, isLoading: apiIsLoading } = useApi({
     showErrorToast: true,
     defaultErrorMessage: t('failedToLoadWorkEntries')
   });
 
-  const loadWork = useCallback(async ({ page = 1, isRefresh = false }) => {
+  const loadWork = useCallback(async ({ page = 1, isRefresh = false, sortBy = sortField, sortDir = sortDirection }) => {
     try {
       const response = await executeGetWorks(() =>
-        api.get('/works', { page, filter: currentFilter })
+        api.get('/works', { page, filter: currentFilter, sortBy, sortDir })
       );
 
       if (response?.data) {
@@ -69,23 +80,41 @@ export default function WorkListScreen() {
       setRefreshing(false);
       setIsLoadingMore(false);
     }
-  }, [currentFilter, executeGetWorks]);
+  }, [currentFilter, executeGetWorks, sortField, sortDirection]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadWork({ page: 1, isRefresh: true });
-  }, [loadWork]);
+    await loadWork({ page: 1, isRefresh: true, sortBy: sortField, sortDir: sortDirection });
+  }, [loadWork, sortField, sortDirection]);
 
   const handleFilter = useCallback((filter: string) => {
     setCurrentFilter(filter);
     setWorkList([]);
     setCurrentPage(1);
     actionSheetRef.current?.hide();
-  }, []);
+    loadWork({ page: 1, sortBy: sortField, sortDir: sortDirection });
+  }, [loadWork, sortField, sortDirection]);
 
   useFocusEffect(
     useCallback(() => {
-      loadWork({ page: 1 });
+      const loadPreferencesAndFetchData = async () => {
+        let prefSortField = 'date';
+        let prefSortDirection = 'desc';
+        try {
+          const storedSortField = await AsyncStorage.getItem(PREFERENCE_KEYS.WORK_SORT_FIELD);
+          const storedSortDirection = await AsyncStorage.getItem(PREFERENCE_KEYS.WORK_SORT_DIRECTION);
+          if (storedSortField) prefSortField = storedSortField;
+          if (storedSortDirection) prefSortDirection = storedSortDirection;
+        } catch (e) {
+          console.error('Failed to load work list sort preferences', e);
+        }
+        setSortField(prefSortField);
+        setSortDirection(prefSortDirection);
+        loadWork({ page: 1, sortBy: prefSortField, sortDir: prefSortDirection });
+      };
+
+      loadPreferencesAndFetchData();
+      refreshUnreadCount();
     }, [currentFilter])
   );
 
@@ -94,49 +123,106 @@ export default function WorkListScreen() {
 
     analyticsService.logEvent('load_more_work_entries', { page: currentPage + 1 });
     setIsLoadingMore(true);
-    await loadWork({ page: currentPage + 1 });
-  }, [currentPage, hasMorePages, isLoadingMore, loadWork]);
+    await loadWork({ page: currentPage + 1, sortBy: sortField, sortDir: sortDirection });
+  }, [currentPage, hasMorePages, isLoadingMore, loadWork, sortField, sortDirection]);
 
-  useEffect(() => {
-    refreshUnreadCount();
-  }, []);
+  const generateWorkListCSV = () => {
+    const header = [
+      t('workName'),
+      t('date'),
+      t('itemDiamondWeight'),
+      t('itemPrice'),
+      t('itemTotalPrice')
+    ].join(',');
 
-  if (isLoading && currentPage === 1) {
+    const rows = workList.flatMap(work => {
+      if (work.work_items && work.work_items.length > 0) {
+        return work.work_items.map(item => {
+          const diamondWeight = parseFloat(item.diamond || '0');
+          const pricePerDiamond = parseFloat(item.price || '0');
+          const totalPrice = diamondWeight * pricePerDiamond;
+          return [
+            `"${work.name.replace(/"/g, '""')}"`, // Escape double quotes
+            work.date,
+            item.diamond || '0',
+            item.price || '0',
+            totalPrice.toFixed(2) // Calculate and format total price
+          ].join(',');
+        });
+      }
+      // For work entries with no items, create a row with empty item details
+      return [`"${work.name.replace(/"/g, '""')}"`, work.date, '', '', ''].join(',');
+    });
+
+    return `${header}\n${rows.join('\n')}`;
+  };
+
+  const handleExportWorkListCSV = async () => {
+    if (!workList || workList.length === 0) {
+      showToast(t('noDataToExport'), 'info'); // Assuming 'noDataToExport' translation
+      return;
+    }
+    try {
+      const csvString = generateWorkListCSV();
+      const filename = `work_list_export_${new Date().toISOString().split('T')[0]}.csv`;
+      const fileUri = FileSystem.documentDirectory + filename;
+
+      await FileSystem.writeAsStringAsync(fileUri, csvString, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      if (!(await Sharing.isAvailableAsync())) {
+        showToast(t('sharingNotAvailable'), 'error'); // Assuming 'sharingNotAvailable' translation
+        return;
+      }
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'text/csv',
+        dialogTitle: t('exportWorkListCSVDialogTitle'), // Assuming translation
+        UTI: 'public.comma-separated-values-text',
+      });
+    } catch (error) {
+      console.error('Error exporting work list CSV:', error);
+      showToast(t('exportFailed'), 'error'); // Assuming 'exportFailed' translation
+    }
+  };
+
+  if (apiIsLoading && currentPage === 1 && workList.length === 0) {
     return (
-      <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
+      <View style={styles.screenContainer}>
         <View
-          className="border-b px-6 pb-4 pt-6"
-          style={{
-            borderColor: COLORS.gray[200],
-            backgroundColor: COLORS.background.primary,
-          }}>
+          style={styles.headerContainer}>
           <View className="flex-row items-center justify-between">
             <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
               {t('worklist')}
             </Text>
-            <View className="flex-row space-x-3">
+            <View className="flex-row space-x-1 items-center">
               <Pressable
                 onPress={() => router.push('/work/add')}
-                className="mr-2 rounded-full p-3"
+                className="mr-1 rounded-full p-3"
                 style={{ backgroundColor: COLORS.primary }}>
                 <MaterialCommunityIcons name="plus" size={22} color="white" />
               </Pressable>
-              <Pressable className="rounded-full p-3" style={{ backgroundColor: COLORS.gray[100] }}>
-                <MaterialCommunityIcons name="filter-variant" size={22} color={COLORS.gray[600]} />
+              <Pressable
+                onPress={handleExportWorkListCSV}
+                className="mr-1 rounded-full p-3"
+                style={{ backgroundColor: COLORS.gray[100] }}>
+                <MaterialCommunityIcons name="download-outline" size={22} color={COLORS.gray[600]} />
+              </Pressable>
+              <Pressable
+                onPress={() => actionSheetRef.current?.show()}
+                className="mr-1 rounded-full p-3"
+                style={{ backgroundColor: COLORS.gray[100] }}>
+                <MaterialCommunityIcons
+                  name="filter-variant"
+                  size={22}
+                  color={currentFilter === 'all' ? COLORS.gray[600] : COLORS.primary}
+                />
               </Pressable>
             </View>
           </View>
         </View>
-
-        <View className="my-6 px-4">
-          <View className="rounded-xl p-4" style={{ backgroundColor: COLORS.primary + '15' }}>
-            <View className="h-4 w-20 rounded bg-gray-200" />
-            <View className="mt-2 h-8 w-32 rounded bg-gray-200" />
-          </View>
-        </View>
-
-        <View className="px-4">
-          {[...Array(8)].map((_, index) => (
+        <View style={styles.skeletonContainer}>
+          {[...Array(5)].map((_, index) => (
             <WorkSkeleton key={index} />
           ))}
         </View>
@@ -145,33 +231,29 @@ export default function WorkListScreen() {
   }
 
   return (
-    <View className="flex-1" style={{ backgroundColor: COLORS.background.primary }}>
-      {/* Header with shadow */}
+    <View style={styles.screenContainer}>
       <View
-        className="border-b px-6 pb-4 pt-6"
-        style={{
-          borderColor: COLORS.gray[200],
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 3,
-          elevation: 3,
-          backgroundColor: COLORS.background.primary,
-        }}>
+        style={styles.headerContainer}>
         <View className="flex-row items-center justify-between">
           <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
             {t('worklist')}
           </Text>
-          <View className="flex-row space-x-3">
+          <View className="flex-row space-x-1 items-center">
             <Pressable
               onPress={() => router.push('/work/add')}
-              className="mr-2 rounded-full p-3"
+              className="mr-1 rounded-full p-3"
               style={{ backgroundColor: COLORS.primary }}>
               <MaterialCommunityIcons name="plus" size={22} color="white" />
             </Pressable>
             <Pressable
+              onPress={handleExportWorkListCSV}
+              className="mr-1 rounded-full p-3"
+              style={{ backgroundColor: COLORS.gray[100] }}>
+              <MaterialCommunityIcons name="download-outline" size={22} color={COLORS.gray[600]} />
+            </Pressable>
+            <Pressable
               onPress={() => actionSheetRef.current?.show()}
-              className="rounded-full p-3"
+              className="mr-1 rounded-full p-3"
               style={{ backgroundColor: COLORS.gray[100] }}>
               <MaterialCommunityIcons
                 name="filter-variant"
@@ -184,7 +266,7 @@ export default function WorkListScreen() {
       </View>
 
       <ScrollView
-        className="flex-1 px-4"
+        style={styles.scrollViewStyle}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -204,7 +286,6 @@ export default function WorkListScreen() {
           }
         }}
         scrollEventThrottle={16}>
-        {/* Today's total section */}
         <View className="my-6 rounded-xl p-4" style={{ backgroundColor: COLORS.primary + '15' }}>
           <Text className="text-sm font-medium" style={{ color: COLORS.gray[600] }}>
             {t('todayTotal')}
@@ -214,14 +295,10 @@ export default function WorkListScreen() {
           </Text>
         </View>
 
-        {/* Banner Ad at the top of the list */}
         <BannerAdComponent size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} containerStyle={{ marginTop: -10 }} />
 
-        {/* Work list with native ads */}
-        {workList.map((item: Work, index: number) => {
-          // Insert a native ad after every 8 items (reduced from 4)
-          const showNativeAd = index > 0 && index % 8 === 0;
-
+        {workList.map((item, index) => {
+          const showNativeAd = index > 0 && index % 10 === 0;
           return (
             <React.Fragment key={item.id.toString()}>
               {showNativeAd && (
@@ -229,35 +306,26 @@ export default function WorkListScreen() {
                   <NativeAdComponent adType="small" />
                 </View>
               )}
-              <Pressable
-                onPress={async () => {
-                  router.push(`/work/${item.id}/edit`);
-                }}
-              >
-                <WorkListItem item={item} />
-              </Pressable>
+              <WorkListItem item={item} />
             </React.Fragment>
           );
         })}
 
-        {/* Loading more indicator */}
         {isLoadingMore && (
           <View className="py-4 items-center">
             <ActivityIndicator size="small" color={COLORS.primary} />
           </View>
         )}
 
-        {/* Empty state */}
-        {!isLoading && workList.length === 0 && (
-          <View className="items-center justify-center py-8">
+        {!apiIsLoading && workList.length === 0 && (
+          <View style={styles.emptyStateContainer}>
             <MaterialCommunityIcons name="file-document-outline" size={48} color={COLORS.gray[400]} />
-            <Text className="mt-2 text-base" style={{ color: COLORS.gray[600] }}>
+            <Text style={styles.emptyStateText}>
               {t('noWorkEntries')}
             </Text>
           </View>
         )}
 
-        {/* Banner ad at the bottom of the list */}
         <View className="mb-2">
           <BannerAdComponent size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
         </View>
@@ -302,3 +370,41 @@ export default function WorkListScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    backgroundColor: COLORS.background.primary,
+  },
+  headerContainer: {
+    borderBottomWidth: 1,
+    borderColor: COLORS.gray[200],
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.md,
+    paddingTop: Platform.OS === 'ios' ? SPACING.xl : SPACING.lg,
+    backgroundColor: COLORS.background.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  scrollViewStyle: {
+    flex: 1,
+    paddingHorizontal: SPACING.lg,
+  },
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl * 2,
+  },
+  emptyStateText: {
+    marginTop: SPACING.md,
+    fontSize: SIZES.body,
+    color: COLORS.gray[600],
+    textAlign: 'center',
+  },
+  skeletonContainer: {
+    padding: SPACING.lg,
+  },
+});

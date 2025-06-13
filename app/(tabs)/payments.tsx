@@ -1,9 +1,9 @@
-import { Text, View, Pressable, ScrollView, ActivityIndicator, RefreshControl, NativeScrollEvent } from 'react-native';
-import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
-import { COLORS } from '../../constants/theme';
+import { Text, View, Pressable, ScrollView, ActivityIndicator, RefreshControl, NativeScrollEvent, Alert, StyleSheet, Platform } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { COLORS, SPACING, SIZES, FONTS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
-import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { format } from 'date-fns';
 import { PaymentSkeleton } from '../../components/PaymentSkeleton';
@@ -17,6 +17,10 @@ import { useAnalytics } from '../../hooks/useAnalytics';
 import { analyticsService } from '../../utils/analytics';
 import { BannerAdComponent, NativeAdComponent } from '../../components/ads';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PREFERENCE_KEYS } from '../account/list-preferences';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 export default function PaymentsList() {
   useAnalytics('PaymentsTabScreen');
@@ -34,6 +38,10 @@ export default function PaymentsList() {
   const { showToast } = useToast();
   const { t } = useLanguage();
 
+  // State for sorting preferences
+  const [sortField, setSortField] = useState('date'); // Default sort field
+  const [sortDirection, setSortDirection] = useState('desc'); // Default sort direction
+
   // Use the modern API hook pattern
   const { execute: executeGetPayments, isLoading } = useApi({
     showErrorToast: true,
@@ -42,11 +50,28 @@ export default function PaymentsList() {
 
   useFocusEffect(
     useCallback(() => {
-      loadPayments({ page: 1 });
+      const loadPreferencesAndFetchData = async () => {
+        let prefSortField = 'date';
+        let prefSortDirection = 'desc';
+        try {
+          const storedSortField = await AsyncStorage.getItem(PREFERENCE_KEYS.PAYMENT_SORT_FIELD);
+          const storedSortDirection = await AsyncStorage.getItem(PREFERENCE_KEYS.PAYMENT_SORT_DIRECTION);
+          if (storedSortField) prefSortField = storedSortField;
+          if (storedSortDirection) prefSortDirection = storedSortDirection;
+        } catch (e) {
+          console.error('Failed to load payment list sort preferences', e);
+        }
+        setSortField(prefSortField);
+        setSortDirection(prefSortDirection);
+        loadPayments({ page: 1, sortBy: prefSortField, sortDir: prefSortDirection });
+      };
+
+      loadPreferencesAndFetchData();
+      refreshUnreadCount();
     }, [currentFilter])
   );
 
-  const loadPayments = async ({ page = 1 }: { page?: number }) => {
+  const loadPayments = async ({ page = 1, sortBy = sortField, sortDir = sortDirection }: { page?: number, sortBy?: string, sortDir?: string }) => {
     try {
       if (page === 1) {
         setPaymentsList([]);
@@ -56,7 +81,7 @@ export default function PaymentsList() {
       }
 
       const response = await executeGetPayments(() =>
-        api.get<{ data: PaymentsResponse }>('/payments', { page, filter: currentFilter })
+        api.get<{ data: PaymentsResponse }>('/payments', { page, filter: currentFilter, sortBy, sortDir })
       );
 
       if (response?.data) {
@@ -81,11 +106,63 @@ export default function PaymentsList() {
     }
   };
 
+  const generatePaymentListCSV = () => {
+    const header = [
+      t('date'),
+      t('from'),
+      t('description'),
+      t('amount'),
+      t('paymentMethod')
+    ].join(',');
+
+    const rows = paymentsList.map(payment => {
+      return [
+        payment.date,
+        `"${(payment.from || '').replace(/"/g, '""')}"`, // Safely handle undefined 'from' and escape double quotes
+        `"${(payment.description || '').replace(/"/g, '""')}"`, // Escape double quotes for 'description'
+        payment.amount,
+        payment.source?.name || 'N/A' // Assuming payment.source.name holds the method
+      ].join(',');
+    });
+
+    return `${header}\n${rows.join('\n')}`;
+  };
+
+  const handleExportPaymentListCSV = async () => {
+    if (!paymentsList || paymentsList.length === 0) {
+      showToast(t('noDataToExport'), 'info');
+      return;
+    }
+    try {
+      const csvString = generatePaymentListCSV();
+      const filename = `payment_list_export_${new Date().toISOString().split('T')[0]}.csv`;
+      const fileUri = FileSystem.documentDirectory + filename;
+
+      await FileSystem.writeAsStringAsync(fileUri, csvString, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      if (!(await Sharing.isAvailableAsync())) {
+        showToast(t('sharingNotAvailable'), 'error');
+        return;
+      }
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'text/csv',
+        dialogTitle: t('exportPaymentListCSVDialogTitle'), // Assuming translation
+        UTI: 'public.comma-separated-values-text',
+      });
+    } catch (error) {
+      console.error('Error exporting payment list CSV:', error);
+      showToast(t('exportFailed'), 'error');
+    }
+  };
+
   const handleFilter = (filter: string) => {
     if (filter !== currentFilter) {
       setCurrentFilter(filter);
       setCurrentPage(1);
       setPaymentsList([]);
+      loadPayments({ page: 1, sortBy: sortField, sortDir: sortDirection });
     }
     actionSheetRef.current?.hide();
   };
@@ -93,27 +170,22 @@ export default function PaymentsList() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     setCurrentPage(1);
-    await loadPayments({ page: 1 });
-  }, [currentFilter]);
+    await loadPayments({ page: 1, sortBy: sortField, sortDir: sortDirection });
+  }, [currentFilter, sortField, sortDirection]);
 
   const handleLoadMore = useCallback(async () => {
     if (!hasMorePages || isLoadingMore || isLoadingSub) return;
 
-    // Log analytics event for loading more payments
     console.log('Loading more payments...');
     analyticsService.logEvent('load_more_payments', { page: currentPage + 1 });
-    await loadPayments({ page: currentPage + 1 });
-  }, [currentPage, hasMorePages, isLoadingMore, isLoadingSub]);
+    await loadPayments({ page: currentPage + 1, sortBy: sortField, sortDir: sortDirection });
+  }, [currentPage, hasMorePages, isLoadingMore, isLoadingSub, sortField, sortDirection]);
 
   const displayTotal = useMemo((): number => {
     return Number(total);
   }, [total]);
 
-  useEffect(() => {
-    refreshUnreadCount();
-  }, []);
-
-  if (isLoading && currentPage === 1 && isLoadingSub) {
+  if (isLoading && currentPage === 1 && isLoadingSub && paymentsList.length === 0) { // Added paymentsList.length check
     return <PaymentSkeleton />;
   }
 
@@ -132,22 +204,23 @@ export default function PaymentsList() {
           backgroundColor: COLORS.background.primary,
         }}>
         <View className="flex-row items-center justify-between">
-          <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
-            {t('paymentsList')}
-          </Text>
-          <View className="flex-row space-x-3">
+          <Text className="text-2xl font-bold" style={{ color: COLORS.secondary }}>{t('paymentsList')}</Text>
+          <View className="flex-row space-x-1 items-center">
             <Pressable
-              onPress={() => {
-                // Direct navigation without forced rewarded ad
-                router.push('/payments/add');
-              }}
-              className="mr-2 rounded-full p-3"
+              onPress={() => router.push('/payments/add')}
+              className="mr-1 rounded-full p-3"
               style={{ backgroundColor: COLORS.primary }}>
               <MaterialCommunityIcons name="plus" size={22} color="white" />
             </Pressable>
             <Pressable
+              onPress={handleExportPaymentListCSV}
+              className="mr-1 rounded-full p-3"
+              style={{ backgroundColor: COLORS.gray[100] }}>
+              <MaterialCommunityIcons name="download-outline" size={22} color={COLORS.gray[600]} />
+            </Pressable>
+            <Pressable
               onPress={() => actionSheetRef.current?.show()}
-              className="rounded-full p-3"
+              className="mr-1 rounded-full p-3"
               style={{ backgroundColor: COLORS.gray[100] }}>
               <MaterialCommunityIcons
                 name="filter-variant"
@@ -223,44 +296,49 @@ export default function PaymentsList() {
                     </View>
                   )}
                   <Pressable
-                    onPress={async () => {
-                      router.push(`/payments/${item.id}/edit`);
-                    }}
+                    onPress={() => router.push(`/payments/${item.id}/edit`)}
                     className="mb-4 rounded-xl p-4"
-                    style={{
-                      backgroundColor: COLORS.background.secondary,
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.05,
-                      shadowRadius: 2,
-                      elevation: 1,
-                    }}>
-                    <View className="flex-row items-center justify-between">
-                      <View>
-                        <Text className="text-base font-medium" style={{ color: COLORS.secondary }}>
-                          ₹ {Number(item.amount).toFixed(2)}
-                        </Text>
-                        <View className="mt-2 flex-row items-center">
-                          <MaterialCommunityIcons
-                            name={item.source?.icon as any}
-                            size={16}
-                            color={COLORS.gray[500]}
-                          />
-                          <Text className="ml-2 text-sm" style={{ color: COLORS.gray[500] }}>
-                            {item.source?.name}
-                          </Text>
+                    style={[
+                      {
+                        backgroundColor: COLORS.background.secondary,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: 0.05,
+                        shadowRadius: 2,
+                        elevation: 1,
+                      },
+                    ]}>
+                    <View className="flex-row items-center">
+                      <View className="flex-1">
+                        <View className="flex-row items-center justify-between">
+                          <View>
+                            <Text className="text-base font-medium" style={{ color: COLORS.secondary }}>
+                              ₹ {Number(item.amount).toFixed(2)}
+                            </Text>
+                            <View className="mt-2 flex-row items-center">
+                              <MaterialCommunityIcons
+                                name={item.source?.icon as any}
+                                size={16}
+                                color={COLORS.gray[500]}
+                              />
+                              <Text className="ml-2 text-sm" style={{ color: COLORS.gray[500] }}>
+                                {item.source?.name}
+                              </Text>
+                            </View>
+                            <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
+                              {format(new Date(item.date), 'MMMM dd, yyyy')}
+                            </Text>
+                            {item.from && (
+                              <View style={styles.highlightableTextContainer}>
+                                <Text style={styles.itemTextLabel}>From: </Text>
+                                <Text style={styles.itemTextValue}>{item.from}</Text>
+                              </View>
+                            )}
+                          </View>
+                          <View className="rounded-full p-2" style={{ backgroundColor: COLORS.gray[100] }}>
+                            <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray[500]} />
+                          </View>
                         </View>
-                        <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
-                          {format(new Date(item.date), 'MMMM dd, yyyy')}
-                        </Text>
-                        {item.from && (
-                          <Text className="mt-1 text-xs" style={{ color: COLORS.gray[400] }}>
-                            From: {item.from}
-                          </Text>
-                        )}
-                      </View>
-                      <View className="rounded-full p-2" style={{ backgroundColor: COLORS.gray[100] }}>
-                        <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray[500]} />
                       </View>
                     </View>
                   </Pressable>
@@ -319,3 +397,171 @@ export default function PaymentsList() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    backgroundColor: COLORS.background.primary,
+  },
+  headerContainer: {
+    borderBottomWidth: 1,
+    borderColor: COLORS.gray[200],
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.md,
+    paddingTop: Platform.OS === 'ios' ? SPACING.xl : SPACING.lg,
+    backgroundColor: COLORS.background.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerTitleText: {
+    fontSize: SIZES.h2,
+    fontFamily: FONTS.bold,
+    color: COLORS.secondary,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  headerButtonBase: {
+    borderRadius: 22,
+    padding: SPACING.sm + 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerButtonPrimary: {
+    backgroundColor: COLORS.primary,
+  },
+  headerButtonSecondary: {
+    backgroundColor: COLORS.gray[100],
+  },
+  headerButtonError: {
+    backgroundColor: COLORS.error,
+  },
+  headerButtonClose: {
+    backgroundColor: COLORS.gray[100],
+  },
+  headerButtonEnabled: {
+    backgroundColor: COLORS.info,
+  },
+  headerButtonDisabled: {
+    backgroundColor: COLORS.gray[300],
+  },
+  skeletonListContainer: {
+    paddingHorizontal: SPACING.lg,
+  },
+  scrollViewStyle: {
+    flex: 1,
+    paddingHorizontal: SPACING.lg,
+  },
+  totalSection: {
+    marginVertical: SPACING.lg,
+    padding: SPACING.md,
+    backgroundColor: COLORS.primary + '15',
+    borderRadius: 12,
+  },
+  totalLabelText: {
+    fontSize: SIZES.body,
+    fontFamily: FONTS.medium,
+    color: COLORS.gray[600],
+  },
+  totalAmountText: {
+    marginTop: SPACING.xs,
+    fontSize: SIZES.h1,
+    fontFamily: FONTS.bold,
+    color: COLORS.primary,
+  },
+  topBannerAd: {
+    marginTop: -SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  nativeAdContainer: {
+    marginVertical: SPACING.sm,
+  },
+  paymentItemPressable: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  paymentItemSelected: {
+    backgroundColor: COLORS.primary + '20',
+  },
+  paymentItemInnerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkboxContainer: {
+    padding: SPACING.md,
+  },
+  paymentListItemView: {
+    flex: 1,
+  },
+  paymentListItemSelectedView: {
+    flex: 1,
+  },
+  loadingMoreContainer: {
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+  },
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl * 2,
+    minHeight: 200,
+  },
+  emptyStateText: {
+    marginTop: SPACING.md,
+    fontSize: SIZES.body,
+    color: COLORS.gray[600],
+    textAlign: 'center',
+  },
+  bottomBannerAd: {
+    marginBottom: SPACING.sm,
+  },
+  actionSheetContent: {
+    padding: SPACING.lg,
+  },
+  actionSheetTitle: {
+    fontSize: SIZES.h3,
+    fontFamily: FONTS.bold,
+    color: COLORS.secondary,
+    marginBottom: SPACING.lg,
+  },
+  actionSheetOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.md + 2,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[200],
+  },
+  actionSheetOptionText: {
+    fontSize: SIZES.body,
+    fontFamily: FONTS.regular,
+    color: COLORS.secondary,
+  },
+  actionSheetOptionTextSelected: {
+    fontFamily: FONTS.semibold,
+    color: COLORS.primary,
+  },
+  highlightableTextContainer: { // New style for container
+    flexDirection: 'row',
+    marginTop: 1,
+  },
+  itemTextLabel: { // New style for label like "From: "
+    fontSize: SIZES.caption,
+    color: COLORS.gray[400],
+    fontFamily: FONTS.medium,
+  },
+  itemTextValue: {
+    fontSize: SIZES.body,
+    color: COLORS.secondary,
+  },
+});

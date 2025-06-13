@@ -9,13 +9,13 @@ import {
   MobileAds,
   MaxAdContentRating,
   AdsConsentStatus,
+  AppOpenAd,
+  InterstitialAd,
+  RewardedAd,
 } from 'react-native-google-mobile-ads';
 
 // Import types to maintain type safety
 import type {
-  InterstitialAd,
-  RewardedAd,
-  AppOpenAd,
   RequestConfiguration,
 } from 'react-native-google-mobile-ads';
 
@@ -121,16 +121,14 @@ const loadAppOpenAd = async (): Promise<() => void> => {
     const adUnitId = getAdUnitId('appOpen');
     console.log('Using app open ad unit ID:', adUnitId);
 
-    // Import is no longer needed as we're importing at the top level
-    const { AppOpenAd } = await import('react-native-google-mobile-ads');
     appOpenAd = AppOpenAd.createForAdRequest(adUnitId, {
       requestNonPersonalizedAdsOnly: true,
     });
 
     // Define unsubscribe functions with default empty functions
-    let unsubscribeLoaded = () => {};
-    let unsubscribeClosed = () => {};
-    let unsubscribeError = () => {};
+    let unsubscribeLoaded = () => { };
+    let unsubscribeClosed = () => { };
+    let unsubscribeError = () => { };
 
     try {
       unsubscribeLoaded = appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
@@ -240,20 +238,17 @@ const loadInterstitialAd = async (): Promise<() => void> => {
     await loadAdModules();
   } catch (error) {
     console.error('Error loading ad modules for interstitial ad:', error);
-    return () => {}; // Return empty function on error
+    return () => { };
   }
 
   try {
     const adUnitId = getAdUnitId('interstitial');
 
-    // Import is no longer needed as we're importing at the top level
-    const { InterstitialAd } = await import('react-native-google-mobile-ads');
     interstitialAd = InterstitialAd.createForAdRequest(adUnitId);
 
-    // Define unsubscribe functions with default empty functions
-    let unsubscribeLoaded = () => {};
-    let unsubscribeClosed = () => {};
-    let unsubscribeError = () => {};
+    let unsubscribeLoaded = () => { };
+    let unsubscribeClosed = () => { };
+    let unsubscribeError = () => { };
 
     try {
       unsubscribeLoaded = interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
@@ -262,7 +257,6 @@ const loadInterstitialAd = async (): Promise<() => void> => {
 
       unsubscribeClosed = interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
         console.log('Interstitial ad closed');
-        // Reload the ad for next time
         try {
           interstitialAd?.load();
         } catch (loadError) {
@@ -275,7 +269,7 @@ const loadInterstitialAd = async (): Promise<() => void> => {
       });
     } catch (eventError) {
       console.error('Error setting up interstitial ad event listeners:', eventError);
-      return () => {}; // Return empty function on error
+      return () => { };
     }
 
     // Start loading with error handling
@@ -298,7 +292,7 @@ const loadInterstitialAd = async (): Promise<() => void> => {
     };
   } catch (error) {
     console.error('Error setting up interstitial ad:', error);
-    return () => {}; // Return empty function on error
+    return () => { }; // Return empty function on error
   }
 };
 
@@ -338,7 +332,7 @@ const loadRewardedAd = async (): Promise<() => void> => {
     await loadAdModules();
   } catch (error) {
     console.error('Error loading ad modules for rewarded ad:', error);
-    return () => {}; // Return empty function on error
+    return () => { }; // Return empty function on error
   }
 
   if (isRewardedAdLoading && rewardedAd && rewardedAd.loaded) {
@@ -359,8 +353,6 @@ const loadRewardedAd = async (): Promise<() => void> => {
     // react-native-google-mobile-ads recommends creating a new instance for each load.
     const adUnitId = getAdUnitId('rewarded');
 
-    // Import is no longer needed as we're importing at the top level
-    const { RewardedAd } = await import('react-native-google-mobile-ads');
     rewardedAd = RewardedAd.createForAdRequest(adUnitId, {
       requestNonPersonalizedAdsOnly: true,
     });
@@ -368,8 +360,8 @@ const loadRewardedAd = async (): Promise<() => void> => {
     console.log(`Rewarded ad: Created new instance for unit ID: ${adUnitId}`);
 
     // Define unsubscribe functions with default empty functions
-    let unsubscribeLoaded = () => {};
-    let unsubscribeLoadError = () => {};
+    let unsubscribeLoaded = () => { };
+    let unsubscribeLoadError = () => { };
 
     try {
       // Listener for when the ad is loaded successfully
@@ -405,7 +397,7 @@ const loadRewardedAd = async (): Promise<() => void> => {
     } catch (eventError) {
       console.error('Error setting up rewarded ad event listeners:', eventError);
       isRewardedAdLoading = false;
-      return () => {}; // Return empty function on error
+      return () => { }; // Return empty function on error
     }
 
     // Start loading the ad
@@ -424,7 +416,7 @@ const loadRewardedAd = async (): Promise<() => void> => {
         console.error('Error cleaning up rewarded ad listeners after load error:', cleanupError);
       }
 
-      return () => {}; // Return an empty cleanup
+      return () => { }; // Return an empty cleanup
     }
 
     // Return a cleanup function for these load-time listeners.
@@ -440,7 +432,7 @@ const loadRewardedAd = async (): Promise<() => void> => {
   } catch (error) {
     console.error('Error setting up rewarded ad:', error);
     isRewardedAdLoading = false;
-    return () => {}; // Return empty function on error
+    return () => { }; // Return empty function on error
   }
 };
 
@@ -549,7 +541,7 @@ const initializeAds = async (): Promise<void> => {
     // when the AdMob account isn't properly configured
     await MobileAds().initialize();
 
-      console.log('Mobile Ads SDK initialized successfully');
+    console.log('Mobile Ads SDK initialized successfully');
 
 
     // Try to handle consent if possible, but don't block ad loading if it fails
@@ -566,7 +558,7 @@ const initializeAds = async (): Promise<void> => {
 
       // Skip consent form handling completely until you configure it in AdMob console
 
-        console.log('Skipping consent form handling - configure forms in AdMob console first');
+      console.log('Skipping consent form handling - configure forms in AdMob console first');
 
 
       // For reference, here's how to implement consent when you have forms configured:
@@ -591,7 +583,7 @@ const initializeAds = async (): Promise<void> => {
       */
     } catch (configError) {
 
-        console.error('Error configuring Mobile Ads SDK:', configError);
+      console.error('Error configuring Mobile Ads SDK:', configError);
 
       // Continue without configuration
     }
@@ -662,7 +654,7 @@ const initializeAds = async (): Promise<void> => {
       await loadAppOpenAd();
     } catch (loadError) {
 
-        console.error('Failed to load ads after SDK initialization error:', loadError);
+      console.error('Failed to load ads after SDK initialization error:', loadError);
 
     }
   }

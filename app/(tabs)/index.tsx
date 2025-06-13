@@ -6,8 +6,10 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
+  Dimensions,
 } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { BarChart, LineChart, PieChart } from 'react-native-chart-kit';
 import { COLORS } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
@@ -42,12 +44,22 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     today: { works: 0, work_amount: 0, payments: 0, total_amount: 0 },
-    weekly: { works: 0, work_amount: 0, payments: 0, total_amount: 0 },
+    weekly: { works: 0, work_amount: 0, payments: 0, total_amount: 0, dailyWorkAmountsLast7Days: [0, 0, 0, 0, 0, 0, 0] },
     monthly: { works: 0, work_amount: 0, payments: 0, total_amount: 0 },
     total_works: 0,
     total_work_amount: 0,
     total_payments: 0,
     total_amount: 0,
+    monthlyEarningsChart: {
+      labels: [],
+      data: [],
+    },
+    paymentSourcesChart: [
+      { name: 'Cash', amount: 0, color: COLORS.primary, legendFontColor: '#7F7F7F', legendFontSize: 12 },
+      { name: 'UPI', amount: 0, color: COLORS.success, legendFontColor: '#7F7F7F', legendFontSize: 12 },
+      { name: 'Bank', amount: 0, color: '#FF6B6B', legendFontColor: '#7F7F7F', legendFontSize: 12 },
+      { name: 'Other', amount: 0, color: '#4ECDC4', legendFontColor: '#7F7F7F', legendFontSize: 12 },
+    ],
   });
   const [user, setUser] = useState<any | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -144,7 +156,67 @@ export default function Home() {
       refreshAds(), // Refresh sponsored ads
     ]);
     setRefreshing(false);
-  }, [refreshAds]);
+  }, [refreshAds, refreshUnreadCount]);
+
+  // Chart data and configuration
+  const screenWidth = Dimensions.get('window').width;
+  const chartData = {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    datasets: [
+      {
+        data: stats?.weekly?.dailyWorkAmountsLast7Days?.length ?
+          stats.weekly.dailyWorkAmountsLast7Days :
+          [0, 0, 0, 0, 0, 0, 0],
+      },
+    ],
+  };
+
+  const chartConfig = {
+    backgroundColor: COLORS.background.secondary,
+    backgroundGradientFrom: COLORS.background.secondary,
+    backgroundGradientTo: COLORS.background.secondary,
+    decimalPlaces: 0,
+    color: (opacity = 1) => `rgba(${parseInt(COLORS.primary.substring(1, 3), 16)}, ${parseInt(COLORS.primary.substring(3, 5), 16)}, ${parseInt(COLORS.primary.substring(5, 7), 16)}, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(100, 100, 100, ${opacity})`,
+    style: {
+      borderRadius: 16,
+    },
+    propsForDots: {
+      r: '6',
+      strokeWidth: '2',
+      stroke: COLORS.primary,
+    },
+    barPercentage: 0.7,
+    formatYLabel: (value: string) => formatIndianNumber(Number(value)),
+  };
+
+  // Ensure we have valid data for Monthly Earnings Line Chart
+  const monthlyEarningsChartData = {
+    labels: stats?.monthlyEarningsChart?.labels?.length ?
+      stats.monthlyEarningsChart.labels :
+      ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    datasets: [
+      {
+        data: stats?.monthlyEarningsChart?.data?.length ?
+          stats.monthlyEarningsChart.data :
+          [0, 0, 0, 0, 0, 0],
+        color: (opacity = 1) => `rgba(${parseInt(COLORS.success.substring(1, 3), 16)}, ${parseInt(COLORS.success.substring(3, 5), 16)}, ${parseInt(COLORS.success.substring(5, 7), 16)}, ${opacity})`,
+        strokeWidth: 2,
+      },
+    ],
+    legend: [t('monthlyEarnings')],
+  };
+
+  // Data for Payment Sources Pie Chart with validation
+  const paymentSourcesPieChartData = (stats?.paymentSourcesChart || [])
+    .filter(source => source && typeof source.amount === 'number' && source.amount > 0)
+    .map(source => ({
+      name: source.name || 'Unknown',
+      population: source.amount,
+      color: source.color || COLORS.primary,
+      legendFontColor: source.legendFontColor || '#7F7F7F',
+      legendFontSize: source.legendFontSize || 12,
+    }));
 
   return (
     <ScrollView
@@ -293,6 +365,32 @@ export default function Home() {
         </View>
       </View>
 
+      {/* Weekly Work Trend Chart */}
+      <View className="mt-2 px-6">
+        <Text className="text-lg font-semibold mb-3" style={{ color: COLORS.secondary }}>
+          {t('weeklyWorkTrend')}
+        </Text>
+        <View style={{ alignItems: 'center' }}>
+          {!loading && (
+            <BarChart
+              data={chartData}
+              width={screenWidth - 48}
+              height={220}
+              yAxisLabel="₹"
+              yAxisSuffix=""
+              chartConfig={chartConfig}
+              verticalLabelRotation={0}
+              style={{
+                marginVertical: 8,
+                borderRadius: 16,
+              }}
+              showValuesOnTopOfBars={true}
+              fromZero={true}
+            />
+          )}
+        </View>
+      </View>
+
       {/* Native Ad */}
       <View className="mt-0 px-6">
         <BannerAdComponent
@@ -388,6 +486,52 @@ export default function Home() {
           </View>
         </View>
       </View>
+
+      {/* Monthly Earnings Line Chart */}
+      <View className="mt-6 px-6">
+        <Text className="text-lg font-semibold mb-3" style={{ color: COLORS.secondary }}>
+          {t('monthlyEarningsTrend')}
+        </Text>
+        <View style={{ alignItems: 'center' }}>
+          {!loading && monthlyEarningsChartData.datasets[0].data.length > 0 && (
+            <LineChart
+              data={monthlyEarningsChartData}
+              width={screenWidth - 48}
+              height={220}
+              yAxisLabel="₹"
+              chartConfig={chartConfig}
+              bezier
+              style={{
+                marginVertical: 8,
+                borderRadius: 16,
+              }}
+            />
+          )}
+        </View>
+      </View>
+
+      {/* Payment Sources Pie Chart */}
+      {!loading && paymentSourcesPieChartData.length > 0 && (
+        <View className="mt-6 px-6">
+          <Text className="text-lg font-semibold mb-3" style={{ color: COLORS.secondary }}>
+            {t('paymentSourcesDistribution')}
+          </Text>
+          <View style={{ alignItems: 'center' }}>
+            <PieChart
+              data={paymentSourcesPieChartData}
+              width={screenWidth - 48}
+              height={220}
+              chartConfig={chartConfig}
+              accessor="population"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              center={[10, 0]}
+              absolute
+              hasLegend={true}
+            />
+          </View>
+        </View>
+      )}
 
       {/* Native Ad */}
       <View className="mt-0 px-6">
