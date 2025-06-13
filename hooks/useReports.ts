@@ -196,7 +196,7 @@ export const useReports = () => {
         quickFilter: 'today',
         startDate: getDateRangeForQuickFilter('today').startDate,
         endDate: getDateRangeForQuickFilter('today').endDate,
-        viewMode: 'payment',
+        viewMode: 'work',
         searchQuery: '',
         taskTypeCode: null,
     });

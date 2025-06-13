@@ -160,22 +160,23 @@ const ViewAndSearchSection = React.memo(({
     t, filters, jobTypeFilterOptions, locale,
     handleViewModeChange, handleSearchQueryChange, handleTaskTypeCodeFilterChange
 }: ViewAndSearchSectionProps) => {
-    const viewModeButtons = useMemo(() => (['work', 'payment', 'combined'] as ViewMode[]).map(mode => {
-        const keySuffix = mode === 'payment' ? 'payments' : mode;
-        const translationKey = `reportsPage.viewModes.${keySuffix}`;
-
-        return (
-            <TouchableOpacity
-                key={mode}
-                className={`flex-1 py-2.5 px-3 rounded-full items-center ${filters.viewMode === mode ? 'bg-primary-500 shadow-md' : ''}`}
-                onPress={() => handleViewModeChange(mode)}
-            >
-                <Text className={`${filters.viewMode === mode ? 'text-white' : 'text-primary-700'} font-semibold capitalize`}>
-                    {t(translationKey as any)}
-                </Text>
-            </TouchableOpacity>
-        );
-    }), [filters.viewMode, handleViewModeChange, t]);
+    const viewModeButtons = useMemo(() => {
+        const modes: ViewMode[] = ['work', 'payment', 'combined'];
+        return modes.map(mode => {
+            const translationKey = `reportsPage.viewModes.${mode}`;
+            return (
+                <TouchableOpacity
+                    key={mode}
+                    className={`flex-1 py-2.5 px-3 rounded-full items-center ${filters.viewMode === mode ? 'bg-primary-500 shadow-md' : ''}`}
+                    onPress={() => handleViewModeChange(mode)}
+                >
+                    <Text className={`${filters.viewMode === mode ? 'text-white' : 'text-primary-700'} font-semibold capitalize`}>
+                        {t(translationKey as any)}
+                    </Text>
+                </TouchableOpacity>
+            );
+        });
+    }, [filters.viewMode, handleViewModeChange, t]);
 
     const renderJobTypeItem = useCallback(({ item: jt }: { item: (JobType | { code: null; name: string; name_en: string; name_gu: string; name_hi: string; id: string; }) }) => {
         let displayName = jt.name_en;
